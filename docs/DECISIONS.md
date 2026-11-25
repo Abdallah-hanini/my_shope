@@ -6,9 +6,9 @@ None of these block Phase 0. Each blocks the listed production features; work on
 
 | # | Decision needed | Blocks | Needed by |
 |---|---|---|---|
-| D-01 | Jurisdiction(s) of operation and data residency (for example Qatar only, or GCC) | Hosting region, tax, payroll law, privacy/consent rules | Phase 1 |
-| D-02 | Legal entity structure: how many companies, shared vs separate ledgers, intercompany policy | Company/branch model, consolidation, ACC-017 | Phase 1 |
-| D-03 | Identity provider (OIDC): Keycloak self-hosted, Auth0, Entra ID, Cognito, … | Login on all 3 clients, MFA, step-up auth | Phase 1 |
+| D-01 | ~~Jurisdiction(s) of operation and data residency~~ **Decided 2026-11-25: on-premises. All data stays on the shop's Windows PC.** Country/tax jurisdiction still to confirm | Hosting region, tax, payroll law, privacy/consent rules | Phase 1 |
+| D-02 | ~~Legal entity structure~~ **Decided 2026-11-25: one company, one branch (one shop).** The model still supports more if the business grows; no intercompany work planned | Company/branch model, consolidation, ACC-017 | Phase 1 |
+| D-03 | Identity provider (OIDC). **Proposed: Keycloak running locally on the shop PC.** Awaiting owner confirmation | Login on all 3 clients, MFA, step-up auth | Phase 1 |
 | D-04 | Chart of accounts template and posting matrix sign-off by the accountant | ACC-001/002, every posting in docs/ACCOUNTING.md | Phase 1 |
 | D-05 | Tax regime and rates (VAT applicability, effective dates) | ACC-010, invoices, POS | Phase 1–3 |
 | D-06 | Inventory costing method: FIFO or weighted average, per company or per product | INV-010, COGS, stock valuation | Phase 2 |
@@ -20,6 +20,23 @@ None of these block Phase 0. Each blocks the listed production features; work on
 | D-12 | Mobile app names, bundle identifiers, Apple/Google developer accounts | Store builds; current IDs are placeholders `com.example.erp.{customer,manager}` | Before Phase 4 device builds |
 | D-13 | Supported iOS/Android versions and target devices | Mobile test matrix | Phase 4 |
 | D-14 | Opening balances, initial catalog source and data migration scope | ACC-014, INV imports | Phase 1–2 |
+
+## Owner decisions (2026-11-25)
+
+- The ERP is a **separate project for the owner's shop**. It moves out of the profile repository into a new GitHub repository the owner will provide, keeping its git history.
+- **Deployment: one Windows PC in the shop** (on-premises), not cloud hosting.
+- **Users: shop staff only, on the shop Wi-Fi, for now.** The customer app (and so online booking, ecommerce and payments, D-08) is **postponed by the owner**. It needs internet exposure (tunnel or cloud) and is revisited later. This narrows the spec, where both mobile apps are mandatory for the full release; the full release gate is unchanged.
+
+### Consequences to implement
+
+| # | Item | Notes |
+|---|---|---|
+| L-01 | Production Docker Compose for Windows (Docker Desktop + WSL 2): PostgreSQL, Redis ×2, API, worker, web, Keycloak, reverse proxy; auto-start on boot | Bound to the shop LAN, not the internet |
+| L-02 | **Automated database backups** to a second disk or USB drive on a schedule, with retention and a documented, tested restore | One PC means one point of failure; this replaces the cloud PITR assumption (RPO/RTO to be agreed) |
+| L-03 | HTTPS on the LAN (local certificate authority trusted by staff devices) | Mobile platforms block plain HTTP by default; tokens must not cross Wi-Fi unencrypted |
+| L-04 | Keycloak realm for staff, with MFA for administrators (once D-03 is confirmed) | Unblocks P1-10 screens |
+| L-05 | Windows install/upgrade/restore guide for a non-developer | Plus UPS (power backup) recommendation |
+| L-06 | Manager app distributed internally (Android APK or TestFlight/ad hoc) rather than public store listing | Revisits D-12 |
 
 ## Technical decisions taken in Phase 0 (reversible)
 

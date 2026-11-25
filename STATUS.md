@@ -8,6 +8,12 @@
 | 1 Identity/org/accounting | **In progress.** The API slice (P1-01 to P1-09) is implemented and verified locally. Still to do: client screens (P1-10), outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | 2–7 | Not started. |
 
+## 2026-11-25: Owner decisions on deployment
+
+- This is a separate project for the owner's shop. It moves to a new GitHub repository (link pending), keeping its history.
+- Runs on one Windows PC in the shop. One company, one branch. Staff only, on the shop Wi-Fi. The customer app is postponed.
+- Recorded in [docs/DECISIONS.md](docs/DECISIONS.md) (D-01 and D-02 decided, D-03 proposed as local Keycloak, plus L-01 to L-06).
+
 ## 2026-11-25: Phase 1, API slice (identity, organization, accounting)
 
 **Approval:** the owner approved the Phase 0 gate ("Approve").
