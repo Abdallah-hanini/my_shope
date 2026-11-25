@@ -23,7 +23,7 @@ None of these block Phase 0. Each blocks the listed production features; work on
 
 ## Owner decisions (2026-11-25)
 
-- The ERP is a **separate project for the owner's shop**. It moves out of the profile repository into a new GitHub repository the owner will provide, keeping its git history.
+- The ERP is a **separate project for the owner's shop**. It now lives in its own repository, `Abdallah-hanini/my_shope`, with its git history.
 - **Deployment: one Windows PC in the shop** (on-premises), not cloud hosting.
 - **Users: shop staff only, on the shop Wi-Fi, for now.** The customer app (and so online booking, ecommerce and payments, D-08) is **postponed by the owner**. It needs internet exposure (tunnel or cloud) and is revisited later. This narrows the spec, where both mobile apps are mandatory for the full release; the full release gate is unchanged.
 
@@ -42,7 +42,7 @@ None of these block Phase 0. Each blocks the listed production features; work on
 
 | # | Decision | Why | Revisit when |
 |---|---|---|---|
-| T-01 | ERP lives in `erp/` inside the existing profile repository | Only repository available to this session; keeps the profile site untouched | Owner creates a dedicated repository (move `erp/` as-is; it has no dependency on the parent) |
+| T-01 | ~~ERP lived in `erp/` inside the profile repository~~ **Moved 2026-11-25 to its own repository `Abdallah-hanini/my_shope`, history preserved (git subtree split)** | Owner request | — |
 | T-02 | Stable majors: Next 15.5, NestJS 11, Prisma 6.19, Expo SDK 54 (React Native 0.81, React 19.1.0), Node 22 | Mature, mutually compatible releases; React pinned once across web and mobile to avoid duplicate React in the hoisted install | Quarterly dependency review; newer majors (Next 16, Nest 12, Prisma 7/8, Expo 55+) exist and need a planned upgrade |
 | T-03 | `node-linker=hoisted` in `.npmrc` | Most reliable Metro resolution for Expo in a pnpm monorepo | Expo isolated-install support is verified for this repo |
 | T-04 | Shared packages compile to CommonJS `dist/` | One format consumable by Nest (CJS), Next and Metro without transpile config | Moving the API to ESM |

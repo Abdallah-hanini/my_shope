@@ -8,6 +8,13 @@
 | 1 Identity/org/accounting | **In progress.** The API slice (P1-01 to P1-09) is implemented and verified locally. Still to do: client screens (P1-10), outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | 2–7 | Not started. |
 
+## 2026-11-25: Moved to its own repository
+
+- The project moved from `erp/` in `Abdallah-hanini/my-profile-` to the root of `Abdallah-hanini/my_shope`. `git subtree split` kept its five commits.
+- The CI workflow moved to `.github/workflows/ci.yml`, with paths updated for the repository root.
+- Earlier entries below mention `erp/` and the profile repo. They describe history and are left unchanged.
+- Verification run in the new repository is recorded below.
+
 ## 2026-11-25: Owner decisions on deployment
 
 - This is a separate project for the owner's shop. It moves to a new GitHub repository (link pending), keeping its history.

@@ -31,12 +31,12 @@ docker-compose.yml  local PostgreSQL 16, cache Redis, queue Redis
 
 ## Prerequisites
 
-Node 22 (`.nvmrc`), pnpm 10.28 (`corepack enable`), Docker with Compose.
+Node 22 (`.nvmrc`), pnpm 10.28 (`corepack enable`), Docker with Compose. Target deployment is the shop's Windows PC (Docker Desktop + WSL 2); see [docs/DECISIONS.md](docs/DECISIONS.md) L-01 to L-06.
 
 ## Run locally
 
 ```bash
-cd erp
+cd my_shope
 pnpm install
 cp .env.example .env && cp apps/api/.env.example apps/api/.env
 cp apps/worker/.env.example apps/worker/.env && cp apps/web-erp/.env.example apps/web-erp/.env.local
@@ -77,7 +77,7 @@ pnpm test:smoke                                        # boots built apps, check
 ```
 
 Integration and smoke tests need the Docker services and fail (they never skip) when those are missing.
-CI runs the same steps: `.github/workflows/erp-ci.yml` at the repository root.
+CI runs the same steps: `.github/workflows/ci.yml`.
 
 ## Changing the API contract
 

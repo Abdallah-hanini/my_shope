@@ -1,0 +1,75 @@
+# Automotive ERP CI. Mirrors the local quality gate in README.md and STATUS.md.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: erp
+          POSTGRES_PASSWORD: erp_ci_only
+          POSTGRES_DB: erp
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U erp -d erp" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis-cache:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis-queue:
+        image: redis:7-alpine
+        ports: ['6380:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      CI: 'true'
+      DATABASE_URL: postgresql://erp:erp_ci_only@localhost:5432/erp?schema=public
+      SHADOW_DATABASE_URL: postgresql://erp:erp_ci_only@localhost:5432/erp_shadow
+      REDIS_CACHE_URL: redis://localhost:6379
+      REDIS_QUEUE_URL: redis://localhost:6380
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Contracts are up to date with the API
+        run: pnpm contracts:check
+      - name: Migrations apply and match schema.prisma
+        run: |
+          psql "postgresql://erp:erp_ci_only@localhost:5432/erp" -c "CREATE DATABASE erp_shadow"
+          pnpm db:migrate
+          pnpm db:migrate
+          pnpm db:migrate:check
+      - run: pnpm --filter @erp/api test:integration
+      - run: pnpm --filter @erp/worker test:integration
+      - name: Smoke test (API, worker, web in Chromium)
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          sed -i "s/erp_local_dev_only/erp_ci_only/" apps/api/.env
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:smoke
