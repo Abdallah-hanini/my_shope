@@ -63,7 +63,7 @@
 | `pnpm --filter @erp/worker test:integration` | ✅ 2/2 |
 | `pnpm test:smoke` | ✅ 11/11 |
 | `iam:bootstrap-admin` run twice, plus once with invalid input | ✅ one user and one audit event; invalid input rejected |
-| `pnpm contracts:check` | Run after commit; result recorded below |
+| `pnpm contracts:check` (after commit) | ✅ exit 0: committed OpenAPI and types match the API |
 
 ### Not done or not verified
 
