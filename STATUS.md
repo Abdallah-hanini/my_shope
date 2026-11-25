@@ -6,8 +6,69 @@
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, staff user and role management screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
+| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). Next: users, roles and permission matrix (WEB-224/225/226), trial balance and general ledger (WEB-122/100), global search (WEB-237). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
+
+## 2026-11-25: AUTO360 UI/UX increment 1 (design system, shell, executive dashboard)
+
+**Input:** docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md (380 proposed views). Followed its start command: audit, catalog and contracts, design system, executive dashboard.
+
+### Changes
+
+- **Audit and traceability:**
+  - `docs/SCREEN_CATALOG.md` lists all 380 views with requirement IDs, phase, status, route and evidence: 7 implemented, 6 partial, 2 shell only, 6 next, 289 planned, 70 postponed (the customer app, per owner decision).
+  - `docs/SCREEN_CONTRACTS.md` has the implemented and partial screens.
+  - Also added: `DESIGN_SYSTEM.md`, `KPI_DICTIONARY.md`, `NAVIGATION_MAP.md`, `COMPONENT_LIBRARY.md`, `USER_JOURNEYS.md`, `UI_ACCEPTANCE_CRITERIA.md`. Requirement traceability stays in `docs/TRACEABILITY.md`.
+  - Conflicts with earlier decisions are recorded in `docs/DECISIONS.md`: customer app postponed, demo mode isolated and deferred, no dead search or notification buttons, password recovery needs an SMTP decision.
+- **API:**
+  - Migration `reporting_foundation` adds `accounting.account.reporting_class` (cash, bank, receivable, payable, inventory, cogs), with a DB check against the account type.
+  - Adds the view `reporting.ledger_line`.
+  - Gives existing company-admin roles the new `reports.financial.read` permission.
+  - New `GET /companies/{id}/reports/financial-summary`: revenue, COGS, gross profit and margin, operating expenses, net profit, cash and bank, monthly trend, branch comparison and exceptions. All figures come from one REPEATABLE READ snapshot and use the central formulas (`kpi.ts`). Branch-limited users are restricted to their branches.
+- **Design system:**
+  - AUTO360 tokens for light and dark; semantic text is darkened to pass AA, and new contrast tests cover the sidebar and links.
+  - Inter and IBM Plex Sans Arabic, self-hosted.
+  - shadcn-style components (Radix, Lucide, cva, tailwind-merge).
+  - Light, dark or system theme, kept in a cookie and applied before paint.
+  - `groupDigits` adds exact thousands separators.
+- **Shell:**
+  - Sidebar 248/72 px, collapsible (remembered), turning into a drawer below 1024 px.
+  - 64 px header with breadcrumbs, company switcher, language switch, and profile menu (theme, sign out).
+- **WEB-001 Executive dashboard:**
+  - Filters for month range, presets and branch, kept in the URL.
+  - Six KPIs, an ECharts monthly trend, and a branch comparison; every chart has a data table.
+  - "Needs attention" panel with links to the related records, and a freshness line.
+- **Existing screens:**
+  - Chart of accounts: reporting-class field and badge.
+  - Amounts grouped everywhere.
+  - Journal numbers and dates no longer wrap.
+
+### Bugs found while verifying
+
+- Chart Y axis showed "1, 1, 1, 0" for all-zero data. Fixed with whole-number ticks.
+- **Arabic charts:** legend text overlapped its keys and axis labels went under the bars, because the SVG text inherited RTL. Fixed with `dir="ltr"` on the chart, a left-to-right time axis (T-28), and the legend at the reading edge.
+- The cash card showed a stray "Reporting class" label when no cash accounts existed. It now says "Not set up — see 'Needs attention'".
+
+### Commands run and results
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile`, `pnpm format:check` | ✅ |
+| `pnpm turbo run build typecheck lint test --force` | ✅ 48/48 tasks; 170 unit tests (validation 55, api 50, web 23, localization 18, api-client 7, tokens 5, worker 5, web-ui 1, mobile 3+3) |
+| Fresh DB: `db:migrate`, `db:migrate:check` | ✅ 3 migrations, "No difference detected" |
+| API integration | ✅ 70/70, including 13 reporting tests against a hand-calculated fixture |
+| Worker integration / smoke | ✅ 2/2, 11/11 |
+| `pnpm test:e2e-web` | ✅ 21/21, including the dashboard check |
+| Production image rebuilt and redeployed (migration ran automatically); `verify-deployment.mjs` | ✅ 14/14 |
+| Screen capture on the production stack | ✅ 25 screens: desktop 1440, tablet 768, phone 390, Arabic, dark theme, collapsed sidebar |
+
+### Not done or not verified
+
+- No automated accessibility scan (axe) yet. The 380-view catalog is mostly planned work.
+- The demo mode from the spec is not started (it needs phase 2–3 modules).
+- The mobile apps have not been restyled with the AUTO360 tokens.
+- Known minor issue: Jest warns that the Phase 0 health integration suite leaves a ~2 s Redis connect timer open. The run still exits 0.
 
 ## 2026-11-25: Web ERP sign-in and Phase 1 screens
 
