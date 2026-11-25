@@ -51,3 +51,39 @@ describe('parseEnv', () => {
     expect(env.WORKER_HEALTH_PORT).toBe(4100);
   });
 });
+
+describe('OIDC settings', () => {
+  const oidc = {
+    OIDC_ISSUER: 'https://id.example.test/realms/erp',
+    OIDC_AUDIENCE: 'erp-api',
+    OIDC_JWKS_URL: 'https://id.example.test/realms/erp/certs',
+  };
+
+  it('are optional in development', () => {
+    expect(parseEnv(apiEnvSchema, valid).OIDC_ISSUER).toBeUndefined();
+  });
+
+  it('must be set together', () => {
+    expect(() => parseEnv(apiEnvSchema, { ...valid, OIDC_ISSUER: oidc.OIDC_ISSUER })).toThrow(/set together/);
+  });
+
+  it('are required in production', () => {
+    expect(() => parseEnv(apiEnvSchema, { ...valid, NODE_ENV: 'production' })).toThrow(
+      /required in production/,
+    );
+    expect(parseEnv(apiEnvSchema, { ...valid, ...oidc, NODE_ENV: 'production' }).OIDC_AUDIENCE).toBe(
+      'erp-api',
+    );
+  });
+
+  it('require https JWKS in production', () => {
+    expect(() =>
+      parseEnv(apiEnvSchema, {
+        ...valid,
+        ...oidc,
+        OIDC_JWKS_URL: 'http://id.example.test/certs',
+        NODE_ENV: 'production',
+      }),
+    ).toThrow(/https/);
+  });
+});

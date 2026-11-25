@@ -54,6 +54,802 @@
           "health"
         ]
       }
+    },
+    "/api/v1/companies": {
+      "post": {
+        "operationId": "createCompany",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a company with its administrator (platform admin)",
+        "tags": [
+          "organization"
+        ]
+      },
+      "get": {
+        "operationId": "listCompanies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Companies where the caller holds a role",
+        "tags": [
+          "organization"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}": {
+      "get": {
+        "operationId": "getCompany",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "organization"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/branches": {
+      "post": {
+        "operationId": "createBranch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "organization"
+        ]
+      },
+      "get": {
+        "operationId": "listBranches",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BranchDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Branches visible in the caller scope",
+        "tags": [
+          "organization"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Caller profile, companies, roles and permissions",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "post": {
+        "operationId": "createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Provision a user from an OIDC identity (platform admin)",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/roles": {
+      "post": {
+        "operationId": "createRole",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "identity"
+        ]
+      },
+      "get": {
+        "operationId": "listRoles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/role-assignments": {
+      "post": {
+        "operationId": "createRoleAssignment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleAssignmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Grant a role, company-wide or for one branch",
+        "tags": [
+          "identity"
+        ]
+      },
+      "get": {
+        "operationId": "listRoleAssignments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleAssignmentDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/role-assignments/{assignmentId}": {
+      "delete": {
+        "operationId": "revokeRoleAssignment",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/accounts": {
+      "post": {
+        "operationId": "createAccount",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "accounting"
+        ]
+      },
+      "get": {
+        "operationId": "listAccounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Chart of accounts ordered by code",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/fiscal-periods": {
+      "post": {
+        "operationId": "createFiscalPeriod",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFiscalPeriodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "accounting"
+        ]
+      },
+      "get": {
+        "operationId": "listFiscalPeriods",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FiscalPeriodDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/fiscal-periods/{periodId}/close": {
+      "post": {
+        "operationId": "closeFiscalPeriod",
+        "parameters": [
+          {
+            "name": "periodId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseFiscalPeriodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalPeriodDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a period; later postings into it are rejected",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/journals": {
+      "post": {
+        "operationId": "postJournal",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "8–128 chars [A-Za-z0-9_.:-]. Retrying with the same key and body returns the original journal.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostJournalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replay of an earlier request with the same Idempotency-Key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post a balanced manual journal (immutable once posted)",
+        "tags": [
+          "accounting"
+        ]
+      },
+      "get": {
+        "operationId": "listJournals",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Journals newest first (cursor pagination)",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/journals/{journalId}": {
+      "get": {
+        "operationId": "getJournal",
+        "parameters": [
+          {
+            "name": "journalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/journals/{journalId}/reverse": {
+      "post": {
+        "operationId": "reverseJournal",
+        "parameters": [
+          {
+            "name": "journalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "8–128 chars [A-Za-z0-9_.:-]. Retrying with the same key and body returns the original journal.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseJournalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replay of an earlier request with the same Idempotency-Key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post the mirror-image journal; the original is unchanged",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/audit-events": {
+      "get": {
+        "operationId": "listAuditEvents",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Audit trail of the company, newest first",
+        "tags": [
+          "audit"
+        ]
+      }
     }
   },
   "info": {
@@ -159,6 +955,864 @@
           "checkedAt",
           "version",
           "checks"
+        ]
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "ACME"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "legalNameAr": {
+            "type": "string"
+          },
+          "baseCurrency": {
+            "type": "string",
+            "example": "QAR"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Qatar"
+          },
+          "initialAdminUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Receives the company-admin role for all branches"
+          }
+        },
+        "required": [
+          "code",
+          "legalName",
+          "baseCurrency",
+          "timezone",
+          "initialAdminUserId"
+        ]
+      },
+      "CompanyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "legalNameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "baseCurrency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "legalName",
+          "baseCurrency",
+          "timezone",
+          "status",
+          "version"
+        ]
+      },
+      "CreateBranchDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "BranchDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "status",
+          "version"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ]
+          },
+          "isPlatformAdmin": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "locale",
+          "isPlatformAdmin",
+          "status"
+        ]
+      },
+      "MeAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string"
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = all branches"
+          }
+        },
+        "required": [
+          "assignmentId",
+          "roleCode"
+        ]
+      },
+      "MeCompanyDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "legalNameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeAssignmentDto"
+            }
+          },
+          "permissions": {
+            "description": "Union of permissions; scope still applies per branch",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "companyId",
+          "code",
+          "legalName",
+          "assignments",
+          "permissions"
+        ]
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "companies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeCompanyDto"
+            }
+          }
+        },
+        "required": [
+          "user",
+          "companies"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "oidcIssuer": {
+            "type": "string",
+            "description": "Issuer (iss) of the OIDC provider"
+          },
+          "oidcSubject": {
+            "type": "string",
+            "description": "Subject (sub) of the user at that provider"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ]
+          },
+          "isPlatformAdmin": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "oidcIssuer",
+          "oidcSubject",
+          "email",
+          "displayName"
+        ]
+      },
+      "CreateRoleDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "permissions"
+        ]
+      },
+      "RoleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "permissions",
+          "isSystem",
+          "version"
+        ]
+      },
+      "CreateRoleAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Omit for all branches"
+          }
+        },
+        "required": [
+          "userId",
+          "roleId"
+        ]
+      },
+      "RoleAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "roleId": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "grantedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "userId",
+          "roleId",
+          "createdAt"
+        ]
+      },
+      "CreateAccountDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "1100"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "asset",
+              "liability",
+              "equity",
+              "revenue",
+              "expense"
+            ]
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isPosting": {
+            "type": "boolean",
+            "description": "false = header account (groups others, cannot be posted to)"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "type",
+          "isPosting"
+        ]
+      },
+      "AccountDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "asset",
+              "liability",
+              "equity",
+              "revenue",
+              "expense"
+            ]
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPosting": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "type",
+          "isPosting",
+          "status",
+          "version"
+        ]
+      },
+      "CreateFiscalPeriodDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "2026-01"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "FiscalPeriodDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "startDate",
+          "endDate",
+          "status",
+          "version"
+        ]
+      },
+      "CloseFiscalPeriodDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Version you last read (optimistic lock)"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "reason"
+        ]
+      },
+      "JournalLineInputDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "debit": {
+            "type": "string",
+            "example": "125.50",
+            "description": "Decimal string; exactly one of debit/credit > 0"
+          },
+          "credit": {
+            "type": "string",
+            "example": "0"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ]
+      },
+      "PostJournalDto": {
+        "type": "object",
+        "properties": {
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "lines": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineInputDto"
+            }
+          }
+        },
+        "required": [
+          "postingDate",
+          "description",
+          "lines"
+        ]
+      },
+      "JournalLineDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "debit": {
+            "type": "string",
+            "example": "125.50"
+          },
+          "credit": {
+            "type": "string",
+            "example": "0.00"
+          }
+        },
+        "required": [
+          "lineNo",
+          "accountId",
+          "accountCode",
+          "debit",
+          "credit"
+        ]
+      },
+      "JournalDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "JV-2026-000001"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "fiscalPeriodId": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalDebit": {
+            "type": "string"
+          },
+          "totalCredit": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "reversal"
+            ]
+          },
+          "reversalOfId": {
+            "type": "string",
+            "nullable": true
+          },
+          "reversedById": {
+            "type": "string",
+            "nullable": true
+          },
+          "postedBy": {
+            "type": "string"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "postingDate",
+          "description",
+          "fiscalPeriodId",
+          "currency",
+          "totalDebit",
+          "totalCredit",
+          "sourceType",
+          "postedBy",
+          "postedAt",
+          "lines"
+        ]
+      },
+      "JournalPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ReverseJournalDto": {
+        "type": "object",
+        "properties": {
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "postingDate",
+          "reason"
+        ]
+      },
+      "AuditEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "action",
+          "entityType",
+          "entityId"
+        ]
+      },
+      "AuditEventPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEventDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "ProblemDetailsDto": {

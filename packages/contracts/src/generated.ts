@@ -38,6 +38,258 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Companies where the caller holds a role */
+        get: operations["listCompanies"];
+        put?: never;
+        /** Create a company with its administrator (platform admin) */
+        post: operations["createCompany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCompany"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Branches visible in the caller scope */
+        get: operations["listBranches"];
+        put?: never;
+        post: operations["createBranch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Caller profile, companies, roles and permissions */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Provision a user from an OIDC identity (platform admin) */
+        post: operations["createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRoles"];
+        put?: never;
+        post: operations["createRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/role-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRoleAssignments"];
+        put?: never;
+        /** Grant a role, company-wide or for one branch */
+        post: operations["createRoleAssignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/role-assignments/{assignmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revokeRoleAssignment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chart of accounts ordered by code */
+        get: operations["listAccounts"];
+        put?: never;
+        post: operations["createAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/fiscal-periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listFiscalPeriods"];
+        put?: never;
+        post: operations["createFiscalPeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/fiscal-periods/{periodId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a period; later postings into it are rejected */
+        post: operations["closeFiscalPeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/journals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Journals newest first (cursor pagination) */
+        get: operations["listJournals"];
+        put?: never;
+        /** Post a balanced manual journal (immutable once posted) */
+        post: operations["postJournal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/journals/{journalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJournal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/journals/{journalId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post the mirror-image journal; the original is unchanged */
+        post: operations["reverseJournal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit trail of the company, newest first */
+        get: operations["listAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -69,6 +321,258 @@ export interface components {
             checkedAt: string;
             version: string;
             checks: components["schemas"]["DependencyCheckDto"][];
+        };
+        CreateCompanyDto: {
+            /** @example ACME */
+            code: string;
+            legalName: string;
+            legalNameAr?: string;
+            /** @example QAR */
+            baseCurrency: string;
+            /** @example Asia/Qatar */
+            timezone: string;
+            /**
+             * Format: uuid
+             * @description Receives the company-admin role for all branches
+             */
+            initialAdminUserId: string;
+        };
+        CompanyDto: {
+            id: string;
+            code: string;
+            legalName: string;
+            legalNameAr?: string | null;
+            baseCurrency: string;
+            timezone: string;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+        };
+        CreateBranchDto: {
+            code: string;
+            name: string;
+            nameAr?: string;
+        };
+        BranchDto: {
+            id: string;
+            companyId: string;
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+        };
+        UserDto: {
+            id: string;
+            email: string;
+            displayName: string;
+            /** @enum {string} */
+            locale: "en" | "ar";
+            isPlatformAdmin: boolean;
+            /** @enum {string} */
+            status: "active" | "inactive";
+        };
+        MeAssignmentDto: {
+            assignmentId: string;
+            roleCode: string;
+            /** @description null = all branches */
+            branchId?: string | null;
+        };
+        MeCompanyDto: {
+            companyId: string;
+            code: string;
+            legalName: string;
+            legalNameAr?: string | null;
+            assignments: components["schemas"]["MeAssignmentDto"][];
+            /** @description Union of permissions; scope still applies per branch */
+            permissions: string[];
+        };
+        MeDto: {
+            user: components["schemas"]["UserDto"];
+            companies: components["schemas"]["MeCompanyDto"][];
+        };
+        CreateUserDto: {
+            /** @description Issuer (iss) of the OIDC provider */
+            oidcIssuer: string;
+            /** @description Subject (sub) of the user at that provider */
+            oidcSubject: string;
+            email: string;
+            displayName: string;
+            /** @enum {string} */
+            locale?: "en" | "ar";
+            isPlatformAdmin?: boolean;
+        };
+        CreateRoleDto: {
+            code: string;
+            name: string;
+            nameAr?: string;
+            permissions: string[];
+        };
+        RoleDto: {
+            id: string;
+            companyId: string;
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            permissions: string[];
+            isSystem: boolean;
+            version: number;
+        };
+        CreateRoleAssignmentDto: {
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            roleId: string;
+            /**
+             * Format: uuid
+             * @description Omit for all branches
+             */
+            branchId?: string | null;
+        };
+        RoleAssignmentDto: {
+            id: string;
+            companyId: string;
+            userId: string;
+            roleId: string;
+            branchId?: string | null;
+            grantedBy?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateAccountDto: {
+            /** @example 1100 */
+            code: string;
+            name: string;
+            nameAr?: string;
+            /** @enum {string} */
+            type: "asset" | "liability" | "equity" | "revenue" | "expense";
+            /** Format: uuid */
+            parentId?: string | null;
+            /** @description false = header account (groups others, cannot be posted to) */
+            isPosting: boolean;
+        };
+        AccountDto: {
+            id: string;
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            /** @enum {string} */
+            type: "asset" | "liability" | "equity" | "revenue" | "expense";
+            parentId?: string | null;
+            isPosting: boolean;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+        };
+        CreateFiscalPeriodDto: {
+            /** @example 2026-01 */
+            name: string;
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+        };
+        FiscalPeriodDto: {
+            id: string;
+            name: string;
+            /** Format: date */
+            startDate: string;
+            /** Format: date */
+            endDate: string;
+            /** @enum {string} */
+            status: "open" | "closed";
+            /** Format: date-time */
+            closedAt?: string | null;
+            closedBy?: string | null;
+            version: number;
+        };
+        CloseFiscalPeriodDto: {
+            /** @description Version you last read (optimistic lock) */
+            version: number;
+            reason: string;
+        };
+        JournalLineInputDto: {
+            /** Format: uuid */
+            accountId: string;
+            /**
+             * @description Decimal string; exactly one of debit/credit > 0
+             * @example 125.50
+             */
+            debit?: string;
+            /** @example 0 */
+            credit?: string;
+            description?: string;
+        };
+        PostJournalDto: {
+            /** Format: date */
+            postingDate: string;
+            description: string;
+            /** Format: uuid */
+            branchId?: string | null;
+            lines: components["schemas"]["JournalLineInputDto"][];
+        };
+        JournalLineDto: {
+            lineNo: number;
+            accountId: string;
+            accountCode: string;
+            description?: string | null;
+            /** @example 125.50 */
+            debit: string;
+            /** @example 0.00 */
+            credit: string;
+        };
+        JournalDto: {
+            id: string;
+            /** @example JV-2026-000001 */
+            number: string;
+            /** Format: date */
+            postingDate: string;
+            description: string;
+            branchId?: string | null;
+            fiscalPeriodId: string;
+            currency: string;
+            totalDebit: string;
+            totalCredit: string;
+            /** @enum {string} */
+            sourceType: "manual" | "reversal";
+            reversalOfId?: string | null;
+            reversedById?: string | null;
+            postedBy: string;
+            /** Format: date-time */
+            postedAt: string;
+            lines: components["schemas"]["JournalLineDto"][];
+        };
+        JournalPageDto: {
+            items: components["schemas"]["JournalDto"][];
+            nextCursor?: string | null;
+        };
+        ReverseJournalDto: {
+            /** Format: date */
+            postingDate: string;
+            reason: string;
+        };
+        AuditEventDto: {
+            id: string;
+            /** Format: date-time */
+            occurredAt: string;
+            actorUserId?: string | null;
+            branchId?: string | null;
+            action: string;
+            entityType: string;
+            entityId: string;
+            reason?: string | null;
+            requestId?: string | null;
+            before?: {
+                [key: string]: unknown;
+            } | null;
+            after?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        AuditEventPageDto: {
+            items: components["schemas"]["AuditEventDto"][];
+            nextCursor?: string | null;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -133,6 +637,500 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthReportDto"];
+                };
+            };
+        };
+    };
+    listCompanies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDto"][];
+                };
+            };
+        };
+    };
+    createCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCompanyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDto"];
+                };
+            };
+        };
+    };
+    getCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDto"];
+                };
+            };
+        };
+    };
+    listBranches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchDto"][];
+                };
+            };
+        };
+    };
+    createBranch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBranchDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchDto"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeDto"];
+                };
+            };
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+        };
+    };
+    listRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleDto"][];
+                };
+            };
+        };
+    };
+    createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleDto"];
+                };
+            };
+        };
+    };
+    listRoleAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleAssignmentDto"][];
+                };
+            };
+        };
+    };
+    createRoleAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleAssignmentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleAssignmentDto"];
+                };
+            };
+        };
+    };
+    revokeRoleAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDto"][];
+                };
+            };
+        };
+    };
+    createAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAccountDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDto"];
+                };
+            };
+        };
+    };
+    listFiscalPeriods: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalPeriodDto"][];
+                };
+            };
+        };
+    };
+    createFiscalPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFiscalPeriodDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalPeriodDto"];
+                };
+            };
+        };
+    };
+    closeFiscalPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                periodId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseFiscalPeriodDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalPeriodDto"];
+                };
+            };
+        };
+    };
+    listJournals: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalPageDto"];
+                };
+            };
+        };
+    };
+    postJournal: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8–128 chars [A-Za-z0-9_.:-]. Retrying with the same key and body returns the original journal. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostJournalDto"];
+            };
+        };
+        responses: {
+            /** @description Replay of an earlier request with the same Idempotency-Key */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+        };
+    };
+    getJournal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+        };
+    };
+    reverseJournal: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 8–128 chars [A-Za-z0-9_.:-]. Retrying with the same key and body returns the original journal. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseJournalDto"];
+            };
+        };
+        responses: {
+            /** @description Replay of an earlier request with the same Idempotency-Key */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+        };
+    };
+    listAuditEvents: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventPageDto"];
                 };
             };
         };

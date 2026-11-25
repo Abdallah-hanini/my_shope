@@ -22,8 +22,11 @@ Phases follow docs/ROADMAP.md: 0 foundation · 1 identity/org/accounting · 2 ca
 | ARCH-12 | Pinned dependency versions and committed lockfile | ARCHITECTURE | 0 | Done | `save-exact`, `pnpm-lock.yaml` |
 | SEC-01 | No hardcoded secrets; env validated at startup without echoing values | CLAUDE, SECURITY_QA | 0 | Done (verified) | `packages/validation` tests; `.env.example` only |
 | SEC-02 | Security headers; no internals in error responses; log redaction of auth headers/cookies | SECURITY_QA | 0 | Done (verified) | helmet, ProblemDetailsFilter tests, pino redact |
-| SEC-03 | RBAC + company/branch scope at service and query layer | SECURITY_QA, CLAUDE | 1 | Not started | — |
-| SEC-04 | OIDC provider (PKCE on mobile, SecureStore tokens) | ARCHITECTURE, MOBILE | 1 | Blocked: provider decision | — |
+| SEC-03 | RBAC + company/branch scope at service and query layer | SECURITY_QA, CLAUDE | 1 | Done (verified) | `apps/api/src/authz/*`; 404 for foreign company, 403 for missing permission, branch-filtered queries; scope.test.ts + phase1 integration |
+| SEC-04 | OIDC provider (PKCE on mobile, SecureStore tokens) | ARCHITECTURE, MOBILE | 1 | API side done (provider-agnostic JWT/JWKS verification); provider choice D-03 and client sign-in pending | `apps/api/src/auth/*`; 7 auth integration tests |
+| SEC-05 | Audit trail: actor, scope, timestamp, reason, redacted before/after; append-only | SECURITY_QA, ADM-007 | 1 | Done (verified) | `platform.audit_event` + immutability trigger; audit.test.ts; integration |
+| SEC-06 | No privilege escalation when granting/revoking roles | SECURITY_QA | 1 | Done (verified) | `canDelegate`; integration escalation tests |
+| ARCH-13 | Transactional outbox (write side) | ARCHITECTURE | 1 | Write side done; relay P1-11 pending | `platform.outbox_event`, `enqueueOutbox` |
 | UX-01 | WCAG contrast and 44pt touch targets in shared tokens | CLAUDE, MOBILE | 0 | Done (verified) | `packages/design-tokens` contrast tests |
 | UX-02 | Responsive web (no horizontal scroll at phone width) | CLAUDE | 0 | Done for shell | smoke: 390px viewport en/ar |
 | RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Schema `reporting` created; rest not started | foundation migration |
@@ -98,14 +101,14 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | POS-010 | Receipts | 3 | Not started | — |
 | POS-011 | Delivery | 3 | Not started | — |
 | POS-012 | Commissions | 3 | Not started | — |
-| ACC-001 | Chart of accounts | 1 | Not started | — |
-| ACC-002 | Journals and GL | 1 | Not started | — |
+| ACC-001 | Chart of accounts | 1 | Done (API, verified) | Hierarchy, header vs posting, type consistency; no template (D-04); `accounting.account`; integration |
+| ACC-002 | Journals and GL | 1 | Done (API, verified) | Balanced, immutable, idempotent, gapless-numbered journals and reversal; DB-enforced; journal.service.ts + migration triggers; integration incl. concurrency |
 | ACC-003 | AR/AP | 1–3 | Not started | — |
 | ACC-004 | Cash and bank | 1–3 | Not started | — |
 | ACC-005 | Reconciliation | 3 | Not started | — |
 | ACC-006 | Expenses/petty cash | 3 | Not started | — |
 | ACC-007 | Fixed assets/depreciation | 6 | Not started | — |
-| ACC-008 | Periods | 1 | Not started | — |
+| ACC-008 | Periods | 1 | Done (API, verified) | Non-overlapping periods, close with optimistic lock + row lock; reopen blocked pending approvals; integration incl. lock test |
 | ACC-009 | Cost centers | 1 | Not started | — |
 | ACC-010 | Currency/tax | 1 (blocked: tax decision) | Not started | — |
 | ACC-011 | Budgets | 5 | Not started | — |
@@ -148,13 +151,13 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | QAS-006 | Equipment/tools | 6 | Not started | — |
 | QAS-007 | Preventive maintenance/calibration | 6 | Not started | — |
 | QAS-008 | Asset assignment | 6 | Not started | — |
-| ADM-001 | Company/branch configuration | 1 | Not started | — |
-| ADM-002 | RBAC and scopes | 1 | Not started | — |
+| ADM-001 | Company/branch configuration | 1 | Partial | Company and branch create/list with audit; update/deactivate pending; `apps/api/src/org/*`; integration |
+| ADM-002 | RBAC and scopes | 1 | Done (API, verified) | Roles, company/branch scoped assignments, permission guard; `apps/api/src/authz`, `iam`; integration |
 | ADM-003 | Approval matrix | 1 | Not started | — |
 | ADM-004 | Feature flags | 1 | Not started | — |
 | ADM-005 | Templates | 5 | Not started | — |
 | ADM-006 | Bilingual RTL | 0 → all | Partial (foundation) | `packages/localization` (en/ar catalogs, RTL), `[locale]` routing in web-erp, mobile locale toggle; tests: localization.test.ts, locale.test.ts, HomeScreen.test.tsx, smoke RTL checks |
-| ADM-007 | Audit | 1 | Not started | — |
+| ADM-007 | Audit | 1 | Done (API, verified) | Append-only audit with redaction, list API with branch filter; `platform.audit_event`; integration |
 | ADM-008 | Notification settings | 5 | Not started | — |
 | ADM-009 | Import/export | 5 | Not started | — |
 | ADM-010 | Global search | 2 | Not started | — |

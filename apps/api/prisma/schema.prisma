@@ -1,5 +1,6 @@
-// Prisma schema for the ERP. Domain tables arrive from Phase 1 onward; every migration's SQL is
-// reviewed before merge (constraints, indexes, locking). See docs/DATA.md.
+// Prisma schema for the ERP. Every migration's SQL is reviewed before merge (constraints, indexes,
+// locking). Triggers, check and exclusion constraints live in hand-written migration SQL; see
+// docs/ERD_PHASE1.md.
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,4 +8,304 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public", "platform", "iam", "org", "accounting"]
+}
+
+enum RecordStatus {
+  active
+  inactive
+
+  @@schema("platform")
+}
+
+// ───────────────────────────── org ─────────────────────────────
+
+model Company {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String
+  legalName    String       @map("legal_name")
+  legalNameAr  String?      @map("legal_name_ar")
+  baseCurrency String       @map("base_currency") @db.Char(3)
+  timezone     String
+  status       RecordStatus @default(active)
+  version      Int          @default(1)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branches        Branch[]
+  roles           Role[]
+  roleAssignments RoleAssignment[]
+  accounts        Account[]
+  fiscalPeriods   FiscalPeriod[]
+  journals        Journal[]
+  journalLines    JournalLine[]
+
+  @@map("company")
+  @@schema("org")
+}
+
+model Branch {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String       @map("company_id") @db.Uuid
+  code      String
+  name      String
+  nameAr    String?      @map("name_ar")
+  status    RecordStatus @default(active)
+  version   Int          @default(1)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  roleAssignments RoleAssignment[]
+  journals        Journal[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, id])
+  @@map("branch")
+  @@schema("org")
+}
+
+// ───────────────────────────── iam ─────────────────────────────
+
+model User {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  oidcIssuer      String       @map("oidc_issuer")
+  oidcSubject     String       @map("oidc_subject")
+  email           String
+  displayName     String       @map("display_name")
+  locale          String       @default("en")
+  isPlatformAdmin Boolean      @default(false) @map("is_platform_admin")
+  status          RecordStatus @default(active)
+  version         Int          @default(1)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  roleAssignments RoleAssignment[] @relation("assignee")
+
+  @@unique([oidcIssuer, oidcSubject])
+  @@map("user")
+  @@schema("iam")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  code        String
+  name        String
+  nameAr      String?  @map("name_ar")
+  permissions String[]
+  isSystem    Boolean  @default(false) @map("is_system")
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  assignments RoleAssignment[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, id])
+  @@map("role")
+  @@schema("iam")
+}
+
+model RoleAssignment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  /// null = every branch of the company
+  branchId  String?  @map("branch_id") @db.Uuid
+  grantedBy String?  @map("granted_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User    @relation("assignee", fields: [userId], references: [id], onDelete: Restrict)
+  role    Role    @relation(fields: [companyId, roleId], references: [companyId, id], onDelete: Restrict)
+  branch  Branch? @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  /// Created in SQL with NULLS NOT DISTINCT so a NULL branch (all branches) is unique too.
+  @@unique([userId, roleId, branchId], map: "role_assignment_unique")
+  @@index([userId, companyId])
+  @@map("role_assignment")
+  @@schema("iam")
+}
+
+// ─────────────────────────── platform ──────────────────────────
+
+model AuditEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  occurredAt  DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  requestId   String?  @map("request_id")
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  companyId   String?  @map("company_id") @db.Uuid
+  branchId    String?  @map("branch_id") @db.Uuid
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  reason      String?
+  before      Json?
+  after       Json?
+
+  @@index([companyId, occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([entityType, entityId])
+  @@map("audit_event")
+  @@schema("platform")
+}
+
+model OutboxEvent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String?   @map("company_id") @db.Uuid
+  aggregateType String    @map("aggregate_type")
+  aggregateId   String    @map("aggregate_id")
+  eventType     String    @map("event_type")
+  payload       Json
+  occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  availableAt   DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
+  attempts      Int       @default(0)
+  lastError     String?   @map("last_error")
+
+  @@index([publishedAt, availableAt])
+  @@map("outbox_event")
+  @@schema("platform")
+}
+
+model DocumentSequence {
+  companyId String @map("company_id") @db.Uuid
+  docType   String @map("doc_type")
+  series    String
+  nextValue BigInt @map("next_value")
+
+  @@id([companyId, docType, series])
+  @@map("document_sequence")
+  @@schema("platform")
+}
+
+// ────────────────────────── accounting ─────────────────────────
+
+enum AccountType {
+  asset
+  liability
+  equity
+  revenue
+  expense
+
+  @@schema("accounting")
+}
+
+enum PeriodStatus {
+  open
+  closed
+
+  @@schema("accounting")
+}
+
+enum JournalSource {
+  manual
+  reversal
+
+  @@schema("accounting")
+}
+
+model Account {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String       @map("company_id") @db.Uuid
+  code      String
+  name      String
+  nameAr    String?      @map("name_ar")
+  type      AccountType
+  parentId  String?      @map("parent_id") @db.Uuid
+  isPosting Boolean      @map("is_posting")
+  status    RecordStatus @default(active)
+  version   Int          @default(1)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  parent   Account?      @relation("hierarchy", fields: [companyId, parentId], references: [companyId, id], onDelete: Restrict)
+  children Account[]     @relation("hierarchy")
+  lines    JournalLine[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, id])
+  @@map("account")
+  @@schema("accounting")
+}
+
+model FiscalPeriod {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String       @map("company_id") @db.Uuid
+  name      String
+  startDate DateTime     @map("start_date") @db.Date
+  endDate   DateTime     @map("end_date") @db.Date
+  status    PeriodStatus @default(open)
+  closedAt  DateTime?    @map("closed_at") @db.Timestamptz(6)
+  closedBy  String?      @map("closed_by") @db.Uuid
+  version   Int          @default(1)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  journals Journal[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, name])
+  @@map("fiscal_period")
+  @@schema("accounting")
+}
+
+model Journal {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String        @map("company_id") @db.Uuid
+  branchId       String?       @map("branch_id") @db.Uuid
+  fiscalPeriodId String        @map("fiscal_period_id") @db.Uuid
+  number         String
+  postingDate    DateTime      @map("posting_date") @db.Date
+  description    String
+  currency       String        @db.Char(3)
+  totalDebit     Decimal       @map("total_debit") @db.Decimal(20, 6)
+  totalCredit    Decimal       @map("total_credit") @db.Decimal(20, 6)
+  sourceType     JournalSource @map("source_type")
+  sourceId       String?       @map("source_id")
+  reversalOfId   String?       @unique @map("reversal_of_id") @db.Uuid
+  idempotencyKey String        @map("idempotency_key")
+  requestHash    String        @map("request_hash")
+  postedBy       String        @map("posted_by") @db.Uuid
+  postedAt       DateTime      @default(now()) @map("posted_at") @db.Timestamptz(6)
+
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch     Branch?       @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  period     FiscalPeriod  @relation(fields: [companyId, fiscalPeriodId], references: [companyId, id], onDelete: Restrict)
+  reversalOf Journal?      @relation("reversal", fields: [companyId, reversalOfId], references: [companyId, id], onDelete: Restrict)
+  reversedBy Journal[]     @relation("reversal")
+  lines      JournalLine[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@unique([companyId, sourceType, sourceId])
+  @@index([companyId, postedAt(sort: Desc), id(sort: Desc)])
+  @@index([companyId, postingDate])
+  @@map("journal")
+  @@schema("accounting")
+}
+
+model JournalLine {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String  @map("company_id") @db.Uuid
+  journalId   String  @map("journal_id") @db.Uuid
+  lineNo      Int     @map("line_no")
+  accountId   String  @map("account_id") @db.Uuid
+  branchId    String? @map("branch_id") @db.Uuid
+  description String?
+  debit       Decimal @default(0) @db.Decimal(20, 6)
+  credit      Decimal @default(0) @db.Decimal(20, 6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  journal Journal @relation(fields: [companyId, journalId], references: [companyId, id], onDelete: Restrict)
+  account Account @relation(fields: [companyId, accountId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([journalId, lineNo])
+  @@index([companyId, accountId])
+  @@map("journal_line")
+  @@schema("accounting")
 }

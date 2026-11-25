@@ -1,15 +1,21 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import type { JWTVerifyGetKey } from 'jose';
 import { LoggerModule } from 'nestjs-pino';
+import { AccountingModule } from './accounting/accounting.module';
+import { AuthModule } from './auth/auth.module';
 import { API_ENV, type ApiEnv } from './config/env';
 import { HealthModule } from './health/health.module';
+import { IamModule } from './iam/iam.module';
 import { InfraModule } from './infra/infra.module';
+import { OrgModule } from './org/org.module';
+import { PlatformModule } from './platform/platform.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
 @Module({})
 export class AppModule {
-  static register(env: ApiEnv): DynamicModule {
+  static register(env: ApiEnv, opts: { keyResolver?: JWTVerifyGetKey } = {}): DynamicModule {
     return {
       module: AppModule,
       global: true,
@@ -32,7 +38,12 @@ export class AppModule {
           },
         }),
         InfraModule,
+        AuthModule.register(opts.keyResolver),
         HealthModule,
+        OrgModule,
+        IamModule,
+        AccountingModule,
+        PlatformModule,
       ],
       providers: [{ provide: API_ENV, useValue: env }],
       exports: [API_ENV],

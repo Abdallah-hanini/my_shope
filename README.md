@@ -2,10 +2,10 @@
 
 Workshop, parts retail/wholesale, inventory, accounting, HR and CRM for automotive businesses, with three mandatory clients: a Next.js web ERP, a customer mobile app and a separate manager mobile app.
 
-**Status: Phase 0 (foundation) only.** No business module is implemented yet. See [STATUS.md](STATUS.md).
+**Status:** Phase 0 is approved. Phase 1 is in progress: the API for identity, organization and accounting foundations is done, and the client screens come next. See [STATUS.md](STATUS.md).
 
 Read in this order: [CLAUDE.md](CLAUDE.md) (engineering charter) → [docs/BRD.md](docs/BRD.md) → [SRS](docs/SRS.md) → [ARCHITECTURE](docs/ARCHITECTURE.md) → [DATA](docs/DATA.md) → [ACCOUNTING](docs/ACCOUNTING.md) → [REPORTING](docs/REPORTING.md) → [MOBILE](docs/MOBILE.md) → [SECURITY_QA](docs/SECURITY_QA.md) → [ROADMAP](docs/ROADMAP.md).
-Planning: [Phase 0 plan](docs/PHASE0_PLAN.md) · [Traceability matrix](docs/TRACEABILITY.md) · [Decisions and open questions](docs/DECISIONS.md) · [Original master specification](docs/spec/MASTER_SPECIFICATION.md).
+Planning: [Phase 0 plan](docs/PHASE0_PLAN.md) · [Phase 1 plan](docs/PHASE1_PLAN.md) · [Phase 1 ERD](docs/ERD_PHASE1.md) · [Traceability matrix](docs/TRACEABILITY.md) · [Decisions and open questions](docs/DECISIONS.md) · [Original master specification](docs/spec/MASTER_SPECIFICATION.md).
 
 ## Layout
 
@@ -50,6 +50,19 @@ pnpm dev                        # api :4000, worker health :4100, web :3000, Exp
 - Health: `GET /api/v1/health/live`, `GET /api/v1/health/ready` (503 with a per-dependency report if anything is down)
 - Web: http://localhost:3000 (redirects to `/en` or `/ar` by `Accept-Language`)
 - Mobile: `pnpm --filter @erp/customer-mobile dev` (or `manager-mobile`), then open in Expo Go / a simulator. On a physical device set `EXPO_PUBLIC_API_URL` to your machine's LAN address and add that origin to `API_CORS_ORIGINS`.
+
+## Sign-in and first administrator
+
+The API is an OIDC resource server: it verifies bearer tokens from the provider set by `OIDC_ISSUER`, `OIDC_AUDIENCE` and `OIDC_JWKS_URL` (see `apps/api/.env.example`). Without them, every endpoint except health returns 401. Production refuses to start without them.
+
+Users are never created automatically. Provision the first platform administrator from their OIDC identity:
+
+```bash
+pnpm --filter @erp/api build
+pnpm --filter @erp/api iam:bootstrap-admin --issuer https://id.example.com/realms/erp --subject <sub> --email ops@example.com --name "Ops"
+```
+
+That administrator then creates users (`POST /api/v1/users`) and companies (`POST /api/v1/companies`, naming the company's first admin). Company admins manage branches, roles, role assignments (company-wide or per branch), the chart of accounts, fiscal periods and journals. The full contract is in `packages/contracts/openapi.json`, and at `/api/docs` outside production.
 
 ## Quality gate
 

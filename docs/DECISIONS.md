@@ -35,3 +35,11 @@ None of these block Phase 0. Each blocks the listed production features; work on
 | T-08 | Integration tests live in separate Jest configs and **fail** (never skip) without services | Charter forbids skipped tests | — |
 | T-09 | Customer app display name "Automotive Care", manager "Automotive Manager" | Placeholders | D-12 |
 | T-10 | Worker readiness depends only on the queue Redis for now | Worker has no DB work until the outbox relay (Phase 1) | Phase 1 adds DB check |
+| T-11 | `jose` 5.10 (not 6) for JWT verification | jose 6 is ESM-only; the API and Jest run as CommonJS | API moves to ESM |
+| T-12 | Sign-in accepts any OIDC provider through `OIDC_ISSUER` / `OIDC_AUDIENCE` / `OIDC_JWKS_URL`; users are provisioned explicitly (no auto-sign-up); permissions come only from the database, never from token claims | Keeps D-03 open without mock auth | D-03 decided |
+| T-13 | A company the caller has no role in answers 404, not 403 | Prevents probing company ids (IDOR) | — |
+| T-14 | Platform administrators can create companies and users and manage role assignments in any company, but they have no ledger access unless a role is assigned. They *can* assign a role to themselves; that is audited (break-glass) and not yet blocked | Least privilege by default, plus a recoverable operator account | D-11: require a second approver for platform-admin self-grants |
+| T-15 | Journals are stored only when posted (no drafts yet); manual posting needs `accounting.journal.post` and is not yet subject to maker-checker | Approval thresholds are D-11 | P1-12 |
+| T-16 | Money crosses the API as decimal strings; amounts with more decimals than the currency allows are rejected, not rounded | No float error and no silent rounding | D-07 for FX rounding rules |
+| T-17 | Journal numbers `JV-<year>-<000001>` are gapless per company and posting year (sequence row locked inside the posting transaction) | Common audit expectation; cost is serialized posting per company | Load tests show contention |
+| T-18 | Period reopen is blocked in the database until the approval workflow exists | Prevents silent changes to closed books | P1-12 |

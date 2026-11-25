@@ -65,6 +65,7 @@ describe('customer HomeScreen', () => {
     });
     fireEvent.press(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(ready).toHaveBeenCalledTimes(2));
+    expect(await screen.findByLabelText('API: Operational')).toBeTruthy();
   });
 
   it('switches to Arabic', async () => {
@@ -75,8 +76,10 @@ describe('customer HomeScreen', () => {
       checks: [],
     });
     renderScreen('en');
+    await screen.findByLabelText('API: Operational');
     fireEvent.press(screen.getByRole('button', { name: 'العربية' }));
     expect(screen.getByText('تطبيق العملاء')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'English' })).toBeTruthy();
+    expect(screen.getByLabelText('واجهة البرمجة: يعمل')).toBeTruthy();
   });
 });

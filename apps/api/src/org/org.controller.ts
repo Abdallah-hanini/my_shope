@@ -1,0 +1,86 @@
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  createBranchSchema,
+  createCompanySchema,
+  type CreateBranchInput,
+  type CreateCompanyInput,
+} from '@erp/validation';
+import {
+  CurrentPrincipal,
+  CurrentScope,
+  PlatformAdminOnly,
+  RequestId,
+  RequirePermission,
+} from '../auth/decorators';
+import type { CompanyScope, Principal } from '../auth/principal';
+import { ZodPipe } from '../common/zod.pipe';
+import { BranchDto, CompanyDto, CreateBranchDto, CreateCompanyDto } from './org.dto';
+import { OrgService } from './org.service';
+
+@ApiTags('organization')
+@ApiBearerAuth()
+@Controller({ path: 'companies' })
+export class OrgController {
+  constructor(private readonly org: OrgService) {}
+
+  @Post()
+  @PlatformAdminOnly()
+  @ApiOperation({
+    operationId: 'createCompany',
+    summary: 'Create a company with its administrator (platform admin)',
+  })
+  @ApiBody({ type: CreateCompanyDto })
+  @ApiCreatedResponse({ type: CompanyDto })
+  create(
+    @Body(new ZodPipe(createCompanySchema)) body: CreateCompanyInput,
+    @CurrentPrincipal() p: Principal,
+    @RequestId() requestId?: string,
+  ): Promise<CompanyDto> {
+    return this.org.createCompany(body, { actorUserId: p.userId, requestId });
+  }
+
+  @Get()
+  @ApiOperation({ operationId: 'listCompanies', summary: 'Companies where the caller holds a role' })
+  @ApiOkResponse({ type: [CompanyDto] })
+  list(@CurrentPrincipal() p: Principal): Promise<CompanyDto[]> {
+    return this.org.listCompaniesFor(p.userId, p.isPlatformAdmin);
+  }
+
+  @Get(':companyId')
+  @RequirePermission('org.company.read')
+  @ApiOperation({ operationId: 'getCompany' })
+  @ApiOkResponse({ type: CompanyDto })
+  get(@CurrentScope() scope: CompanyScope): Promise<CompanyDto> {
+    return this.org.getCompany(scope.companyId);
+  }
+
+  @Post(':companyId/branches')
+  @RequirePermission('org.branch.manage')
+  @ApiOperation({ operationId: 'createBranch' })
+  @ApiBody({ type: CreateBranchDto })
+  @ApiCreatedResponse({ type: BranchDto })
+  createBranch(
+    @CurrentScope() scope: CompanyScope,
+    @Body(new ZodPipe(createBranchSchema)) body: CreateBranchInput,
+    @CurrentPrincipal() p: Principal,
+    @RequestId() requestId?: string,
+  ): Promise<BranchDto> {
+    return this.org.createBranch(scope, body, { actorUserId: p.userId, requestId });
+  }
+
+  @Get(':companyId/branches')
+  @RequirePermission('org.branch.read')
+  @ApiOperation({ operationId: 'listBranches', summary: 'Branches visible in the caller scope' })
+  @ApiOkResponse({ type: [BranchDto] })
+  listBranches(@CurrentScope() scope: CompanyScope): Promise<BranchDto[]> {
+    return this.org.listBranches(scope);
+  }
+}

@@ -34,3 +34,36 @@ describe('toProblem (RFC 9457)', () => {
     expect(JSON.stringify(p)).not.toContain('secret_table');
   });
 });
+
+describe('toProblem (database errors)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Prisma } = require('@prisma/client');
+
+  it('maps unique violations to 409 without leaking column names', () => {
+    const err = new Prisma.PrismaClientKnownRequestError('Unique constraint failed on secret_col', {
+      code: 'P2002',
+      clientVersion: 'x',
+    });
+    const p = toProblem(err, '/a');
+    expect(p).toMatchObject({ status: 409, title: 'Conflict' });
+    expect(JSON.stringify(p)).not.toContain('secret_col');
+  });
+
+  it('surfaces only our own trigger messages as 422', () => {
+    const err = new Prisma.PrismaClientUnknownRequestError(
+      'Error occurred during query execution: db error: ERROR: ERP: journal JV-2026-000001 is not balanced (debit 10, credit 9)\nDETAIL: internal',
+      { clientVersion: 'x' },
+    );
+    expect(toProblem(err, '/a')).toMatchObject({
+      status: 422,
+      detail: 'journal JV-2026-000001 is not balanced (debit 10, credit 9)',
+    });
+  });
+
+  it('keeps other database errors generic', () => {
+    const err = new Prisma.PrismaClientUnknownRequestError('relation "x" does not exist', {
+      clientVersion: 'x',
+    });
+    expect(toProblem(err, '/a')).toMatchObject({ status: 500, title: 'Internal Server Error' });
+  });
+});

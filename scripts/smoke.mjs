@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Phase 0 smoke test: boots the built API, worker and web server against real local PostgreSQL/Redis,
+// Smoke test: boots the built API, worker and web server against real local PostgreSQL/Redis,
 // then checks health endpoints and renders the web shell in a real browser (Playwright/Chromium)
 // in English and Arabic at desktop and phone widths.
 //
@@ -29,6 +29,7 @@ const apiEnv = { ...loadEnvFile(join(root, 'apps/api/.env')), ...process.env };
 const ports = { api: 4000, worker: 4100, web: 3000 };
 const children = [];
 const results = [];
+const exited = new Set();
 
 function start(name, cwd, args, env) {
   const child = spawn(process.execPath, args, {
@@ -40,7 +41,10 @@ function start(name, cwd, args, env) {
   child.stdout.on('data', (d) => (log += d));
   child.stderr.on('data', (d) => (log += d));
   child.on('exit', (code) => {
-    if (code && !child.stopping) console.error(`[${name}] exited with ${code}\n${log.slice(-2000)}`);
+    if (!child.stopping) {
+      exited.add(name);
+      console.error(`[${name}] exited with ${code}\n${log.slice(-2000)}`);
+    }
   });
   children.push(child);
   return child;
@@ -50,6 +54,7 @@ async function waitFor(url, { status = 200, timeoutMs = 60000 } = {}) {
   const deadline = Date.now() + timeoutMs;
   let last;
   while (Date.now() < deadline) {
+    if (exited.size) throw new Error(`process exited early: ${[...exited].join(', ')}`);
     try {
       const res = await fetch(url, { redirect: 'manual' });
       if (res.status === status) return res;
@@ -80,6 +85,11 @@ function assert(cond, msg) {
 async function main() {
   start('api', 'apps/api', ['dist/main.js'], {
     ...apiEnv,
+    // Production mode requires OIDC settings. The .invalid host is never contacted: the smoke test
+    // only calls public endpoints and an unauthenticated request, which is rejected before key lookup.
+    OIDC_ISSUER: 'https://issuer.smoke.invalid/realms/erp',
+    OIDC_AUDIENCE: 'erp-api',
+    OIDC_JWKS_URL: 'https://issuer.smoke.invalid/realms/erp/certs',
     API_PORT: String(ports.api),
     LOG_LEVEL: 'warn',
     NODE_ENV: 'production',
@@ -98,7 +108,7 @@ async function main() {
   const api = `http://localhost:${ports.api}/api/v1`;
   const web = `http://localhost:${ports.web}`;
 
-  console.log('Phase 0 smoke test');
+  console.log('Smoke test');
   await check('API liveness 200', async () => {
     const body = await (await waitFor(`${api}/health/live`)).json();
     assert(body.status === 'up', `unexpected body ${JSON.stringify(body)}`);
@@ -114,6 +124,12 @@ async function main() {
   await check('API docs disabled in production mode', async () => {
     const res = await fetch(`${api.replace('/v1', '')}/docs`);
     assert(res.status === 404, `expected 404, got ${res.status}`);
+  });
+  await check('Protected endpoint without a token answers 401 problem+json', async () => {
+    const res = await fetch(`${api}/me`);
+    assert(res.status === 401, `expected 401, got ${res.status}`);
+    assert(res.headers.get('www-authenticate') === 'Bearer', 'missing WWW-Authenticate');
+    assert(res.headers.get('content-type')?.includes('application/problem+json'), 'not problem+json');
   });
   await check('Worker liveness and readiness (heartbeat processed)', async () => {
     await waitFor(`http://localhost:${ports.worker}/health/live`);
