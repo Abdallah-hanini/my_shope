@@ -1,0 +1,28 @@
+{
+  "name": "@erp/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed HTTP client generated from @erp/contracts, with RFC 9457 problem handling.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@erp/contracts": "workspace:*",
+    "openapi-fetch": "0.17.0"
+  },
+  "devDependencies": {
+    "@erp/config": "workspace:*",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.20.7",
+    "jest": "29.7.0",
+    "ts-jest": "29.4.15"
+  }
+}

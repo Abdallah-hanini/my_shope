@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Automotive Care",
+    "slug": "erp-customer",
+    "scheme": "erpcustomer",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.example.erp.customer",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.example.erp.customer"
+    },
+    "plugins": ["expo-router", ["expo-localization", { "supportsRTL": true }], "expo-secure-store"],
+    "experiments": { "typedRoutes": false },
+    "extra": {
+      "appRole": "customer"
+    }
+  }
+}

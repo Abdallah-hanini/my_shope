@@ -1,0 +1,31 @@
+{
+  "name": "automotive-erp",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12 <23",
+    "pnpm": ">=10.28 <11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:smoke": "node scripts/smoke.mjs",
+    "db:up": "docker compose up -d --wait postgres redis-cache redis-queue",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @erp/api prisma:migrate:deploy",
+    "db:migrate:check": "pnpm --filter @erp/api prisma:migrate:check",
+    "contracts:generate": "pnpm --filter @erp/api openapi:generate && pnpm --filter @erp/contracts generate",
+    "contracts:check": "pnpm contracts:generate && git diff --exit-code -- packages/contracts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "prettier": "3.6.2",
+    "turbo": "2.11.13",
+    "typescript": "5.9.3"
+  }
+}

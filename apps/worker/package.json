@@ -1,0 +1,28 @@
+{
+  "name": "@erp/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Background worker (BullMQ). Outbox relay, report refresh and notifications land here in later phases.",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "jest",
+    "test:integration": "jest -c jest.integration.config.cjs --runInBand",
+    "start": "node dist/main.js",
+    "dev": "tsc -p tsconfig.build.json && node --watch dist/main.js"
+  },
+  "dependencies": {
+    "@erp/validation": "workspace:*",
+    "bullmq": "5.81.6",
+    "ioredis": "5.11.1",
+    "pino": "10.4.0"
+  },
+  "devDependencies": {
+    "@erp/config": "workspace:*",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.20.7",
+    "jest": "29.7.0",
+    "ts-jest": "29.4.15"
+  }
+}

@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 10 blocks dependency lifecycle scripts unless they are listed here.
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver
+  - msgpackr-extract
+
+# Telemetry-only install script; intentionally not run.
+ignoredBuiltDependencies:
+  - '@scarf/scarf'

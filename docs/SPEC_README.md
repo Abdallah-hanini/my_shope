@@ -1,0 +1,2 @@
+# Automotive ERP starter specification
+This is a greenfield specification pack, not runnable application code. Extract into a new project directory, start Claude Code there, and paste START.md. Read CLAUDE.md and docs in order: BRD, SRS, ARCHITECTURE, DATA, ACCOUNTING, REPORTING, MOBILE, SECURITY_QA, ROADMAP. All targets are proposals until validated. Both mobile apps are required in the full release.

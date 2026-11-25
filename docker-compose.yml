@@ -1,0 +1,43 @@
+# Local development infrastructure only (docs/ARCHITECTURE.md). Not a production topology.
+name: automotive-erp
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_local_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-erp}
+    ports: ['127.0.0.1:${POSTGRES_PORT:-5432}:5432']
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Evictable cache. Never authoritative (CLAUDE.md).
+  redis-cache:
+    image: redis:7-alpine
+    command: ['redis-server', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru', '--save', '']
+    ports: ['127.0.0.1:${REDIS_CACHE_PORT:-6379}:6379']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # BullMQ queue store: separate from the cache, never evicts, AOF persistence.
+  redis-queue:
+    image: redis:7-alpine
+    command: ['redis-server', '--maxmemory-policy', 'noeviction', '--appendonly', 'yes']
+    ports: ['127.0.0.1:${REDIS_QUEUE_PORT:-6380}:6379']
+    volumes: [redisqueue:/data]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+  redisqueue:

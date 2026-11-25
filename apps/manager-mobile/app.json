@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Automotive Manager",
+    "slug": "erp-manager",
+    "scheme": "erpmanager",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.example.erp.manager",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.example.erp.manager"
+    },
+    "plugins": ["expo-router", ["expo-localization", { "supportsRTL": true }], "expo-secure-store"],
+    "experiments": { "typedRoutes": false },
+    "extra": {
+      "appRole": "manager"
+    }
+  }
+}
