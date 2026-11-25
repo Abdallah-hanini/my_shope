@@ -55,11 +55,26 @@ export const apiEnvSchema = z
         message: 'OIDC settings are required in production',
       });
     }
-    if (env.NODE_ENV === 'production' && env.OIDC_JWKS_URL && !env.OIDC_JWKS_URL.startsWith('https://')) {
-      ctx.addIssue({ code: 'custom', path: ['OIDC_JWKS_URL'], message: 'must use https in production' });
+    if (env.NODE_ENV === 'production' && env.OIDC_JWKS_URL && !isSecureJwksUrl(env.OIDC_JWKS_URL)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_JWKS_URL'],
+        message:
+          'must use https in production (plain http is allowed only for an internal service name such as http://keycloak:8080)',
+      });
     }
   });
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
+
+/**
+ * https anywhere, or http to a single-label host (a Docker service name on the private network,
+ * e.g. http://keycloak:8080). Public and LAN hostnames or IP addresses must use https.
+ */
+export function isSecureJwksUrl(raw: string): boolean {
+  const url = new URL(raw);
+  if (url.protocol === 'https:') return true;
+  return url.protocol === 'http:' && /^[a-z][a-z0-9-]*$/i.test(url.hostname) && url.hostname !== 'localhost';
+}
 
 export const workerEnvSchema = z.object({
   NODE_ENV: nodeEnv,

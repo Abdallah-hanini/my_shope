@@ -12,3 +12,7 @@ next-env.d.ts
 ios/
 android/
 web-build/
+
+# Shop server secrets and local backups
+deploy/.env
+deploy/backups/

@@ -12,6 +12,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals, static files and the web liveness endpoint.
-  matcher: ['/((?!_next|healthz|favicon.ico|.*\\..*).*)'],
+  // Skip Next internals, static files, the web liveness endpoint and /session/* (OIDC sign-in
+  // callbacks, which must keep the exact redirect URI registered in Keycloak).
+  matcher: ['/((?!_next|healthz|session|favicon.ico|.*\\..*).*)'],
 };

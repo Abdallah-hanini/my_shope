@@ -8,7 +8,7 @@ None of these block Phase 0. Each blocks the listed production features; work on
 |---|---|---|---|
 | D-01 | ~~Jurisdiction(s) of operation and data residency~~ **Decided 2026-11-25: on-premises. All data stays on the shop's Windows PC.** Country/tax jurisdiction still to confirm | Hosting region, tax, payroll law, privacy/consent rules | Phase 1 |
 | D-02 | ~~Legal entity structure~~ **Decided 2026-11-25: one company, one branch (one shop).** The model still supports more if the business grows; no intercompany work planned | Company/branch model, consolidation, ACC-017 | Phase 1 |
-| D-03 | Identity provider (OIDC). **Proposed: Keycloak running locally on the shop PC.** Awaiting owner confirmation | Login on all 3 clients, MFA, step-up auth | Phase 1 |
+| D-03 | ~~Identity provider~~ **Decided 2026-11-25: Keycloak 26, self-hosted on the shop PC** (realm `erp`, TOTP required for administrators) | Login on all 3 clients, MFA, step-up auth | Phase 1 |
 | D-04 | Chart of accounts template and posting matrix sign-off by the accountant | ACC-001/002, every posting in docs/ACCOUNTING.md | Phase 1 |
 | D-05 | Tax regime and rates (VAT applicability, effective dates) | ACC-010, invoices, POS | Phase 1–3 |
 | D-06 | Inventory costing method: FIFO or weighted average, per company or per product | INV-010, COGS, stock valuation | Phase 2 |
@@ -29,15 +29,14 @@ None of these block Phase 0. Each blocks the listed production features; work on
 
 ### Consequences to implement
 
-| # | Item | Notes |
-|---|---|---|
-| L-01 | Production Docker Compose for Windows (Docker Desktop + WSL 2): PostgreSQL, Redis ×2, API, worker, web, Keycloak, reverse proxy; auto-start on boot | Bound to the shop LAN, not the internet |
-| L-02 | **Automated database backups** to a second disk or USB drive on a schedule, with retention and a documented, tested restore | One PC means one point of failure; this replaces the cloud PITR assumption (RPO/RTO to be agreed) |
-| L-03 | HTTPS on the LAN (local certificate authority trusted by staff devices) | Mobile platforms block plain HTTP by default; tokens must not cross Wi-Fi unencrypted |
-| L-04 | Keycloak realm for staff, with MFA for administrators (once D-03 is confirmed) | Unblocks P1-10 screens |
-| L-05 | Windows install/upgrade/restore guide for a non-developer | Plus UPS (power backup) recommendation |
-| L-06 | Manager app distributed internally (Android APK or TestFlight/ad hoc) rather than public store listing | Revisits D-12 |
-
+| # | Item | Notes | Status |
+|---|---|---|---|
+| L-01 | Production Docker Compose for Windows (Docker Desktop + WSL 2): PostgreSQL, Redis ×2, API, worker, web, Keycloak, reverse proxy; auto-start on boot | Bound to the shop LAN, not the internet | Done (verified): `deploy/docker-compose.prod.yml`, `deploy/Dockerfile`, Windows scripts in `deploy/windows/` |
+| L-02 | **Automated database backups** to a second disk or USB drive on a schedule, with retention and a documented, tested restore | One PC means one point of failure; this replaces the cloud PITR assumption (RPO/RTO to be agreed) | Done (verified): `deploy/backup/backup.sh` (every 6 h, checksums, retention, failure flag, health), `restore.sh`, `verify` restore check |
+| L-03 | HTTPS on the LAN (local certificate authority trusted by staff devices) | Mobile platforms block plain HTTP by default; tokens must not cross Wi-Fi unencrypted | Done (verified): Caddy `local_certs` CA; `export-ca.ps1` |
+| L-04 | Keycloak realm for staff, with MFA for administrators (once D-03 is confirmed) | Unblocks P1-10 screens | Done (verified): `deploy/keycloak/realm-erp.json`, `add-admin.ps1` (password change + TOTP enrolment forced) |
+| L-05 | Windows install/upgrade/restore guide for a non-developer | Plus UPS (power backup) recommendation | Done: `docs/DEPLOY_WINDOWS.md` (not yet tried on a real Windows PC) |
+| L-06 | Manager app distributed internally (Android APK or TestFlight/ad hoc) rather than public store listing | Revisits D-12 | Open: needs the manager app sign-in (next change) |
 ## Technical decisions taken in Phase 0 (reversible)
 
 | # | Decision | Why | Revisit when |
@@ -60,3 +59,7 @@ None of these block Phase 0. Each blocks the listed production features; work on
 | T-16 | Money crosses the API as decimal strings; amounts with more decimals than the currency allows are rejected, not rounded | No float error and no silent rounding | D-07 for FX rounding rules |
 | T-17 | Journal numbers `JV-<year>-<000001>` are gapless per company and posting year (sequence row locked inside the posting transaction) | Common audit expectation; cost is serialized posting per company | Load tests show contention |
 | T-18 | Period reopen is blocked in the database until the approval workflow exists | Prevents silent changes to closed books | P1-12 |
+| T-19 | Shop-server image built on the PC from `node:22-bookworm` (full image, ~3.4 GB including build tooling) | Includes the openssl binary Prisma needs, so the build needs no Debian package download | Slim runtime stage with pruned dependencies once stable |
+| T-20 | Caddy terminates HTTPS with its own local CA; Keycloak and the API run behind it on the private Docker network; the API reads Keycloak signing keys over internal `http://keycloak:8080` | Nothing but port 443 is published; plain http is allowed only for single-label internal hosts (validated) | — |
+| T-21 | Keycloak admin console is reachable on the LAN at `/auth/admin` (protected by the admin password); Docker Desktop NAT hides client IPs, so IP allow-listing would not work | Usable from the shop PC | Restrict further if the network grows |
+| T-22 | `.gitattributes` forces LF for everything except PowerShell scripts | Git for Windows would otherwise convert shell scripts used inside containers to CRLF | — |

@@ -76,6 +76,19 @@ describe('OIDC settings', () => {
     );
   });
 
+  it.each([
+    ['http://keycloak:8080/auth/realms/erp/protocol/openid-connect/certs', true],
+    ['https://192.168.1.50/auth/realms/erp/protocol/openid-connect/certs', true],
+    ['http://192.168.1.50/certs', false],
+    ['http://erp.shop.lan/certs', false],
+    ['http://localhost:8080/certs', false],
+  ])('production JWKS URL %s allowed=%s', (url, ok) => {
+    const run = () =>
+      parseEnv(apiEnvSchema, { ...valid, ...oidc, OIDC_JWKS_URL: url, NODE_ENV: 'production' });
+    if (ok) expect(run).not.toThrow();
+    else expect(run).toThrow(/https/);
+  });
+
   it('require https JWKS in production', () => {
     expect(() =>
       parseEnv(apiEnvSchema, {

@@ -1,0 +1,35 @@
+# HTTPS for the shop LAN with Caddy's own local certificate authority. Staff devices trust the
+# exported root certificate once (deploy/windows/export-ca.ps1).
+{
+	local_certs
+	skip_install_trust
+	admin off
+}
+
+https://{$ERP_SITE_HOST} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	# Keycloak (sign-in). The admin console is reachable on the LAN; it is protected by the
+	# Keycloak administrator password and should be used from the shop PC itself.
+	handle /auth/* {
+		reverse_proxy keycloak:8080
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

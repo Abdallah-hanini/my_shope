@@ -20,12 +20,15 @@
     "contracts:generate": "pnpm --filter @erp/api openapi:generate && pnpm --filter @erp/contracts generate",
     "contracts:check": "pnpm contracts:generate && git diff --exit-code -- packages/contracts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "deploy:verify": "node deploy/scripts/verify-deployment.mjs",
+    "auth:up": "docker compose up -d --wait keycloak"
   },
   "devDependencies": {
     "playwright": "1.63.0",
     "prettier": "3.6.2",
     "turbo": "2.11.13",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "undici": "6.29.1"
   }
 }

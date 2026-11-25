@@ -1,0 +1,9 @@
+# Files used inside Linux containers must keep LF line endings even when cloned on Windows
+# (Git for Windows defaults to core.autocrlf=true, which would break shell scripts with CRLF).
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.dump binary

@@ -1,0 +1,217 @@
+# Production stack for the shop's Windows PC (Docker Desktop + WSL 2). See docs/DEPLOY_WINDOWS.md.
+# Only Caddy publishes ports; everything else stays on the private Docker network.
+name: my-shop
+
+x-app: &app
+  image: my-shop/erp:local
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+  restart: unless-stopped
+  logging:
+    driver: local
+    options: { max-size: 20m, max-file: '5' }
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: erp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in deploy/.env}
+      POSTGRES_DB: erp
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set in deploy/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U erp -d erp']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    logging: { driver: local }
+
+  redis-cache:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru', '--save', '']
+    healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: 10s, timeout: 3s, retries: 30 }
+
+  redis-queue:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--maxmemory-policy', 'noeviction', '--appendonly', 'yes']
+    volumes: [redisqueue:/data]
+    healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: 10s, timeout: 3s, retries: 30 }
+
+  keycloak:
+    image: keycloak/keycloak:26.4.7
+    restart: unless-stopped
+    command: ['start', '--import-realm']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HOSTNAME: ${ERP_PUBLIC_URL:?set in deploy/.env}/auth
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HTTP_ENABLED: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
+      KC_HEALTH_ENABLED: 'true'
+      # Temporary master-realm admin used only to create the first shop users (see bootstrap-admin).
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?set in deploy/.env}
+      # Placeholders in the realm file.
+      ERP_PUBLIC_URL: ${ERP_PUBLIC_URL}
+      ERP_WEB_CLIENT_SECRET: ${ERP_WEB_CLIENT_SECRET:?set in deploy/.env}
+    volumes:
+      - ./keycloak/realm-erp.json:/opt/keycloak/data/import/realm-erp.json:ro
+      - ./scripts:/erp-scripts:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      # The image has no curl; use bash's /dev/tcp against the management port.
+      test:
+        [
+          'CMD-SHELL',
+          "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /auth/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+    logging: { driver: local }
+
+  migrate:
+    <<: *app
+    restart: 'no'
+    command:
+      [
+        'node',
+        'node_modules/prisma/build/index.js',
+        'migrate',
+        'deploy',
+        '--schema',
+        'apps/api/prisma/schema.prisma',
+      ]
+    environment:
+      DATABASE_URL: postgresql://erp:${POSTGRES_PASSWORD}@postgres:5432/erp?schema=public
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    <<: *app
+    command: ['node', 'apps/api/dist/main.js']
+    environment:
+      NODE_ENV: production
+      API_PORT: '4000'
+      API_CORS_ORIGINS: ${ERP_PUBLIC_URL}
+      DATABASE_URL: postgresql://erp:${POSTGRES_PASSWORD}@postgres:5432/erp?schema=public
+      REDIS_CACHE_URL: redis://redis-cache:6379
+      REDIS_QUEUE_URL: redis://redis-queue:6379
+      OIDC_ISSUER: ${ERP_PUBLIC_URL}/auth/realms/erp
+      OIDC_AUDIENCE: erp-api
+      # Internal network: the API reads signing keys straight from Keycloak.
+      OIDC_JWKS_URL: http://keycloak:8080/auth/realms/erp/protocol/openid-connect/certs
+      LOG_LEVEL: info
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis-cache: { condition: service_healthy }
+      redis-queue: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/v1/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    <<: *app
+    command: ['node', 'apps/worker/dist/main.js']
+    environment:
+      NODE_ENV: production
+      WORKER_HEALTH_PORT: '4100'
+      REDIS_QUEUE_URL: redis://redis-queue:6379
+      LOG_LEVEL: info
+    depends_on:
+      redis-queue: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4100/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  web:
+    <<: *app
+    working_dir: /repo/apps/web-erp
+    command: ['node', '../../node_modules/next/dist/bin/next', 'start', '--port', '3000']
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:4000
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - '${ERP_HTTPS_PORT:-443}:443'
+    environment:
+      ERP_SITE_HOST: ${ERP_SITE_HOST:?set in deploy/.env}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      web: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    entrypoint: ['/bin/sh', '/erp-backup/backup.sh', 'loop']
+    environment:
+      PGHOST: postgres
+      PGUSER: erp
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-6}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ./backup:/erp-backup:ro
+      - ${ERP_BACKUP_DIR:?set in deploy/.env}:/backups
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD', '/bin/sh', '/erp-backup/backup.sh', 'health']
+      interval: 5m
+      timeout: 30s
+      retries: 1
+      start_period: 15m
+
+volumes:
+  pgdata:
+  redisqueue:
+  caddydata:
+  caddyconfig:

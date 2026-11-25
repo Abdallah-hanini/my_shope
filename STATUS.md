@@ -6,7 +6,83 @@
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
 | 1 Identity/org/accounting | **In progress.** The API slice (P1-01 to P1-09) is implemented and verified locally. Still to do: client screens (P1-10), outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
+| Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
+
+## 2026-11-25: Shop server for the Windows PC (Keycloak, HTTPS, backups)
+
+**Owner decision:** Keycloak approved for staff sign-in (D-03).
+**Items:** L-01 to L-05 (docs/DECISIONS.md), SEC-04 (provider side). Guide: [docs/DEPLOY_WINDOWS.md](docs/DEPLOY_WINDOWS.md).
+
+### Changes
+
+- `deploy/docker-compose.prod.yml`: PostgreSQL 16, cache and queue Redis, Keycloak 26.4.7 (its own DB and role), a one-shot migration job, API, worker, web, Caddy and a backup service.
+  - Only Caddy publishes a port (443). Restart policy is `unless-stopped`, every service has a health check, and logs are size-limited.
+- `deploy/Dockerfile`: one image for API, worker, web and migrations. An optional BuildKit secret lets it build behind a TLS-inspecting proxy; the certificate is never stored in the image.
+- `deploy/keycloak/realm-erp.json`: the realm definition, used by dev and prod.
+  - Clients: `erp-web` (confidential) and `erp-manager-mobile` (public). Both use authorization code + PKCE S256, have direct password grants disabled, and carry an `erp-api` audience mapper.
+  - Brute-force lockout, 12-character password policy, 5-minute access tokens, login event logging.
+  - The public URL and client secret are injected from the environment.
+- `deploy/caddy/Caddyfile`: HTTPS with Caddy's local CA, HSTS. Routes `/api/*` to the API, `/auth/*` to Keycloak, and everything else to web.
+- `deploy/backup/backup.sh`:
+  - Scheduled `pg_dump` of both databases, each checked with `pg_restore --list`, with a SHA-256 file.
+  - Retention: 30 days, but at least 14 dumps kept per database.
+  - `LAST_SUCCESS` / `LAST_FAILURE` markers drive the health check.
+  - `verify` restores the newest dump into a scratch database and checks that the ledger balances per company.
+  - `restore.sh` replaces a live database after a checksum check.
+- `deploy/scripts/bootstrap-admin.sh`: creates a Keycloak user with a one-time temporary password and forced password change plus authenticator enrolment.
+- `deploy/windows/*.ps1` and the `ErpShop.psm1` module: install, add-admin, export-ca, status, start, stop, backup-now, verify-backup, restore (typed confirmation and a safety backup first), upgrade (backs up first).
+- `deploy/scripts/verify-deployment.mjs` (`pnpm deploy:verify`): an end-to-end check of a running server, also added to CI as job `deploy-verify`.
+- Dev: Keycloak added to `docker-compose.yml` (`pnpm auth:up`) with the same realm. `apps/api/.env.example` now points at it.
+- API: in production, the JWKS URL may use plain http only for an internal single-label host such as `keycloak`, never for a LAN or public address (5 new validation tests).
+- Web: middleware no longer language-prefixes `/session/*`, so the OIDC callback URL stays exactly as registered.
+- `.gitattributes`: LF line endings for files used in containers, so Windows clones don't break shell scripts.
+
+### Bugs found while verifying
+
+- **Backup failure was silent.** With the database stopped, `backup.sh once` reported `backup ok` for a 0-byte dump and health stayed green, because `set -e` is ignored inside a function called with `||`. Every step now checks its own exit status, and dumps under 1 KB are rejected. Re-tested: exit 1, `LAST_FAILURE.txt` written, health unhealthy, no partial files. The next good backup clears it.
+- **The OIDC callback was rewritten to `/en/session/callback`** by the language middleware. Fixed as described above.
+- **Prisma could not detect OpenSSL** in the slim image. Switched to the full `node:22-bookworm` image (T-19).
+- Verification-script bugs fixed along the way: the TOTP secret is read from the manual-entry key, and Keycloak's order of required actions is handled.
+
+### Commands run and results (2026-11-25; Linux container with Docker 29.9.3, images pulled via `mirror.gcr.io` because Docker Hub rate-limited and quay.io is blocked here)
+
+| Command | Result |
+|---|---|
+| `docker build -f deploy/Dockerfile` | ✅ about 2.5 min; image 3.44 GB; `openssl version` and Prisma client load inside it |
+| `docker compose -f deploy/docker-compose.prod.yml up -d --wait` | ✅ 9 services healthy, migration job exited 0 |
+| `node deploy/scripts/verify-deployment.mjs` | ✅ 13/13 (details below) |
+| Restore drill using the same steps as `restore.ps1` | ✅ backup taken, row added, safety backup, stop, restore of both DBs, start: the added row was gone, all services healthy, 13/13 again |
+| Backup failure drill (database stopped) | ✅ after the fix: exit 1, `LAST_FAILURE.txt` written, health exit 1, no partial or empty dumps |
+| `docker compose down`, then `up` (simulated reboot) | ✅ users and audit rows unchanged, HTTPS root CA unchanged, 13/13 |
+| PowerShell (pwsh 7.4 container): parse all 12 scripts, then `deploy/windows/tests/ErpShop.Tests.ps1` | ✅ all parse; 9/9 helper checks |
+| Dev `pnpm auth:up` and `bootstrap-admin.sh` | ✅ realm imported, issuer `http://localhost:8080/realms/erp`, user created |
+
+The 13 deployment checks:
+1. HTTPS certificate chains to the exported shop root CA.
+2. API readiness through the proxy.
+3. Discovery returns the public issuer.
+4. A request without a token gets 401.
+5. Direct password grant is refused.
+6. A Keycloak user is created needing a password change and TOTP.
+7. That user is provisioned as ERP platform admin.
+8. Browser sign-in completes both required actions; the TOTP code is computed by the script.
+9. A second sign-in uses the SSO session without prompting.
+10. A wrong PKCE verifier is rejected (`invalid_grant`).
+11. The right verifier gives a token with `iss` = public issuer, `aud` ∋ `erp-api` and `sub` = Keycloak id.
+12. The API accepts the token, and `/me` shows a platform admin.
+13. A backup is taken and verified by restoring it.
+
+### Not verified
+
+- **Not yet run on the real Windows PC.** The PowerShell scripts were parsed and their pure helpers tested under pwsh on Linux; the commands that call Docker were exercised through the same compose commands on Linux. Still untested on Windows: Docker Desktop on Windows, Windows backup-folder paths, `Import-Certificate`, and the guide itself.
+- Installing the CA on real staff phones (Android and iOS), and auto-start after a real Windows reboot.
+- The `deploy-verify` CI job has not run on GitHub (Actions availability is unknown).
+- Image size (3.4 GB) is not optimized (T-19).
+
+### Next task
+
+P1-10: web ERP sign-in (`/session/*` with the `erp-web` client, server-side session) and screens for companies, chart of accounts, periods, journals and the audit trail. Then manager app sign-in with `erp-manager-mobile` (L-06).
 
 ## 2026-11-25: Moved to its own repository
 

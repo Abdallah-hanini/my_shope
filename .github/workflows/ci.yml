@@ -73,3 +73,42 @@ jobs:
           sed -i "s/erp_local_dev_only/erp_ci_only/" apps/api/.env
           pnpm exec playwright install --with-deps chromium
           pnpm test:smoke
+
+  # Builds the shop-server image and runs the full production stack (Caddy HTTPS, Keycloak, API,
+  # worker, web, backups), then signs in through Keycloak in a browser and checks backup/restore.
+  deploy-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Test settings with random secrets
+        run: |
+          mkdir -p "$RUNNER_TEMP/erp-backups" && chmod 777 "$RUNNER_TEMP/erp-backups"
+          r() { head -c 32 /dev/urandom | base64 | tr '+/' 'xy' | tr -d '='; }
+          {
+            echo "ERP_SITE_HOST=localhost"
+            echo "ERP_HTTPS_PORT=8443"
+            echo "ERP_PUBLIC_URL=https://localhost:8443"
+            echo "ERP_BACKUP_DIR=$RUNNER_TEMP/erp-backups"
+            echo "POSTGRES_PASSWORD=$(r)"
+            echo "KEYCLOAK_DB_PASSWORD=$(r)"
+            echo "KC_BOOTSTRAP_ADMIN_PASSWORD=$(r)"
+            echo "ERP_WEB_CLIENT_SECRET=$(r)"
+          } > deploy/.env
+      - name: Build and start the production stack
+        run: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build --wait --wait-timeout 900
+      - name: Verify sign-in, API and backups end to end
+        run: node deploy/scripts/verify-deployment.mjs --env-file deploy/.env
+      - name: Service logs
+        if: failure()
+        run: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env logs --no-color --tail 200

@@ -51,6 +51,12 @@ pnpm dev                        # api :4000, worker health :4100, web :3000, Exp
 - Web: http://localhost:3000 (redirects to `/en` or `/ar` by `Accept-Language`)
 - Mobile: `pnpm --filter @erp/customer-mobile dev` (or `manager-mobile`), then open in Expo Go / a simulator. On a physical device set `EXPO_PUBLIC_API_URL` to your machine's LAN address and add that origin to `API_CORS_ORIGINS`.
 
+## Shop server (Windows PC)
+
+Production runs on one Windows PC in the shop with Docker Desktop: HTTPS on the shop Wi-Fi, a local Keycloak for sign-in, and automatic backups. The owner's step-by-step guide is [docs/DEPLOY_WINDOWS.md](docs/DEPLOY_WINDOWS.md). Files are in `deploy/`. `pnpm deploy:verify --env-file <file>` checks a running server end to end.
+
+For local development, `pnpm auth:up` starts Keycloak at http://localhost:8080 with the same `erp` realm.
+
 ## Sign-in and first administrator
 
 The API is an OIDC resource server: it verifies bearer tokens from the provider set by `OIDC_ISSUER`, `OIDC_AUDIENCE` and `OIDC_JWKS_URL` (see `apps/api/.env.example`). Without them, every endpoint except health returns 401. Production refuses to start without them.
