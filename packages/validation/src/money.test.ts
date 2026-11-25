@@ -75,3 +75,36 @@ describe('request schemas', () => {
     ).toBe(false);
   });
 });
+
+describe('minor units', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { toMinorUnits, formatMinorUnits } = require('./money') as typeof import('./money');
+
+  it.each([
+    ['0', 2, 0n],
+    ['125.5', 2, 12550n],
+    ['125.50', 2, 12550n],
+    ['0.10', 2, 10n],
+    ['1.125', 3, 1125n],
+    ['99999999999999.990000', 2, 9999999999999999n],
+    ['7', 0, 7n],
+  ])('%s at scale %d → %s', (v, scale, expected) => {
+    expect(toMinorUnits(v as string, scale as number)).toBe(expected);
+  });
+
+  it('adds without float error (0.1 + 0.2 = 0.30)', () => {
+    expect(formatMinorUnits(toMinorUnits('0.1', 2) + toMinorUnits('0.2', 2), 2)).toBe('0.30');
+  });
+
+  it('rejects significant digits beyond the scale and malformed input', () => {
+    expect(() => toMinorUnits('1.005', 2)).toThrow(/more than 2/);
+    expect(() => toMinorUnits('-1', 2)).toThrow(/invalid/);
+    expect(() => toMinorUnits('1e3', 2)).toThrow(/invalid/);
+  });
+
+  it('formats negatives and zero scale', () => {
+    expect(formatMinorUnits(-1250n, 2)).toBe('-12.50');
+    expect(formatMinorUnits(5n, 0)).toBe('5');
+    expect(formatMinorUnits(5n, 3)).toBe('0.005');
+  });
+});

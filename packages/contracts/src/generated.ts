@@ -687,7 +687,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -706,7 +708,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -725,7 +729,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -790,7 +796,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -809,7 +817,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -832,7 +842,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -851,7 +863,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -876,6 +890,7 @@ export interface operations {
             header?: never;
             path: {
                 assignmentId: string;
+                companyId: unknown;
             };
             cookie?: never;
         };
@@ -893,7 +908,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -912,7 +929,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -935,7 +954,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -954,7 +975,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -979,6 +1002,7 @@ export interface operations {
             header?: never;
             path: {
                 periodId: string;
+                companyId: unknown;
             };
             cookie?: never;
         };
@@ -1005,7 +1029,9 @@ export interface operations {
                 cursor?: unknown;
             };
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1027,7 +1053,9 @@ export interface operations {
                 /** @description 8–128 chars [A-Za-z0-9_.:-]. Retrying with the same key and body returns the original journal. */
                 "Idempotency-Key": string;
             };
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -1061,6 +1089,7 @@ export interface operations {
             header?: never;
             path: {
                 journalId: string;
+                companyId: unknown;
             };
             cookie?: never;
         };
@@ -1085,6 +1114,7 @@ export interface operations {
             };
             path: {
                 journalId: string;
+                companyId: unknown;
             };
             cookie?: never;
         };
@@ -1120,7 +1150,9 @@ export interface operations {
                 cursor?: unknown;
             };
             header?: never;
-            path?: never;
+            path: {
+                companyId: unknown;
+            };
             cookie?: never;
         };
         requestBody?: never;

@@ -159,8 +159,16 @@ services:
     environment:
       NODE_ENV: production
       API_INTERNAL_URL: http://api:4000
+      WEB_PUBLIC_URL: ${ERP_PUBLIC_URL}
+      OIDC_ISSUER: ${ERP_PUBLIC_URL}/auth/realms/erp
+      # Token and key requests stay on the private network; browsers use the public URL.
+      OIDC_INTERNAL_BASE_URL: http://keycloak:8080/auth/realms/erp
+      OIDC_CLIENT_ID: erp-web
+      OIDC_CLIENT_SECRET: ${ERP_WEB_CLIENT_SECRET}
+      WEB_SESSION_SECRET: ${WEB_SESSION_SECRET:?set in deploy/.env}
     depends_on:
       api: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
     healthcheck:
       test:
         [
@@ -198,6 +206,7 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-6}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-300}
     volumes:
       - ./backup:/erp-backup:ro
       - ${ERP_BACKUP_DIR:?set in deploy/.env}:/backups

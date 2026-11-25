@@ -19,7 +19,7 @@ Phase 1 is delivered in several changes. Business decisions D-01…D-04 (docs/DE
 | P1-07 | Chart of accounts (hierarchy, posting vs header accounts) | P1-04 | ACC-001 | Integration | Done |
 | P1-08 | Fiscal periods: non-overlapping, close with optimistic locking; closed periods reject posting | P1-07 | ACC-008 | Integration incl. overlap and close-then-post | Done |
 | P1-09 | Journal posting: idempotency key, gapless per-company numbering, decimal money with currency minor units, immutability, reversal | P1-08 | ACC-002 | Integration incl. concurrency (same key ×10, different keys ×20) | Done |
-| P1-10 | Web ERP and manager app screens for companies, chart, periods and journals | P1-09, D-03 | ACC-001/002, ADM-011 | Playwright + jest-expo | **Next change** (needs an OIDC provider for interactive sign-in) |
+| P1-10 | Web ERP sign-in (OIDC, server-side session) and screens for companies, branches, chart of accounts, periods, journals (list, detail, entry, reversal) and audit trail; manager app screens | P1-09, D-03 | ACC-001/002/008, ADM-001/007, ADM-006, ADM-011 (partial) | Browser end-to-end test (`scripts/e2e-web.mjs`) against real Keycloak/API/PostgreSQL; production check of web sign-in | **Web done** (verified). Manager app: next change |
 | P1-11 | Outbox relay in the worker (publish, retry, dead-letter) | P1-05 | ARCH | Integration | Next change |
 | P1-12 | Approval matrix / maker-checker for manual journals and restricted actions | P1-09, D-11 | ADM-003 | Integration incl. self-approval rejection | Next change (needs D-11 thresholds) |
 | P1-13 | Opening balances import | P1-09, D-14 | ACC-014 | Integration | Blocked on D-14 |

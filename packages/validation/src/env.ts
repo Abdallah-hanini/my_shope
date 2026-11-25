@@ -67,6 +67,60 @@ export const apiEnvSchema = z
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
 /**
+ * Web ERP server settings. Sign-in is disabled (with a visible notice) when the OIDC values are
+ * absent; production requires them.
+ */
+export const webEnvSchema = z
+  .object({
+    NODE_ENV: nodeEnv,
+    API_INTERNAL_URL: z.string().url().default('http://localhost:4000'),
+    /** Address staff type in the browser, e.g. https://192.168.1.50 (no trailing slash). */
+    WEB_PUBLIC_URL: z
+      .string()
+      .url()
+      .transform((v) => v.replace(/\/$/, ''))
+      .optional(),
+    /** Public issuer, e.g. https://192.168.1.50/auth/realms/erp. */
+    OIDC_ISSUER: z.string().url().optional(),
+    /** Server-to-server base URL of the same realm, e.g. http://keycloak:8080/auth/realms/erp. */
+    OIDC_INTERNAL_BASE_URL: z.string().url().optional(),
+    OIDC_CLIENT_ID: z.string().min(1).default('erp-web'),
+    OIDC_CLIENT_SECRET: z.string().min(1).optional(),
+    /** Key material for the encrypted session cookie: at least 32 characters of random data. */
+    WEB_SESSION_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+  })
+  .superRefine((env, ctx) => {
+    const required = ['WEB_PUBLIC_URL', 'OIDC_ISSUER', 'OIDC_CLIENT_SECRET', 'WEB_SESSION_SECRET'] as const;
+    const set = required.filter((k) => env[k]).length;
+    if (set !== 0 && set !== required.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_ISSUER'],
+        message: `${required.join(', ')} must be set together`,
+      });
+    }
+    if (env.NODE_ENV === 'production' && set !== required.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_ISSUER'],
+        message: 'web sign-in settings are required in production',
+      });
+    }
+    if (
+      env.NODE_ENV === 'production' &&
+      env.OIDC_INTERNAL_BASE_URL &&
+      !isSecureJwksUrl(env.OIDC_INTERNAL_BASE_URL)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_INTERNAL_BASE_URL'],
+        message: 'must use https or an internal service name',
+      });
+    }
+  });
+export type WebEnv = z.infer<typeof webEnvSchema>;
+
+/**
  * https anywhere, or http to a single-label host (a Docker service name on the private network,
  * e.g. http://keycloak:8080). Public and LAN hostnames or IP addresses must use https.
  */

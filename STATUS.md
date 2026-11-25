@@ -5,9 +5,104 @@
 | Phase | Status |
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
-| 1 Identity/org/accounting | **In progress.** The API slice (P1-01 to P1-09) is implemented and verified locally. Still to do: client screens (P1-10), outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
+| 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, staff user and role management screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
+
+## 2026-11-25: Web ERP sign-in and Phase 1 screens
+
+**Requirement IDs:** P1-10 (web part), ACC-001, ACC-002, ACC-008, ADM-001 (partial), ADM-007, ADM-006, SEC-04 (web side).
+
+### Changes
+
+- **Web sign-in** (`apps/web-erp/src/lib/session*.ts`, `oidc.ts`, `app/session/*`):
+  - Uses `openid-client` 6.9 with the `erp-web` Keycloak client: authorization code + PKCE S256 + state + nonce, and ID token validation.
+  - Tokens are kept server-side, in a cookie that is encrypted (AES-256-GCM with an HKDF-derived key), httpOnly, SameSite=Lax, split into chunks, and Secure on HTTPS.
+  - Access tokens refresh through `/session/refresh` for pages and in place for server actions.
+  - Sign-out is POST-only, checks the Origin header, and also ends the Keycloak session (RP-initiated logout).
+  - `returnTo` accepts same-site paths only (no open redirect).
+- **Screens, in English and Arabic (RTL), responsive and keyboard/screen-reader friendly:**
+  - Home: sign-in, company picker, system status.
+  - New company (platform administrators).
+  - Company overview, branches, and the chart of accounts (tree, header vs posting accounts).
+  - Fiscal periods (create; close with a reason and optimistic version check).
+  - Journals: list with cursor pagination, detail, and reversal with a reason. The new-journal form shows exact running totals in integer minor units and a balance indicator. An idempotency key per form means a double submit can never post twice.
+  - Audit trail.
+  - Every screen has empty and error states and shows the server's RFC 9457 detail. Actions are hidden without the permission, and the server still enforces it.
+- **Shared code:**
+  - `@erp/validation`: `toMinorUnits` / `formatMinorUnits` for exact money arithmetic, and `webEnvSchema`.
+  - `@erp/api-client`: `unwrap` / `expectOk` helpers.
+  - `@erp/contracts`: type aliases. 95 Arabic/English message keys added.
+- **API contract fix:** company routes now declare the `companyId` path parameter in OpenAPI. It used to be missing because the permission guard resolves it, so typed clients could not supply it.
+- **Shop server:**
+  - Web gets OIDC settings and `WEB_SESSION_SECRET`.
+  - `install.ps1` and `upgrade.ps1` add missing secrets to an existing `deploy/.env` and never change existing values (3 new PowerShell tests).
+  - CI generates the new secret.
+- **Backup bug fixed (found in testing).** After a Docker or PC restart, the backup service started before PostgreSQL accepted connections. It flagged a failure and then slept 6 hours while reporting unhealthy. It now waits up to 5 minutes for the database at start, and retries every 5 minutes after any failure.
+- **Tests:**
+  - `scripts/e2e-web.mjs` (`pnpm test:e2e-web`, added to CI with the dev Keycloak).
+  - `deploy/scripts/keycloak-login.mjs`: a shared Keycloak sign-in helper that handles password change, TOTP enrolment and returning-user codes.
+  - The deployment check now also signs in through the web app.
+  - The smoke test gives the web app placeholder sign-in settings and checks that the sign-in link is offered.
+- **Other:**
+  - `apps/web-erp/turbo.json`: typecheck runs after the build, because it reads `.next/types`; the race was found in testing.
+  - Table header alignment fixed.
+
+### Bugs found while verifying
+
+- **Forms sometimes stuck on "Saving…" after a successful save.** The server had committed the change and rendered the next page. With the company `loading.tsx`, Next.js 15.5 intermittently did not apply the redirect: about 1 in 4 runs, with server logs showing 201 then 200. Removing `loading.tsx` gave 4/4 clean runs (T-26). The ledger was never at risk, because posts are idempotent.
+- **The backup service stayed unhealthy for up to 6 hours after a restart.** Fixed as described above.
+- **Missing `companyId` in the OpenAPI contract.** Fixed as described above.
+
+### Commands run and results (2026-11-25)
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile`, `pnpm format:check` | ✅ |
+| `pnpm turbo run build typecheck lint test --force` | ✅ 48/48 tasks; 156 unit tests (validation 53, api 45, web-erp 23, localization 11, api-client 7, design-tokens 5, worker 5, web-ui 1, customer-mobile 3, manager-mobile 3) |
+| Fresh database: `db:migrate`, `db:migrate:check` | ✅ "No difference detected" |
+| API / worker integration | ✅ 57/57, 2/2 |
+| `pnpm test:smoke` | ✅ 11/11 |
+| `pnpm test:e2e-web` (dev Keycloak, real API and PostgreSQL) | ✅ 20/20, and 4 consecutive clean runs after the `loading.tsx` fix |
+| Production image rebuilt; `docker compose -f deploy/docker-compose.prod.yml up --wait`; `verify-deployment.mjs` | ✅ 14/14 |
+| Backup start-up drill (database down when the backup service starts, back after 20 s) | ✅ waited, then backed up; health ok |
+| PowerShell helper tests (pwsh 7.4) | ✅ 12/12 |
+
+The 20 browser checks:
+1. Protected pages redirect to Keycloak with PKCE.
+2. Sign-in with forced password change and TOTP enrolment.
+3. The session cookie is httpOnly and SameSite=Lax, and not visible to page scripts.
+4. Create a company.
+5. Chart of accounts with a hierarchy.
+6. A duplicate account code shows the server error.
+7. Create periods.
+8. The journal form shows exact totals, and the server rejects an unbalanced entry.
+9. A balanced journal posts and shows its detail.
+10. Reversal links both journals, and reversing twice is not offered.
+11. The journal list shows both entries.
+12. Closing a period makes later posts into it fail with a clear message.
+13. Branches.
+14. The audit trail shows the actions and the reason.
+15. Six Arabic pages are RTL with no horizontal scroll at 390 px.
+16. The language switch keeps the current page.
+17. Sign-out ends both the ERP and the Keycloak session.
+18. A cross-site sign-out request gets 403.
+19. An open-redirect `returnTo` is refused.
+20. No uncaught page errors.
+
+The deployment check's new item: in a fresh browser on the production stack, sign-in with password plus one-time code reaches the ERP, with a Secure, httpOnly session cookie.
+
+### Not done or not verified
+
+- **Manager app sign-in and screens (L-06)**: next change.
+- **No screens yet to create staff users or assign roles.** Today that means `add-admin.ps1` (administrators only) or the API. Next change.
+- Not yet run on the real Windows PC or on real staff phones. GitHub Actions has not run.
+- Automated accessibility scanning (axe) is not in place. Labels, landmarks, focus styles, keyboard flow and contrast were built in, and the browser test uses accessible names.
+- API error details (for example "Journal is not balanced…") are in English only on Arabic pages.
+
+### Next task
+
+Manager app (Expo) sign-in with `erp-manager-mobile` (PKCE, SecureStore) and read-only journals and periods. Then web screens for staff users, roles and assignments, so the owner can onboard staff without scripts.
 
 ## 2026-11-25: Shop server for the Windows PC (Keycloak, HTTPS, backups)
 

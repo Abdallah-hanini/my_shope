@@ -7,6 +7,7 @@ import {
   ApiPropertyOptional,
   ApiQuery,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import { listQuerySchema, type ListQuery } from '@erp/validation';
 import { CurrentScope, RequirePermission } from '../auth/decorators';
@@ -36,6 +37,7 @@ export class AuditEventPageDto {
 
 @ApiTags('audit')
 @ApiBearerAuth()
+@ApiParam({ name: 'companyId', format: 'uuid' })
 @Controller({ path: 'companies/:companyId/audit-events' })
 export class AuditController {
   constructor(private readonly prisma: PrismaService) {}

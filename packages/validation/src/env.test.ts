@@ -100,3 +100,41 @@ describe('OIDC settings', () => {
     ).toThrow(/https/);
   });
 });
+
+describe('web env', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { webEnvSchema } = require('./env') as typeof import('./env');
+  const full = {
+    WEB_PUBLIC_URL: 'https://192.168.1.50/',
+    OIDC_ISSUER: 'https://192.168.1.50/auth/realms/erp',
+    OIDC_INTERNAL_BASE_URL: 'http://keycloak:8080/auth/realms/erp',
+    OIDC_CLIENT_SECRET: 's',
+    WEB_SESSION_SECRET: 'x'.repeat(43),
+  };
+
+  it('allows running without sign-in in development', () => {
+    expect(parseEnv(webEnvSchema, {}).OIDC_CLIENT_ID).toBe('erp-web');
+  });
+
+  it('normalizes the public URL and accepts a full production config', () => {
+    expect(parseEnv(webEnvSchema, { ...full, NODE_ENV: 'production' }).WEB_PUBLIC_URL).toBe(
+      'https://192.168.1.50',
+    );
+  });
+
+  it('requires sign-in settings together and in production', () => {
+    expect(() => parseEnv(webEnvSchema, { OIDC_ISSUER: full.OIDC_ISSUER })).toThrow(/must be set together/);
+    expect(() => parseEnv(webEnvSchema, { NODE_ENV: 'production' })).toThrow(/required in production/);
+  });
+
+  it('rejects a short session secret and plain-http LAN back-channel in production', () => {
+    expect(() => parseEnv(webEnvSchema, { ...full, WEB_SESSION_SECRET: 'short' })).toThrow(/32 characters/);
+    expect(() =>
+      parseEnv(webEnvSchema, {
+        ...full,
+        NODE_ENV: 'production',
+        OIDC_INTERNAL_BASE_URL: 'http://192.168.1.50/x',
+      }),
+    ).toThrow(/internal service name/);
+  });
+});

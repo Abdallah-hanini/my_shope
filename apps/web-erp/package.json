@@ -15,10 +15,15 @@
     "@erp/api-client": "workspace:*",
     "@erp/design-tokens": "workspace:*",
     "@erp/localization": "workspace:*",
+    "@erp/validation": "workspace:*",
     "@erp/web-ui": "workspace:*",
+    "jose": "5.10.0",
     "next": "15.5.29",
+    "openid-client": "6.9.1",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "server-only": "0.0.1",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@erp/config": "workspace:*",

@@ -17,6 +17,8 @@ Assert-ErpPrerequisites
 $envFile = Get-ErpEnvFile
 if (Test-Path $envFile) {
   Write-ErpStep 'deploy/.env already exists; keeping its secrets (delete it only for a brand-new install)'
+  $added = Update-ErpEnvFile
+  if ($added.Count -gt 0) { Write-ErpStep "Added new settings to deploy/.env: $($added -join ', '). Back up deploy/.env again." }
 } else {
   Write-ErpStep 'Creating deploy/.env with new random secrets'
   $content = New-ErpEnvContent -SiteHost $SiteHost -BackupDir $BackupDir -HttpsPort $HttpsPort

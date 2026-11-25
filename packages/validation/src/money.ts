@@ -49,3 +49,25 @@ export function decimalPlaces(value: string): number {
 export function isPositiveMoney(value: string): boolean {
   return /[1-9]/.test(value);
 }
+
+/**
+ * Converts a decimal money string to integer minor units (e.g. "125.50" with scale 2 → 12550n)
+ * without floating point. Digits beyond the scale must be zeros; anything else throws.
+ */
+export function toMinorUnits(value: string, scale: number): bigint {
+  if (!MONEY_PATTERN.test(value)) throw new Error(`invalid money string "${value}"`);
+  const [int, frac = ''] = value.split('.') as [string, string?];
+  const extra = frac.slice(scale);
+  if (/[1-9]/.test(extra)) throw new Error(`"${value}" has more than ${scale} decimal places`);
+  return BigInt(int) * 10n ** BigInt(scale) + BigInt(frac.slice(0, scale).padEnd(scale, '0') || '0');
+}
+
+/** Formats integer minor units back to a fixed-scale decimal string (12550n, 2 → "125.50"). */
+export function formatMinorUnits(value: bigint, scale: number): string {
+  const negative = value < 0n;
+  const abs = negative ? -value : value;
+  const base = 10n ** BigInt(scale);
+  const int = (abs / base).toString();
+  const frac = scale > 0 ? `.${(abs % base).toString().padStart(scale, '0')}` : '';
+  return `${negative ? '-' : ''}${int}${frac}`;
+}

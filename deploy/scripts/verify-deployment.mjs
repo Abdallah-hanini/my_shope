@@ -7,13 +7,14 @@
 // clearly named verification user ("verify-<timestamp>") as a platform administrator; disable or
 // delete that user in Keycloak afterwards on a live server.
 import { spawnSync } from 'node:child_process';
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Agent, fetch } from 'undici';
+import { keycloakLogin } from './keycloak-login.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (name, fallback) => {
@@ -55,20 +56,6 @@ async function check(name, fn) {
 }
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
-}
-
-// RFC 6238 TOTP (SHA-1, 6 digits, 30 s), as configured in the realm.
-function totp(secretBase32, at = Date.now()) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const c of secretBase32.replace(/\s+/g, '').toUpperCase())
-    bits += alphabet.indexOf(c).toString(2).padStart(5, '0');
-  const key = Buffer.from(bits.match(/.{8}/g).map((b) => parseInt(b, 2)));
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(at / 1000 / 30)));
-  const h = createHmac('sha1', key).update(counter).digest();
-  const o = h[h.length - 1] & 0xf;
-  return String((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, '0');
 }
 
 async function main() {
@@ -171,6 +158,7 @@ async function main() {
   })}`;
   let code;
   let secondCode;
+  let credentials;
   const verifier2 = randomBytes(32).toString('base64url');
   const authUrl2 = authUrl.replace(
     `code_challenge=${challenge}`,
@@ -182,48 +170,37 @@ async function main() {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'en-GB' });
+    // This manual PKCE flow shares the web client's redirect URI. Read the code from Keycloak's
+    // redirect (Location header); the web app's callback then refuses it without redeeming it,
+    // because it has no matching login state, so the code stays valid for the exchange below.
+    let lastCallback;
+    page.on('response', (r) => {
+      const location = r.headers()['location'];
+      if (location && location.startsWith(redirectUri)) lastCallback = location;
+    });
     await check('Sign in, change temporary password and enrol an authenticator app', async () => {
       await page.goto(authUrl);
-      await page.fill('#username', username);
-      await page.fill('#password', tempPassword);
-      await page.click('#kc-login');
-      // Keycloak presents required actions in its own order; handle each until the redirect.
-      const done = { password: false, totp: false };
-      for (let step = 0; step < 6 && !page.url().startsWith(redirectUri); step++) {
-        await page.waitForLoadState('load');
-        if (page.url().startsWith(redirectUri)) break;
-        if (await page.locator('#password-new').count()) {
-          const newPassword = `Vf-${randomBytes(12).toString('base64url')}`;
-          await page.fill('#password-new', newPassword);
-          await page.fill('#password-confirm', newPassword);
-          if (done.password) throw new Error('new password was rejected');
-          await Promise.all([page.waitForNavigation(), page.locator('[type=submit]').first().click()]);
-          done.password = true;
-        } else if (await page.locator('#totpSecret').count()) {
-          if (done.totp) throw new Error('authenticator code was rejected');
-          // The manual-entry key (Base32) is what an authenticator app uses.
-          if (await page.locator('#mode-manual').count()) await page.click('#mode-manual');
-          const secret = (await page.locator('#kc-totp-secret-key').innerText()).trim();
-          await page.fill('#totp', totp(secret));
-          if (await page.locator('#userLabel').count()) await page.fill('#userLabel', 'verification');
-          await Promise.all([page.waitForNavigation(), page.click('#saveTOTPBtn')]);
-          done.totp = true;
-        } else {
-          throw new Error(`unexpected page ${page.url()}`);
-        }
-      }
-      assert(done.password && done.totp, `required actions not both completed: ${JSON.stringify(done)}`);
-      assert(page.url().startsWith(redirectUri), `ended at ${page.url()}`);
-      const url = new URL(page.url());
+      const { completed, newPassword, totpSecret } = await keycloakLogin(page, {
+        username,
+        password: tempPassword,
+        done: () => Boolean(lastCallback),
+      });
+      credentials = { password: newPassword, totpSecret };
+      assert(
+        completed.password && completed.totp,
+        `required actions not both completed: ${JSON.stringify(completed)}`,
+      );
+      const url = new URL(lastCallback);
       assert(url.searchParams.get('state') === state, 'state mismatch');
       code = url.searchParams.get('code');
       assert(code, `no code in ${url}`);
     });
     await check('A second sign-in reuses the SSO session without prompting', async () => {
-      const callback = page.waitForURL((u) => u.toString().startsWith(redirectUri), { timeout: 30000 });
+      lastCallback = undefined;
       await page.goto(authUrl2);
-      await callback;
-      secondCode = new URL(page.url()).searchParams.get('code');
+      await page.waitForLoadState('load');
+      assert(lastCallback, 'Keycloak did not redirect back without prompting');
+      secondCode = new URL(lastCallback).searchParams.get('code');
       assert(secondCode && secondCode !== code, 'no second code');
     });
   } finally {
@@ -272,6 +249,35 @@ async function main() {
     assert(res.status === 200, `HTTP ${res.status} ${text}`);
     const me = JSON.parse(text);
     assert(me.user.isPlatformAdmin === true, JSON.stringify(me.user));
+  });
+
+  await check('Staff sign-in through the web app (password + one-time code) reaches the ERP', async () => {
+    assert(credentials, 'no credentials from the first sign-in');
+    const web = await chromium.launch();
+    try {
+      // Fresh browser: no Keycloak session, so the password and a one-time code are required.
+      const page = await web.newPage({ ignoreHTTPSErrors: true, locale: 'en-GB' });
+      await page.goto(`${base}/en`);
+      await Promise.all([
+        page.waitForURL((u) => u.toString().startsWith(`${base}/auth/`)),
+        page.getByRole('link', { name: 'Sign in' }).first().click(),
+      ]);
+      await keycloakLogin(page, {
+        username,
+        password: credentials.password,
+        totpSecret: credentials.totpSecret,
+        done: (u) => u.startsWith(`${base}/en`),
+      });
+      await page.getByRole('heading', { name: 'Choose a company' }).waitFor({ timeout: 15000 });
+      const cookies = await page.context().cookies(base);
+      const session = cookies.filter((c) => c.name.startsWith('erp_session.'));
+      assert(
+        session.length && session.every((c) => c.secure && c.httpOnly),
+        'session cookie must be Secure and httpOnly',
+      );
+    } finally {
+      await web.close();
+    }
   });
 
   await check('Database backup runs and restores into a scratch database', async () => {

@@ -6,6 +6,7 @@
 // Prerequisites: `pnpm build`, `pnpm db:up`, `pnpm db:migrate`, and apps/api/.env (copy .env.example).
 // Usage: pnpm test:smoke [--screenshots <dir>]
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -103,6 +104,12 @@ async function main() {
   const nextBin = createRequire(join(root, 'apps/web-erp/package.json')).resolve('next/dist/bin/next');
   start('web', 'apps/web-erp', [nextBin, 'start', '--port', String(ports.web)], {
     API_INTERNAL_URL: `http://localhost:${ports.api}`,
+    // Production mode requires sign-in settings; the .invalid issuer is never contacted because the
+    // smoke test does not sign in (the browser end-to-end test does, against a real Keycloak).
+    WEB_PUBLIC_URL: `http://localhost:${ports.web}`,
+    OIDC_ISSUER: 'https://issuer.smoke.invalid/realms/erp',
+    OIDC_CLIENT_SECRET: 'smoke-placeholder',
+    WEB_SESSION_SECRET: randomBytes(32).toString('base64url'),
   });
 
   const api = `http://localhost:${ports.api}/api/v1`;
@@ -182,6 +189,8 @@ async function main() {
               const text = await page.locator(`[data-check="${name}"]`).innerText();
               assert(text.includes(upLabel), `${name}: ${text}`);
             }
+            const signIn = await page.locator('a[href^="/session/login"]').count();
+            assert(signIn === 1, 'sign-in link not offered');
             const overflow = await page.evaluate(
               () => document.documentElement.scrollWidth > window.innerWidth,
             );

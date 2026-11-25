@@ -47,6 +47,7 @@ function New-ErpEnvContent {
       KEYCLOAK_DB_PASSWORD = New-ErpSecret
       KC_BOOTSTRAP_ADMIN_PASSWORD = New-ErpSecret
       ERP_WEB_CLIENT_SECRET = New-ErpSecret
+      WEB_SESSION_SECRET = New-ErpSecret
     }
   }
   $backup = $BackupDir.Replace('\', '/')
@@ -62,7 +63,31 @@ function New-ErpEnvContent {
     "KEYCLOAK_DB_PASSWORD=$($Secrets.KEYCLOAK_DB_PASSWORD)"
     "KC_BOOTSTRAP_ADMIN_PASSWORD=$($Secrets.KC_BOOTSTRAP_ADMIN_PASSWORD)"
     "ERP_WEB_CLIENT_SECRET=$($Secrets.ERP_WEB_CLIENT_SECRET)"
+    "WEB_SESSION_SECRET=$($Secrets.WEB_SESSION_SECRET)"
   ) -join "`n"
+}
+
+# Secrets added by later versions. Upgrades append any that are missing, keeping existing values.
+$script:GeneratedSecretKeys = @('POSTGRES_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KC_BOOTSTRAP_ADMIN_PASSWORD', 'ERP_WEB_CLIENT_SECRET', 'WEB_SESSION_SECRET')
+
+function Get-ErpMissingSecretLines {
+  <# Pure: given the current .env text, returns lines to append for secrets it lacks. #>
+  param([Parameter(Mandatory)][AllowEmptyString()][string]$Content)
+  $present = @{}
+  foreach ($line in ($Content -split "`r?`n")) {
+    if ($line -match '^\s*([A-Z0-9_]+)\s*=\s*\S') { $present[$Matches[1]] = $true }
+  }
+  @($script:GeneratedSecretKeys | Where-Object { -not $present.ContainsKey($_) } | ForEach-Object { "$_=$(New-ErpSecret)" })
+}
+
+function Update-ErpEnvFile {
+  <# Appends newly required secrets to deploy/.env (never changes existing values). Returns the keys added. #>
+  if (-not (Test-Path $script:EnvFile)) { throw 'deploy/.env not found. Run install.ps1 first.' }
+  $lines = Get-ErpMissingSecretLines -Content ([System.IO.File]::ReadAllText($script:EnvFile))
+  if ($lines.Count -gt 0) {
+    [System.IO.File]::AppendAllText($script:EnvFile, "`n" + ($lines -join "`n") + "`n", (New-Object System.Text.UTF8Encoding $false))
+  }
+  @($lines | ForEach-Object { ($_ -split '=', 2)[0] })
 }
 
 function Read-ErpEnv {

@@ -123,7 +123,16 @@
     "/api/v1/companies/{companyId}": {
       "get": {
         "operationId": "getCompany",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -150,7 +159,16 @@
     "/api/v1/companies/{companyId}/branches": {
       "post": {
         "operationId": "createBranch",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -185,7 +203,16 @@
       },
       "get": {
         "operationId": "listBranches",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -279,7 +306,16 @@
     "/api/v1/companies/{companyId}/roles": {
       "post": {
         "operationId": "createRole",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -314,7 +350,16 @@
       },
       "get": {
         "operationId": "listRoles",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -344,7 +389,16 @@
     "/api/v1/companies/{companyId}/role-assignments": {
       "post": {
         "operationId": "createRoleAssignment",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -379,7 +433,16 @@
       },
       "get": {
         "operationId": "listRoleAssignments",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -417,6 +480,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -438,7 +509,16 @@
     "/api/v1/companies/{companyId}/accounts": {
       "post": {
         "operationId": "createAccount",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -473,7 +553,16 @@
       },
       "get": {
         "operationId": "listAccounts",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -503,7 +592,16 @@
     "/api/v1/companies/{companyId}/fiscal-periods": {
       "post": {
         "operationId": "createFiscalPeriod",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -538,7 +636,16 @@
       },
       "get": {
         "operationId": "listFiscalPeriods",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -575,6 +682,14 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
             }
           }
         ],
@@ -622,6 +737,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
             }
           }
         ],
@@ -683,6 +806,14 @@
             "required": false,
             "in": "query",
             "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -718,6 +849,14 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
             }
           }
         ],
@@ -763,6 +902,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
             }
           }
         ],
@@ -826,6 +973,14 @@
             "required": false,
             "in": "query",
             "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
           }
         ],
         "responses": {

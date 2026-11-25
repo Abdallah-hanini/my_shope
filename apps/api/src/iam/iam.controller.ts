@@ -7,6 +7,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import {
   createRoleAssignmentSchema,
@@ -66,6 +67,7 @@ export class IamController {
   }
 
   @Post('companies/:companyId/roles')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('iam.role.manage')
   @ApiOperation({ operationId: 'createRole' })
   @ApiBody({ type: CreateRoleDto })
@@ -80,6 +82,7 @@ export class IamController {
   }
 
   @Get('companies/:companyId/roles')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('iam.role.read')
   @ApiOperation({ operationId: 'listRoles' })
   @ApiOkResponse({ type: [RoleDto] })
@@ -88,6 +91,7 @@ export class IamController {
   }
 
   @Post('companies/:companyId/role-assignments')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('iam.assignment.manage')
   @ApiOperation({
     operationId: 'createRoleAssignment',
@@ -105,6 +109,7 @@ export class IamController {
   }
 
   @Get('companies/:companyId/role-assignments')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('iam.assignment.read')
   @ApiOperation({ operationId: 'listRoleAssignments' })
   @ApiOkResponse({ type: [RoleAssignmentDto] })
@@ -113,6 +118,7 @@ export class IamController {
   }
 
   @Delete('companies/:companyId/role-assignments/:assignmentId')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @HttpCode(204)
   @RequirePermission('iam.assignment.manage')
   @ApiOperation({ operationId: 'revokeRoleAssignment' })

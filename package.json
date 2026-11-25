@@ -22,7 +22,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "deploy:verify": "node deploy/scripts/verify-deployment.mjs",
-    "auth:up": "docker compose up -d --wait keycloak"
+    "auth:up": "docker compose up -d --wait keycloak",
+    "test:e2e-web": "node scripts/e2e-web.mjs"
   },
   "devDependencies": {
     "playwright": "1.63.0",

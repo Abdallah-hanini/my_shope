@@ -275,18 +275,33 @@ importers:
       '@erp/localization':
         specifier: workspace:*
         version: link:../../packages/localization
+      '@erp/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       '@erp/web-ui':
         specifier: workspace:*
         version: link:../../packages/web-ui
+      jose:
+        specifier: 5.10.0
+        version: 5.10.0
       next:
         specifier: 15.5.29
         version: 15.5.29(@babel/core@7.29.13)(@types/node@22.20.7)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      openid-client:
+        specifier: 6.9.1
+        version: 6.9.1
       react:
         specifier: 19.1.0
         version: 19.1.0
       react-dom:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
+      server-only:
+        specifier: 0.0.1
+        version: 0.0.1
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@erp/config':
         specifier: workspace:*
@@ -4345,6 +4360,9 @@ packages:
   jose@5.10.0:
     resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
+  jose@6.2.18:
+    resolution: {integrity: sha512-doV4thUwgkrycJH4yLeqwTGIIZphHl+pk7CPReuMIhYhncmgzdko85MaCG4YQFTxqMFr1/oEH32tZuKKovcDEg==}
+
   js-levenshtein@1.1.6:
     resolution: {integrity: sha512-X2BB11YZtrRqY4EnQcLX5Rh373zbK4alC1FW7D7MBhL2gtcC17cTnr6DmfHZeS0s2rTHjUTMMHfG7gO8SSdw+g==}
     engines: {node: '>=0.10.0'}
@@ -4934,6 +4952,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  oauth4webapi@3.8.9:
+    resolution: {integrity: sha512-gyn4jpaxyYFm1epl3mwqc1sFShLjT9eq/63JW+Nvk286Lz6FC72pVv/SyhJHxo+sQiHEcjIHs4TtFKX/+Md07A==}
+
   ob1@0.83.3:
     resolution: {integrity: sha512-egUxXCDwoWG06NGCS5s5AdcpnumHKJlfd3HH06P3m9TEMwwScfcY35wpQxbm9oHof+dM/lVH9Rfyu1elTVelSA==}
     engines: {node: '>=20.19.4'}
@@ -4999,6 +5020,9 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: ^5.x
+
+  openid-client@6.9.1:
+    resolution: {integrity: sha512-wysSRjtNRRpu1S/HCVaQ7LRPSNc42lhS1szB1SihVTcA2kAarpzKyvAd+sjFX41ky7iDblGerORC8ASwpt3zqA==}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -10937,6 +10961,8 @@ snapshots:
 
   jose@5.10.0: {}
 
+  jose@6.2.18: {}
+
   js-levenshtein@1.1.6: {}
 
   js-tokens@4.0.0: {}
@@ -11700,6 +11726,8 @@ snapshots:
       pathe: 2.0.3
       tinyexec: 1.4.0
 
+  oauth4webapi@3.8.9: {}
+
   ob1@0.83.3:
     dependencies:
       flow-enums-runtime: 0.0.6
@@ -11764,6 +11792,11 @@ snapshots:
       supports-color: 10.2.2
       typescript: 5.9.3
       yargs-parser: 21.1.1
+
+  openid-client@6.9.1:
+    dependencies:
+      jose: 6.2.18
+      oauth4webapi: 3.8.9
 
   optionator@0.9.4:
     dependencies:

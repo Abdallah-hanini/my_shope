@@ -19,6 +19,7 @@ import {
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import {
@@ -76,6 +77,7 @@ function respond(res: Response, r: PostResult): JournalDto {
 
 @ApiTags('accounting')
 @ApiBearerAuth()
+@ApiParam({ name: 'companyId', format: 'uuid' })
 @Controller({ path: 'companies/:companyId' })
 export class AccountingController {
   constructor(

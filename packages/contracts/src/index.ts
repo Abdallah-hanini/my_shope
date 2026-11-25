@@ -8,5 +8,18 @@ export type LivenessReport = Schemas['LivenessDto'];
 export type ProblemDetails = Schemas['ProblemDetailsDto'];
 export type DependencyStatus = HealthReport['checks'][number];
 
+export type Me = Schemas['MeDto'];
+export type Company = Schemas['CompanyDto'];
+export type Branch = Schemas['BranchDto'];
+export type Role = Schemas['RoleDto'];
+export type RoleAssignment = Schemas['RoleAssignmentDto'];
+export type Account = Schemas['AccountDto'];
+export type FiscalPeriod = Schemas['FiscalPeriodDto'];
+export type Journal = Schemas['JournalDto'];
+export type JournalLine = Schemas['JournalLineDto'];
+export type JournalPage = Schemas['JournalPageDto'];
+export type AuditEvent = Schemas['AuditEventDto'];
+export type AuditEventPage = Schemas['AuditEventPageDto'];
+
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

@@ -73,6 +73,10 @@ jobs:
           sed -i "s/erp_local_dev_only/erp_ci_only/" apps/api/.env
           pnpm exec playwright install --with-deps chromium
           pnpm test:smoke
+      - name: Web end-to-end (sign-in through dev Keycloak, all screens)
+        run: |
+          pnpm auth:up
+          pnpm test:e2e-web
 
   # Builds the shop-server image and runs the full production stack (Caddy HTTPS, Keycloak, API,
   # worker, web, backups), then signs in through Keycloak in a browser and checks backup/restore.
@@ -104,6 +108,7 @@ jobs:
             echo "KEYCLOAK_DB_PASSWORD=$(r)"
             echo "KC_BOOTSTRAP_ADMIN_PASSWORD=$(r)"
             echo "ERP_WEB_CLIENT_SECRET=$(r)"
+            echo "WEB_SESSION_SECRET=$(r)"
           } > deploy/.env
       - name: Build and start the production stack
         run: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build --wait --wait-timeout 900

@@ -6,6 +6,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import {
   createBranchSchema,
@@ -55,6 +56,7 @@ export class OrgController {
   }
 
   @Get(':companyId')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('org.company.read')
   @ApiOperation({ operationId: 'getCompany' })
   @ApiOkResponse({ type: CompanyDto })
@@ -63,6 +65,7 @@ export class OrgController {
   }
 
   @Post(':companyId/branches')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('org.branch.manage')
   @ApiOperation({ operationId: 'createBranch' })
   @ApiBody({ type: CreateBranchDto })
@@ -77,6 +80,7 @@ export class OrgController {
   }
 
   @Get(':companyId/branches')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
   @RequirePermission('org.branch.read')
   @ApiOperation({ operationId: 'listBranches', summary: 'Branches visible in the caller scope' })
   @ApiOkResponse({ type: [BranchDto] })

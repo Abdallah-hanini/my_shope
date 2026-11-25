@@ -1,10 +1,16 @@
 import { createApiClient, type HealthReport } from '@erp/api-client';
-import { createTranslator, formatDateTime, isLocale, type Locale, type MessageKey } from '@erp/localization';
+import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
 import { StatusBadge } from '@erp/web-ui';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { AppShell } from '@/components/AppShell';
+import { ProblemNotice } from '@/components/ProblemNotice';
+import { buttonPrimary, buttonSecondary, Card, EmptyState, Notice } from '@/components/ui';
+import { signInConfig, webConfig } from '@/lib/config';
+import { companyName, loadUser } from '@/lib/context';
+import { readSession } from '@/lib/session';
 
-// Health is live server state: never prerender or cache it.
+// Health and sign-in state are live: never prerender or cache this page.
 export const dynamic = 'force-dynamic';
 
 const dependencyLabel: Record<HealthReport['checks'][number]['name'], MessageKey> = {
@@ -13,10 +19,18 @@ const dependencyLabel: Record<HealthReport['checks'][number]['name'], MessageKey
   queue: 'health.queue',
 };
 
+const signInMessages: Record<string, MessageKey> = {
+  failed: 'auth.failed',
+  expired: 'auth.expired',
+  denied: 'auth.denied',
+};
+
 async function loadHealth(): Promise<{ report?: HealthReport; failed: boolean }> {
-  const baseUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:4000';
   try {
-    const client = createApiClient({ baseUrl, fetch: (req) => fetch(req, { cache: 'no-store' }) });
+    const client = createApiClient({
+      baseUrl: webConfig().API_INTERNAL_URL,
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    });
     return { report: await client.ready(), failed: false };
   } catch (err) {
     console.error('API readiness check failed:', err instanceof Error ? err.message : err);
@@ -24,80 +38,128 @@ async function loadHealth(): Promise<{ report?: HealthReport; failed: boolean }>
   }
 }
 
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function HomePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ signin?: string }>;
+}) {
   const { locale } = await params;
+  const { signin } = await searchParams;
   if (!isLocale(locale)) notFound();
   const t = createTranslator(locale);
-  const other: Locale = locale === 'ar' ? 'en' : 'ar';
-  const { report, failed } = await loadHealth();
+
+  const configured = signInConfig() !== null;
+  const session = configured ? await readSession() : null;
+  if (session && session.accessTokenExpiresAt - 30 <= Math.floor(Date.now() / 1000)) {
+    redirect(`/session/refresh?returnTo=${encodeURIComponent(`/${locale}`)}`);
+  }
+  const [user, health] = await Promise.all([session ? loadUser() : null, loadHealth()]);
+  const signinError = signin ? signInMessages[signin] : undefined;
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">{t('app.erp.name')}</h1>
-          <p className="mt-1 text-[var(--color-text-muted)]">{t('erp.home.subtitle')}</p>
-        </div>
-        <Link
-          href={`/${other}`}
-          hrefLang={other}
-          lang={other}
-          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border)] px-4 font-semibold"
-        >
-          {t('common.switchLanguage')}
-        </Link>
-      </header>
+    <AppShell
+      locale={locale}
+      title={t('app.erp.name')}
+      titleHref={`/${locale}`}
+      userLabel={user?.ok ? user.data.me.user.displayName : session ? '—' : undefined}
+    >
+      <div className="flex flex-col gap-6">
+        {signinError ? <Notice tone="danger">{t(signinError)}</Notice> : null}
 
-      <p
-        role="note"
-        className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warning-bg)] p-4 text-[var(--color-warning)]"
-      >
-        {t('foundation.notice')}
-      </p>
-
-      <section
-        aria-labelledby="health-title"
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
-      >
-        <h2
-          id="health-title"
-          className="border-b border-[var(--color-border)] px-4 py-3 text-lg font-semibold"
-        >
-          {t('health.title')}
-        </h2>
-        {failed || !report ? (
-          <div role="alert" className="flex items-center justify-between gap-4 px-4 py-3">
-            <span>{t('health.api')}</span>
-            <StatusBadge tone="down" label={t('health.unreachable')} />
-          </div>
+        {!configured ? (
+          <Notice>{t('auth.notConfigured')}</Notice>
+        ) : !session ? (
+          <Card title={t('auth.signIn')} id="signin">
+            <p className="mb-4">{t('auth.prompt')}</p>
+            <a href={`/session/login?returnTo=${encodeURIComponent(`/${locale}`)}`} className={buttonPrimary}>
+              {t('auth.signIn')}
+            </a>
+          </Card>
+        ) : !user?.ok ? (
+          user && user.status === 403 ? (
+            <Notice tone="danger">{t('auth.notProvisioned')}</Notice>
+          ) : (
+            <ProblemNotice result={user ?? { status: 0 }} locale={locale} />
+          )
         ) : (
-          <>
-            <ul>
-              <li className="flex min-h-11 items-center justify-between gap-4 border-b border-[var(--color-border)] px-4 py-2">
-                <span>{t('health.api')}</span>
-                <StatusBadge tone="up" label={t('health.status.up')} />
-              </li>
-              {report.checks.map((c) => (
-                <li
-                  key={c.name}
-                  data-check={c.name}
-                  className="flex min-h-11 items-center justify-between gap-4 border-b border-[var(--color-border)] px-4 py-2 last:border-b-0"
-                >
-                  <span>{t(dependencyLabel[c.name])}</span>
-                  <StatusBadge
-                    tone={c.status}
-                    label={t(c.status === 'up' ? 'health.status.up' : 'health.status.down')}
-                  />
-                </li>
-              ))}
-            </ul>
-            <p className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
-              {t('common.lastChecked')}:{' '}
-              <time dateTime={report.checkedAt}>{formatDateTime(locale, report.checkedAt)}</time>
-            </p>
-          </>
+          <Card title={t('home.chooseCompany')} id="companies">
+            {user.data.me.companies.length === 0 ? (
+              <EmptyState>{t('home.noCompanies')}</EmptyState>
+            ) : (
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {user.data.me.companies.map((c) => (
+                  <li key={c.companyId}>
+                    <Link
+                      href={`/${locale}/c/${c.companyId}`}
+                      className="flex min-h-16 flex-col justify-center rounded-xl border border-[var(--color-border)] px-4 py-2"
+                    >
+                      <span className="font-semibold">{companyName(c, locale)}</span>
+                      <span dir="ltr" className="text-sm text-[var(--color-text-muted)]">
+                        {c.code}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {user.data.me.user.isPlatformAdmin ? (
+              <div className="mt-4">
+                <Link href={`/${locale}/companies/new`} className={buttonSecondary}>
+                  {t('company.new')}
+                </Link>
+              </div>
+            ) : null}
+          </Card>
         )}
-      </section>
-    </main>
+
+        <section
+          aria-labelledby="health-title"
+          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+        >
+          <h2
+            id="health-title"
+            className="border-b border-[var(--color-border)] px-4 py-3 text-lg font-semibold"
+          >
+            {t('health.title')}
+          </h2>
+          {health.failed || !health.report ? (
+            <div role="alert" className="flex items-center justify-between gap-4 px-4 py-3">
+              <span>{t('health.api')}</span>
+              <StatusBadge tone="down" label={t('health.unreachable')} />
+            </div>
+          ) : (
+            <>
+              <ul>
+                <li className="flex min-h-11 items-center justify-between gap-4 border-b border-[var(--color-border)] px-4 py-2">
+                  <span>{t('health.api')}</span>
+                  <StatusBadge tone="up" label={t('health.status.up')} />
+                </li>
+                {health.report.checks.map((c) => (
+                  <li
+                    key={c.name}
+                    data-check={c.name}
+                    className="flex min-h-11 items-center justify-between gap-4 border-b border-[var(--color-border)] px-4 py-2 last:border-b-0"
+                  >
+                    <span>{t(dependencyLabel[c.name])}</span>
+                    <StatusBadge
+                      tone={c.status}
+                      label={t(c.status === 'up' ? 'health.status.up' : 'health.status.down')}
+                    />
+                  </li>
+                ))}
+              </ul>
+              <p className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
+                {t('common.lastChecked')}:{' '}
+                <time dateTime={health.report.checkedAt}>
+                  {formatDateTime(locale, health.report.checkedAt)}
+                </time>
+              </p>
+            </>
+          )}
+        </section>
+      </div>
+    </AppShell>
   );
 }

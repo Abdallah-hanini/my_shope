@@ -2,7 +2,7 @@
 
 Workshop, parts retail/wholesale, inventory, accounting, HR and CRM for automotive businesses, with three mandatory clients: a Next.js web ERP, a customer mobile app and a separate manager mobile app.
 
-**Status:** Phase 0 is approved. Phase 1 is in progress: the API for identity, organization and accounting foundations is done, and the client screens come next. See [STATUS.md](STATUS.md).
+**Status:** Phase 0 is approved. Phase 1 is in progress: identity, organization and accounting are done in the API and the web ERP (staff sign-in through Keycloak), and the manager app comes next. See [STATUS.md](STATUS.md).
 
 Read in this order: [CLAUDE.md](CLAUDE.md) (engineering charter) → [docs/BRD.md](docs/BRD.md) → [SRS](docs/SRS.md) → [ARCHITECTURE](docs/ARCHITECTURE.md) → [DATA](docs/DATA.md) → [ACCOUNTING](docs/ACCOUNTING.md) → [REPORTING](docs/REPORTING.md) → [MOBILE](docs/MOBILE.md) → [SECURITY_QA](docs/SECURITY_QA.md) → [ROADMAP](docs/ROADMAP.md).
 Planning: [Phase 0 plan](docs/PHASE0_PLAN.md) · [Phase 1 plan](docs/PHASE1_PLAN.md) · [Phase 1 ERD](docs/ERD_PHASE1.md) · [Traceability matrix](docs/TRACEABILITY.md) · [Decisions and open questions](docs/DECISIONS.md) · [Original master specification](docs/spec/MASTER_SPECIFICATION.md).
@@ -55,7 +55,10 @@ pnpm dev                        # api :4000, worker health :4100, web :3000, Exp
 
 Production runs on one Windows PC in the shop with Docker Desktop: HTTPS on the shop Wi-Fi, a local Keycloak for sign-in, and automatic backups. The owner's step-by-step guide is [docs/DEPLOY_WINDOWS.md](docs/DEPLOY_WINDOWS.md). Files are in `deploy/`. `pnpm deploy:verify --env-file <file>` checks a running server end to end.
 
-For local development, `pnpm auth:up` starts Keycloak at http://localhost:8080 with the same `erp` realm.
+For local development, `pnpm auth:up` starts Keycloak at http://localhost:8080 with the same `erp` realm. To sign in to the local web app:
+1. Copy `apps/web-erp/.env.example` to `apps/web-erp/.env.local`.
+2. Create a user: `docker compose exec keycloak bash /erp-scripts/bootstrap-admin.sh <user> <email> <first> <last>`.
+3. Link it: `pnpm --filter @erp/api iam:bootstrap-admin --issuer http://localhost:8080/realms/erp --subject <USER_ID> ...`.
 
 ## Sign-in and first administrator
 
@@ -80,6 +83,7 @@ pnpm db:migrate && pnpm db:migrate:check               # migrations apply and ma
 pnpm --filter @erp/api test:integration                # real PostgreSQL + Redis
 pnpm --filter @erp/worker test:integration             # real Redis
 pnpm test:smoke                                        # boots built apps, checks health, renders en/ar in Chromium
+pnpm auth:up && pnpm test:e2e-web                      # signs in through dev Keycloak and uses every web screen
 ```
 
 Integration and smoke tests need the Docker services and fail (they never skip) when those are missing.

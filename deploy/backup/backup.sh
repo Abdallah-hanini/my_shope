@@ -10,6 +10,8 @@ set -eu
 
 DIR=/backups
 INTERVAL_HOURS=${BACKUP_INTERVAL_HOURS:-6}
+# After a failure, try again this soon instead of waiting a full interval.
+RETRY_SECONDS=${BACKUP_RETRY_SECONDS:-300}
 RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
 KEEP_MIN=14
 DATABASES="erp keycloak"
@@ -96,10 +98,18 @@ case "${1:-}" in
   health) health ;;
   verify) verify ;;
   loop)
-    log "backup loop: every ${INTERVAL_HOURS}h, retention ${RETENTION_DAYS}d (min ${KEEP_MIN} kept)"
+    log "backup loop: every ${INTERVAL_HOURS}h, retry after failure in ${RETRY_SECONDS}s, retention ${RETENTION_DAYS}d (min ${KEEP_MIN} kept)"
+    # After a PC or Docker restart, containers start without waiting for each other: give the
+    # database up to 5 minutes before the first attempt.
+    waited=0
+    until pg_isready -q -d erp || [ "$waited" -ge 300 ]; do sleep 5; waited=$((waited + 5)); done
     while true; do
-      if backup_once; then :; else record_failure; fi
-      sleep $((INTERVAL_HOURS * 3600))
+      if backup_once; then
+        sleep $((INTERVAL_HOURS * 3600))
+      else
+        record_failure
+        sleep "$RETRY_SECONDS"
+      fi
     done
     ;;
   *) echo "usage: backup.sh loop|once|health|verify" >&2; exit 2 ;;

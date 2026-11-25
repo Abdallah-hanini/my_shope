@@ -1,7 +1,20 @@
 import type { HealthReport, LivenessReport, paths, ProblemDetails } from '@erp/contracts';
 import createClient, { type Middleware } from 'openapi-fetch';
 
-export type { HealthReport, LivenessReport, ProblemDetails } from '@erp/contracts';
+export type {
+  Account,
+  AuditEvent,
+  Branch,
+  Company,
+  FiscalPeriod,
+  HealthReport,
+  Journal,
+  LivenessReport,
+  Me,
+  ProblemDetails,
+  Role,
+  RoleAssignment,
+} from '@erp/contracts';
 
 /** Thrown for any non-2xx response. Carries the RFC 9457 body when the server sent one. */
 export class ApiProblemError extends Error {
@@ -62,6 +75,20 @@ export function createApiClient(options: ApiClientOptions) {
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
+
+/**
+ * Returns the body of a successful openapi-fetch result, or throws ApiProblemError carrying the
+ * RFC 9457 problem the server sent. For 204 responses use {@link expectOk}.
+ */
+export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
+  if (result.response.ok && result.data !== undefined) return result.data;
+  throw new ApiProblemError(result.response.status, asProblem(result.error));
+}
+
+/** Throws ApiProblemError unless the response status is 2xx. */
+export function expectOk(result: { error?: unknown; response: Response }): void {
+  if (!result.response.ok) throw new ApiProblemError(result.response.status, asProblem(result.error));
+}
 
 function asProblem(v: unknown): Partial<ProblemDetails> | undefined {
   return typeof v === 'object' && v !== null ? (v as Partial<ProblemDetails>) : undefined;

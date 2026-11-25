@@ -1,4 +1,4 @@
-import { ApiProblemError, createApiClient } from './index';
+import { ApiProblemError, createApiClient, expectOk, unwrap } from './index';
 
 function mockFetch(status: number, body: unknown, seen: Request[] = []) {
   return jest.fn(async (input: Request) => {
@@ -62,5 +62,29 @@ describe('createApiClient', () => {
     });
     await client.live();
     expect(seen[0]!.headers.has('authorization')).toBe(false);
+  });
+});
+
+describe('unwrap / expectOk', () => {
+  const res = (status: number) => new Response(null, { status });
+
+  it('returns data for 2xx', () => {
+    expect(unwrap({ data: { a: 1 }, response: res(200) })).toEqual({ a: 1 });
+  });
+
+  it('throws the problem for errors', () => {
+    const problem = { title: 'Unprocessable Entity', status: 422, detail: 'Journal is not balanced' };
+    expect(() => unwrap({ error: problem, response: res(422) })).toThrow(ApiProblemError);
+    try {
+      unwrap({ error: problem, response: res(422) });
+    } catch (e) {
+      expect((e as ApiProblemError).problem?.detail).toBe('Journal is not balanced');
+      expect((e as ApiProblemError).status).toBe(422);
+    }
+  });
+
+  it('expectOk accepts 204 and rejects 403', () => {
+    expect(() => expectOk({ response: res(204) })).not.toThrow();
+    expect(() => expectOk({ error: { title: 'Forbidden' }, response: res(403) })).toThrow('Forbidden');
   });
 });

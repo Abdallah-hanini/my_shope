@@ -4,7 +4,12 @@ import { negotiateLocale } from './lib/locale';
 
 export function middleware(req: NextRequest) {
   const first = req.nextUrl.pathname.split('/')[1];
-  if (isLocale(first)) return NextResponse.next();
+  if (isLocale(first)) {
+    // Pages read this to return here after sign-in or a session refresh.
+    const headers = new Headers(req.headers);
+    headers.set('x-erp-path', `${req.nextUrl.pathname}${req.nextUrl.search}`);
+    return NextResponse.next({ request: { headers } });
+  }
   const locale = negotiateLocale(req.headers.get('accept-language'));
   const url = req.nextUrl.clone();
   url.pathname = `/${locale}${req.nextUrl.pathname === '/' ? '' : req.nextUrl.pathname}`;

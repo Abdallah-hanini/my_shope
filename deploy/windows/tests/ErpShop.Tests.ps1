@@ -18,15 +18,28 @@ Check 'rejects URLs, ports and spaces' {
 }
 Check 'env content has every required key and fresh secrets' {
   $c = New-ErpEnvContent -SiteHost '192.168.1.50' -BackupDir 'D:\ERP-Backups'
-  $keys = 'ERP_SITE_HOST','ERP_HTTPS_PORT','ERP_PUBLIC_URL','ERP_BACKUP_DIR','POSTGRES_PASSWORD','KEYCLOAK_DB_PASSWORD','KC_BOOTSTRAP_ADMIN_PASSWORD','ERP_WEB_CLIENT_SECRET'
+  $keys = 'ERP_SITE_HOST','ERP_HTTPS_PORT','ERP_PUBLIC_URL','ERP_BACKUP_DIR','POSTGRES_PASSWORD','KEYCLOAK_DB_PASSWORD','KC_BOOTSTRAP_ADMIN_PASSWORD','ERP_WEB_CLIENT_SECRET','WEB_SESSION_SECRET'
   ($keys | Where-Object { $c -notmatch "(?m)^$_=\S+" }).Count -eq 0 -and $c -notmatch 'change-me' -and $c -match '(?m)^ERP_BACKUP_DIR=D:/ERP-Backups$'
 }
 Check 'env content refuses a bad host' {
   try { New-ErpEnvContent -SiteHost 'https://bad' -BackupDir 'D:\x' | Out-Null; $false } catch { $_.Exception.Message -match 'IPv4 address or host name' }
 }
 Check 'env content is deterministic with given secrets' {
-  $s = @{ POSTGRES_PASSWORD = 'a'; KEYCLOAK_DB_PASSWORD = 'b'; KC_BOOTSTRAP_ADMIN_PASSWORD = 'c'; ERP_WEB_CLIENT_SECRET = 'd' }
+  $s = @{ POSTGRES_PASSWORD = 'a'; KEYCLOAK_DB_PASSWORD = 'b'; KC_BOOTSTRAP_ADMIN_PASSWORD = 'c'; ERP_WEB_CLIENT_SECRET = 'd'; WEB_SESSION_SECRET = 'e' }
   (New-ErpEnvContent -SiteHost 'h.lan' -BackupDir 'E:\b' -Secrets $s) -eq (New-ErpEnvContent -SiteHost 'h.lan' -BackupDir 'E:\b' -Secrets $s)
+}
+
+Check 'missing secrets are added for an older .env, existing ones untouched' {
+  $old = "ERP_SITE_HOST=h`nPOSTGRES_PASSWORD=keep-me`nKEYCLOAK_DB_PASSWORD=k`nKC_BOOTSTRAP_ADMIN_PASSWORD=a`nERP_WEB_CLIENT_SECRET=w`n"
+  $lines = @(Get-ErpMissingSecretLines -Content $old)
+  $lines.Count -eq 1 -and $lines[0] -match '^WEB_SESSION_SECRET=[A-Za-z0-9_-]{43}$'
+}
+Check 'nothing is added when all secrets exist' {
+  $full = New-ErpEnvContent -SiteHost 'h.lan' -BackupDir 'E:\b'
+  @(Get-ErpMissingSecretLines -Content $full).Count -eq 0
+}
+Check 'an empty value counts as missing' {
+  @(Get-ErpMissingSecretLines -Content "WEB_SESSION_SECRET=`n") -match '^WEB_SESSION_SECRET=\S+' | Measure-Object | ForEach-Object { $_.Count -eq 1 }
 }
 
 if ($failures) { Write-Host "$failures check(s) failed"; exit 1 } else { Write-Host 'all checks passed' }

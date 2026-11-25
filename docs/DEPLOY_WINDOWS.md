@@ -63,7 +63,7 @@ Run these from `C:\my_shope` in PowerShell.
 | Take a backup now | `.\deploy\windows\backup-now.ps1` |
 | Check that the newest backup can really be restored (live data is not touched) | `.\deploy\windows\verify-backup.ps1` |
 | Stop / start the server | `.\deploy\windows\stop.ps1` / `.\deploy\windows\start.ps1` |
-| Install a new version (it backs up first) | `.\deploy\windows\upgrade.ps1` |
+| Install a new version (it backs up first, and adds any new settings to `deploy\.env`) | `.\deploy\windows\upgrade.ps1` |
 
 **Recommended routine:** run `verify-backup.ps1` once a week, and copy the backup folder to a second place (another USB drive or cloud storage you trust) once a week.
 
@@ -98,5 +98,5 @@ Everything entered after that backup is lost.
 
 ## What is not done yet
 
-- The ERP web screens for daily work are the next development step. Today the site shows system status, and the API is ready behind sign-in.
+- Web screens available now: companies, branches, chart of accounts, fiscal periods, journals (entry, list, detail, reversal) and the audit trail. Adding staff users and roles from the web is the next step; until then, use `add-admin.ps1` for administrators.
 - Customer-facing access from the internet is postponed (owner decision). Do not forward router ports to this PC.
