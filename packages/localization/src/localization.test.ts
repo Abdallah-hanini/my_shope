@@ -1,6 +1,6 @@
 import { ar } from './messages/ar';
 import { en } from './messages/en';
-import { createTranslator, formatDateTime, getDirection, resolveLocale } from './index';
+import { createTranslator, formatDateTime, getDirection, groupDigits, resolveLocale } from './index';
 
 describe('localization', () => {
   it('Arabic and English catalogs define exactly the same keys', () => {
@@ -39,5 +39,19 @@ describe('localization', () => {
     const s = formatDateTime('en', '2026-01-01T21:30:00Z', 'Asia/Qatar');
     expect(s).toMatch(/2 Jan 2026/);
     expect(s).toMatch(/00:30:00/);
+  });
+});
+
+describe('groupDigits', () => {
+  it.each([
+    ['50000.00', '50,000.00'],
+    ['0.00', '0.00'],
+    ['999.99', '999.99'],
+    ['1000', '1,000'],
+    ['-2000.00', '-2,000.00'],
+    ['12345678901234.567890', '12,345,678,901,234.567890'],
+    ['not money', 'not money'],
+  ])('%s → %s', (input, expected) => {
+    expect(groupDigits(input)).toBe(expected);
   });
 });

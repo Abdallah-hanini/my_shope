@@ -108,3 +108,28 @@ describe('minor units', () => {
     expect(formatMinorUnits(5n, 3)).toBe('0.005');
   });
 });
+
+describe('reporting schemas', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const r = require('./requests') as typeof import('./requests');
+  const acct = { code: '1100', name: 'Cash', type: 'asset', isPosting: true };
+
+  it('accepts a matching reporting class and rejects mismatches', () => {
+    expect(r.createAccountSchema.safeParse({ ...acct, reportingClass: 'cash' }).success).toBe(true);
+    expect(r.createAccountSchema.safeParse({ ...acct, reportingClass: 'cogs' }).success).toBe(false);
+    expect(
+      r.createAccountSchema.safeParse({ ...acct, isPosting: false, reportingClass: 'cash' }).success,
+    ).toBe(false);
+    expect(
+      r.createAccountSchema.safeParse({ ...acct, type: 'expense', reportingClass: 'cogs' }).success,
+    ).toBe(true);
+  });
+
+  it('validates the financial summary range', () => {
+    expect(r.financialSummaryQuerySchema.safeParse({ from: '2026-01', to: '2026-12' }).success).toBe(true);
+    expect(r.financialSummaryQuerySchema.safeParse({ from: '2026-12', to: '2026-01' }).success).toBe(false);
+    expect(r.financialSummaryQuerySchema.safeParse({ from: '2024-01', to: '2026-01' }).success).toBe(false);
+    expect(r.financialSummaryQuerySchema.safeParse({ from: '2026-13', to: '2026-13' }).success).toBe(false);
+    expect(r.monthsBetween('2025-11', '2026-02')).toBe(4);
+  });
+});

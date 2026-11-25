@@ -18,6 +18,7 @@ export const toAccountDto = (a: Account): AccountDto => ({
   type: a.type,
   parentId: a.parentId,
   isPosting: a.isPosting,
+  reportingClass: a.reportingClass,
   status: a.status,
   version: a.version,
 });
@@ -62,6 +63,7 @@ export class AccountingService {
             type: input.type,
             parentId: input.parentId ?? null,
             isPosting: input.isPosting,
+            reportingClass: input.reportingClass ?? null,
           },
         });
         await writeAudit(tx, ctx, {

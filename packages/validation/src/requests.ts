@@ -74,17 +74,50 @@ export const createRoleAssignmentSchema = z.object({
 export type CreateRoleAssignmentInput = z.infer<typeof createRoleAssignmentSchema>;
 
 export const accountTypes = ['asset', 'liability', 'equity', 'revenue', 'expense'] as const;
-export const createAccountSchema = z.object({
-  code: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z0-9.-]{1,32}$/, 'letters, digits, "." or "-" (max 32)'),
-  name,
-  nameAr: optionalArabicName,
-  type: z.enum(accountTypes),
-  parentId: uuid.nullable().optional(),
-  isPosting: z.boolean(),
-});
+
+/**
+ * Optional reporting classification of a posting account. Reports never guess from names:
+ * cash position uses cash/bank accounts, gross profit uses cogs accounts (docs/KPI_DICTIONARY.md).
+ */
+export const accountReportingClasses = [
+  'cash',
+  'bank',
+  'receivable',
+  'payable',
+  'inventory',
+  'cogs',
+] as const;
+export type AccountReportingClass = (typeof accountReportingClasses)[number];
+/** Which account type each class belongs to (also enforced by a database check). */
+export const reportingClassAccountType: Record<AccountReportingClass, (typeof accountTypes)[number]> = {
+  cash: 'asset',
+  bank: 'asset',
+  receivable: 'asset',
+  inventory: 'asset',
+  payable: 'liability',
+  cogs: 'expense',
+};
+export const createAccountSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9.-]{1,32}$/, 'letters, digits, "." or "-" (max 32)'),
+    name,
+    nameAr: optionalArabicName,
+    type: z.enum(accountTypes),
+    parentId: uuid.nullable().optional(),
+    isPosting: z.boolean(),
+    reportingClass: z.enum(accountReportingClasses).nullable().optional(),
+  })
+  .refine((v) => !v.reportingClass || v.isPosting, {
+    message: 'only posting accounts can have a reporting class',
+    path: ['reportingClass'],
+  })
+  .refine((v) => !v.reportingClass || reportingClassAccountType[v.reportingClass] === v.type, {
+    message: 'reporting class does not match the account type',
+    path: ['reportingClass'],
+  });
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;
 
 export const createFiscalPeriodSchema = z
@@ -130,3 +163,21 @@ export const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 export type ListQuery = z.infer<typeof listQuerySchema>;
+
+const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'must be YYYY-MM');
+export const MAX_REPORT_MONTHS = 24;
+export const financialSummaryQuerySchema = z
+  .object({ from: yearMonth, to: yearMonth, branchId: uuid.optional() })
+  .refine((v) => v.from <= v.to, { message: 'from must not be after to', path: ['to'] })
+  .refine((v) => monthsBetween(v.from, v.to) <= MAX_REPORT_MONTHS, {
+    message: `at most ${MAX_REPORT_MONTHS} months`,
+    path: ['to'],
+  });
+export type FinancialSummaryQuery = z.infer<typeof financialSummaryQuerySchema>;
+
+/** Inclusive number of calendar months between two YYYY-MM values. */
+export function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split('-').map(Number) as [number, number];
+  const [ty, tm] = to.split('-').map(Number) as [number, number];
+  return (ty - fy) * 12 + (tm - fm) + 1;
+}

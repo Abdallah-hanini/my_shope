@@ -1,45 +1,84 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
 
+/* Class-based dark variant so the user's theme choice (data-theme) wins over the OS setting. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* AUTO360 tokens — mirror packages/design-tokens (contrast verified there). */
 :root {
-  --color-background: #f7f8fa;
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-text: #14171f;
-  --color-text-muted: #4a5160;
-  --color-border: #d5d9e0;
-  --color-primary: #1d4ed8;
-  --color-success: #166534;
-  --color-success-bg: #dcfce7;
-  --color-danger: #991b1b;
-  --color-danger-bg: #fee2e2;
-  --color-warning: #854d0e;
-  --color-warning-bg: #fef9c3;
-  color-scheme: light dark;
+  --color-surface-muted: #f1f5f9;
+  --color-text: #101828;
+  --color-text-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-primary: #2563eb;
+  --color-on-primary: #ffffff;
+  --color-sidebar: #101828;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-muted: #94a3b8;
+  --color-sidebar-active: #1e293b;
+  --color-success: #047857;
+  --color-success-bg: #ecfdf5;
+  --color-success-brand: #059669;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fef2f2;
+  --color-danger-brand: #dc2626;
+  --color-warning: #92400e;
+  --color-warning-bg: #fffbeb;
+  --color-warning-brand: #d97706;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.04);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #0f1117;
-    --color-surface: #171a22;
-    --color-text: #eef0f4;
-    --color-text-muted: #a9b0bd;
-    --color-border: #2c313c;
-    --color-primary: #7aa2ff;
-    --color-success: #86efac;
-    --color-success-bg: #12321f;
-    --color-danger: #fca5a5;
-    --color-danger-bg: #3a1515;
-    --color-warning: #fde68a;
-    --color-warning-bg: #3a2f0b;
-  }
+:root[data-theme='dark'] {
+  --color-background: #0b1220;
+  --color-surface: #111a2e;
+  --color-surface-muted: #162036;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-border: #1e293b;
+  --color-primary: #60a5fa;
+  --color-on-primary: #0b1220;
+  --color-sidebar: #070c17;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-muted: #94a3b8;
+  --color-sidebar-active: #16213a;
+  --color-success: #34d399;
+  --color-success-bg: #052e26;
+  --color-success-brand: #10b981;
+  --color-danger: #fca5a5;
+  --color-danger-bg: #2a0a0a;
+  --color-danger-brand: #ef4444;
+  --color-warning: #fcd34d;
+  --color-warning-bg: #2a1e05;
+  --color-warning-brand: #f59e0b;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
 }
 
+html,
 body {
   background: var(--color-background);
   color: var(--color-text);
 }
 
+body {
+  font-family: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 html[dir='rtl'] body {
-  font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+  font-family: 'IBM Plex Sans Arabic', 'Inter Variable', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 .erp-badge {
@@ -49,8 +88,9 @@ html[dir='rtl'] body {
   border-radius: 999px;
   padding-block: 0.125rem;
   padding-inline: 0.625rem;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 .erp-badge--up {
   color: var(--color-success);
@@ -66,6 +106,15 @@ html[dir='rtl'] body {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-primary);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

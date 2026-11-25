@@ -18,6 +18,7 @@ export const COMPANY_PERMISSIONS = [
   'accounting.journal.read',
   'accounting.journal.post',
   'accounting.journal.reverse',
+  'reports.financial.read',
 ] as const;
 
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];

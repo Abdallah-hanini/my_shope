@@ -1005,6 +1005,67 @@
           "audit"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/reports/financial-summary": {
+      "get": {
+        "operationId": "getFinancialSummary",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Limit to one branch",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "Last month (YYYY-MM); at most 24 months",
+            "schema": {
+              "example": "2026-12"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "First month (YYYY-MM)",
+            "schema": {
+              "example": "2026-01"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancialSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revenue, gross and net profit, expenses, cash and trends from posted journals",
+        "tags": [
+          "reporting"
+        ]
+      }
     }
   },
   "info": {
@@ -1554,6 +1615,19 @@
           "isPosting": {
             "type": "boolean",
             "description": "false = header account (groups others, cannot be posted to)"
+          },
+          "reportingClass": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank",
+              "receivable",
+              "payable",
+              "inventory",
+              "cogs"
+            ],
+            "nullable": true,
+            "description": "Reporting classification (posting accounts only; must match the type)"
           }
         },
         "required": [
@@ -1595,6 +1669,18 @@
           },
           "isPosting": {
             "type": "boolean"
+          },
+          "reportingClass": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank",
+              "receivable",
+              "payable",
+              "inventory",
+              "cogs"
+            ],
+            "nullable": true
           },
           "status": {
             "type": "string",
@@ -1968,6 +2054,212 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "FinancialTotalsDto": {
+        "type": "object",
+        "properties": {
+          "revenue": {
+            "type": "string",
+            "example": "2830.25",
+            "description": "Σ(credit − debit) on revenue accounts"
+          },
+          "cogs": {
+            "type": "string",
+            "description": "Σ(debit − credit) on expense accounts classed \"cogs\""
+          },
+          "grossProfit": {
+            "type": "string",
+            "description": "revenue − cogs"
+          },
+          "grossMarginPercent": {
+            "type": "string",
+            "nullable": true,
+            "description": "grossProfit ÷ revenue × 100, 1 decimal; null when revenue is 0"
+          },
+          "operatingExpenses": {
+            "type": "string",
+            "description": "Σ(debit − credit) on other expense accounts"
+          },
+          "netProfit": {
+            "type": "string",
+            "description": "revenue − cogs − operatingExpenses"
+          },
+          "cashAndBank": {
+            "type": "string",
+            "description": "Balance of cash and bank accounts at the end of the range (all history)"
+          },
+          "journalCount": {
+            "type": "number",
+            "description": "Posted journals in the range (including reversals)"
+          }
+        },
+        "required": [
+          "revenue",
+          "cogs",
+          "grossProfit",
+          "operatingExpenses",
+          "netProfit",
+          "cashAndBank",
+          "journalCount"
+        ]
+      },
+      "MonthlyFigureDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "revenue": {
+            "type": "string"
+          },
+          "cogs": {
+            "type": "string"
+          },
+          "operatingExpenses": {
+            "type": "string"
+          },
+          "netProfit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "revenue",
+          "cogs",
+          "operatingExpenses",
+          "netProfit"
+        ]
+      },
+      "BranchFigureDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = company-level journals"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "revenue": {
+            "type": "string"
+          },
+          "expenses": {
+            "type": "string"
+          },
+          "netProfit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "revenue",
+          "expenses",
+          "netProfit"
+        ]
+      },
+      "ReportExceptionDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "period_open_after_end",
+              "reversal_in_range",
+              "no_cash_accounts"
+            ]
+          },
+          "recordId": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "FinancialSummaryDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "example": "2026-01"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-12"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "company",
+              "branches"
+            ],
+            "description": "company = all journals; branches = only the caller’s branches"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were computed from the posted ledger"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/FinancialTotalsDto"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyFigureDto"
+            }
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchFigureDto"
+            }
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportExceptionDto"
+            }
+          }
+        },
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "scope",
+          "asOf",
+          "totals",
+          "months",
+          "branches",
+          "exceptions"
         ]
       },
       "ProblemDetailsDto": {

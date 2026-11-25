@@ -10,6 +10,7 @@ import { IamModule } from './iam/iam.module';
 import { InfraModule } from './infra/infra.module';
 import { OrgModule } from './org/org.module';
 import { PlatformModule } from './platform/platform.module';
+import { ReportingModule } from './reporting/reporting.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
@@ -44,6 +45,7 @@ export class AppModule {
         IamModule,
         AccountingModule,
         PlatformModule,
+        ReportingModule,
       ],
       providers: [{ provide: API_ENV, useValue: env }],
       exports: [API_ENV],

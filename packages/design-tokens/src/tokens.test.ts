@@ -10,6 +10,11 @@ describe('design tokens', () => {
     expect(contrastRatio(p.success, p.successBg)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(p.danger, p.dangerBg)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(p.warning, p.warningBg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.sidebarText, p.sidebar)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.sidebarText, p.sidebarActive)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.sidebarMuted, p.sidebar)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.textMuted, p.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.primary, p.surface)).toBeGreaterThanOrEqual(4.5); // links
   });
 
   it('light and dark palettes define the same tokens', () => {

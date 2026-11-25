@@ -10,6 +10,13 @@ export class CreateAccountDto {
   @ApiPropertyOptional({ format: 'uuid', nullable: true, type: String }) parentId?: string | null;
   @ApiProperty({ description: 'false = header account (groups others, cannot be posted to)' })
   isPosting!: boolean;
+  @ApiPropertyOptional({
+    enum: ['cash', 'bank', 'receivable', 'payable', 'inventory', 'cogs'],
+    nullable: true,
+    type: String,
+    description: 'Reporting classification (posting accounts only; must match the type)',
+  })
+  reportingClass?: string | null;
 }
 
 export class AccountDto {
@@ -20,6 +27,11 @@ export class AccountDto {
   @ApiProperty({ enum: ACCOUNT_TYPES }) type!: string;
   @ApiPropertyOptional({ nullable: true, type: String }) parentId!: string | null;
   @ApiProperty() isPosting!: boolean;
+  @ApiPropertyOptional({
+    enum: ['cash', 'bank', 'receivable', 'payable', 'inventory', 'cogs'],
+    nullable: true,
+  })
+  reportingClass!: string | null;
   @ApiProperty({ enum: ['active', 'inactive'] }) status!: string;
   @ApiProperty() version!: number;
 }

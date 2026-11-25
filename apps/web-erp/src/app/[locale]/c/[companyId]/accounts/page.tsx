@@ -1,10 +1,10 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
-import { accountTypes } from '@erp/validation';
+import { accountReportingClasses, accountTypes } from '@erp/validation';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
-import { Card, EmptyState, Ltr, PageHeader, Table, td, th } from '@/components/ui';
+import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, th } from '@/components/ui';
 import { accountLabel, accountTree } from '@/lib/accounts';
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
@@ -60,6 +60,19 @@ export default async function AccountsPage({
                 ],
               },
               {
+                name: 'reportingClass',
+                label: t('account.reportingClass'),
+                type: 'select',
+                hint: t('account.reportingClassHelp'),
+                options: [
+                  { value: '', label: t('account.class.none') },
+                  ...accountReportingClasses.map((c) => ({
+                    value: c,
+                    label: t(`account.class.${c}` as MessageKey),
+                  })),
+                ],
+              },
+              {
                 name: 'parentId',
                 label: t('account.parent'),
                 type: 'select',
@@ -93,6 +106,9 @@ export default async function AccountsPage({
                 <th scope="col" className={th}>
                   {t('account.kind')}
                 </th>
+                <th scope="col" className={th}>
+                  {t('account.reportingClass')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -106,6 +122,11 @@ export default async function AccountsPage({
                   <td className={`${td} ${a.isPosting ? '' : 'font-semibold'}`}>{localName(a, locale)}</td>
                   <td className={td}>{typeLabel(a.type)}</td>
                   <td className={td}>{t(a.isPosting ? 'account.posting' : 'account.header')}</td>
+                  <td className={td}>
+                    {a.reportingClass ? (
+                      <Badge tone="info">{t(`account.class.${a.reportingClass}` as MessageKey)}</Badge>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>

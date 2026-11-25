@@ -290,6 +290,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/reports/financial-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revenue, gross and net profit, expenses, cash and trends from posted journals */
+        get: operations["getFinancialSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -451,6 +468,11 @@ export interface components {
             parentId?: string | null;
             /** @description false = header account (groups others, cannot be posted to) */
             isPosting: boolean;
+            /**
+             * @description Reporting classification (posting accounts only; must match the type)
+             * @enum {string|null}
+             */
+            reportingClass?: "cash" | "bank" | "receivable" | "payable" | "inventory" | "cogs" | null;
         };
         AccountDto: {
             id: string;
@@ -461,6 +483,8 @@ export interface components {
             type: "asset" | "liability" | "equity" | "revenue" | "expense";
             parentId?: string | null;
             isPosting: boolean;
+            /** @enum {string|null} */
+            reportingClass?: "cash" | "bank" | "receivable" | "payable" | "inventory" | "cogs" | null;
             /** @enum {string} */
             status: "active" | "inactive";
             version: number;
@@ -573,6 +597,75 @@ export interface components {
         AuditEventPageDto: {
             items: components["schemas"]["AuditEventDto"][];
             nextCursor?: string | null;
+        };
+        FinancialTotalsDto: {
+            /**
+             * @description Σ(credit − debit) on revenue accounts
+             * @example 2830.25
+             */
+            revenue: string;
+            /** @description Σ(debit − credit) on expense accounts classed "cogs" */
+            cogs: string;
+            /** @description revenue − cogs */
+            grossProfit: string;
+            /** @description grossProfit ÷ revenue × 100, 1 decimal; null when revenue is 0 */
+            grossMarginPercent?: string | null;
+            /** @description Σ(debit − credit) on other expense accounts */
+            operatingExpenses: string;
+            /** @description revenue − cogs − operatingExpenses */
+            netProfit: string;
+            /** @description Balance of cash and bank accounts at the end of the range (all history) */
+            cashAndBank: string;
+            /** @description Posted journals in the range (including reversals) */
+            journalCount: number;
+        };
+        MonthlyFigureDto: {
+            /** @example 2026-11 */
+            month: string;
+            revenue: string;
+            cogs: string;
+            operatingExpenses: string;
+            netProfit: string;
+        };
+        BranchFigureDto: {
+            /** @description null = company-level journals */
+            branchId?: string | null;
+            code?: string | null;
+            name?: string | null;
+            nameAr?: string | null;
+            revenue: string;
+            expenses: string;
+            netProfit: string;
+        };
+        ReportExceptionDto: {
+            /** @enum {string} */
+            kind: "period_open_after_end" | "reversal_in_range" | "no_cash_accounts";
+            recordId?: string | null;
+            label?: string | null;
+            /** Format: date */
+            date?: string | null;
+        };
+        FinancialSummaryDto: {
+            currency: string;
+            /** @example 2026-01 */
+            from: string;
+            /** @example 2026-12 */
+            to: string;
+            branchId?: string | null;
+            /**
+             * @description company = all journals; branches = only the caller’s branches
+             * @enum {string}
+             */
+            scope: "company" | "branches";
+            /**
+             * Format: date-time
+             * @description When the figures were computed from the posted ledger
+             */
+            asOf: string;
+            totals: components["schemas"]["FinancialTotalsDto"];
+            months: components["schemas"]["MonthlyFigureDto"][];
+            branches: components["schemas"]["BranchFigureDto"][];
+            exceptions: components["schemas"]["ReportExceptionDto"][];
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -1163,6 +1256,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEventPageDto"];
+                };
+            };
+        };
+    };
+    getFinancialSummary: {
+        parameters: {
+            query: {
+                /** @description Limit to one branch */
+                branchId?: unknown;
+                /** @description Last month (YYYY-MM); at most 24 months */
+                to: unknown;
+                /** @description First month (YYYY-MM) */
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialSummaryDto"];
                 };
             };
         };

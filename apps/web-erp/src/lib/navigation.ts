@@ -1,0 +1,59 @@
+import { createTranslator, type Locale } from '@erp/localization';
+import type { SidebarGroup } from '@/components/shell/Sidebar';
+
+/** Role-filtered navigation for a company (docs/NAVIGATION_MAP.md). Server enforces access anyway. */
+export function companyNavigation(
+  locale: Locale,
+  companyId: string,
+  can: (p: string) => boolean,
+): SidebarGroup[] {
+  const t = createTranslator(locale);
+  const base = `/${locale}/c/${companyId}`;
+  const groups: SidebarGroup[] = [
+    {
+      items: [
+        {
+          href: base,
+          label: can('reports.financial.read') ? t('nav.dashboard') : t('nav.overview'),
+          icon: 'LayoutDashboard',
+        },
+      ],
+    },
+    {
+      label: t('nav.groupFinance'),
+      items: [
+        ...(can('accounting.journal.read')
+          ? [{ href: `${base}/journals`, label: t('nav.journals'), icon: 'BookText' as const }]
+          : []),
+        ...(can('accounting.account.read')
+          ? [{ href: `${base}/accounts`, label: t('nav.accounts'), icon: 'ListTree' as const }]
+          : []),
+        ...(can('accounting.period.read')
+          ? [{ href: `${base}/periods`, label: t('nav.periods'), icon: 'CalendarRange' as const }]
+          : []),
+      ],
+    },
+    {
+      label: t('nav.groupOrganization'),
+      items: can('org.branch.read')
+        ? [{ href: `${base}/branches`, label: t('nav.branches'), icon: 'Building2' }]
+        : [],
+    },
+    {
+      label: t('nav.groupAdministration'),
+      items: can('audit.read') ? [{ href: `${base}/audit`, label: t('nav.audit'), icon: 'ShieldCheck' }] : [],
+    },
+  ];
+  return groups.filter((g) => g.items.length);
+}
+
+/** Section crumb for the current path (longest matching navigation item). */
+export function sectionFor(
+  groups: SidebarGroup[],
+  path: string,
+): { href: string; label: string } | undefined {
+  const items = groups.flatMap((g) => g.items);
+  return items
+    .filter((i) => path === i.href || path.startsWith(`${i.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+}

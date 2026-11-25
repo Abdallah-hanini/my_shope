@@ -68,3 +68,14 @@ None of these block Phase 0. Each blocks the listed production features; work on
 | T-25 | Access tokens are refreshed by redirecting through `/session/refresh` (pages) or in place (server actions); sign-out is POST-only with an Origin check and also ends the Keycloak session | Server Components cannot set cookies; prevents cross-site forced sign-out | — |
 | T-26 | No `loading.tsx` in the company section | With it, Next.js 15.5 intermittently left forms on "Saving…" after a server-action redirect (about 1 run in 4 in the browser test; 4/4 clean without it) | Re-test on Next.js upgrades |
 | T-27 | Amounts are shown exactly as the API returns them (decimal strings, left-to-right digits) rather than locale-formatted | Avoids converting money to floating point for display | Add exact locale formatting later if Arabic-Indic digits are wanted |
+| T-28 | Charts keep a left-to-right time axis in Arabic too; only the legend and layout mirror | Common in Arabic financial dashboards; inverting the axis made axis labels collide with bars | Owner preference |
+| T-29 | Product brand "AUTO360" (per the UI/UX specification) in the app shell; the Keycloak realm display name stays "My Shop ERP" | Spec naming; realm text is editable in Keycloak | Owner confirms brand and logo |
+| T-30 | Fonts self-hosted through @fontsource (Inter, IBM Plex Sans Arabic) | Works offline on the shop LAN; no third-party font requests | — |
+| T-31 | Reports classify accounts only through an explicit `reporting_class` (cash, bank, receivable, payable, inventory, COGS), checked against the account type in the database | KPIs must not guess from names; the accountant controls classification (D-04) | Accountant review |
+
+## AUTO360 UI/UX specification: conflicts and scope (2026-11-25)
+
+- **Customer app (71 CUS screens):** the owner postponed it (staff-only on Wi-Fi). The catalog lists these screens as "Postponed" and keeps them in the plan.
+- **Owner demonstration mode:** the spec asks for synthetic fixtures (150 customers, 500 parts, 100 jobs…) covering workshop, inventory, procurement and POS, which do not exist yet. The charter forbids mock production functionality, so the demo will be a separate, clearly labelled environment with its own database and demo adapters, built after those modules. The suggested figures (revenue 425,000 …) are used only if the fixtures reconcile; `kpi.test.ts` checks the formulas with exactly those numbers.
+- **Global search and notification inbox** in the shell are hidden until implemented (no dead buttons).
+- **WEB-219 password recovery** needs an email (SMTP) provider decision. Until then, administrators reset passwords in Keycloak.

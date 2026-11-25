@@ -59,6 +59,7 @@ export async function createAccountAction(
     type: values.type,
     parentId: blankToUndefined(values.parentId) ?? null,
     isPosting: values.kind === 'posting',
+    reportingClass: blankToUndefined(values.reportingClass) ?? null,
   });
   if (!v.ok) return { fieldErrors: v.fieldErrors, values };
   const failed = await mutate(locale, values, async (api) => {

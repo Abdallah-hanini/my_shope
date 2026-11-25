@@ -1,5 +1,5 @@
 import { unwrap } from '@erp/api-client';
-import { createTranslator, isLocale } from '@erp/localization';
+import { createTranslator, groupDigits, isLocale } from '@erp/localization';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -83,16 +83,16 @@ export default async function JournalsPage({
                 <tr key={j.id}>
                   <td className={td}>
                     <Link href={`${base}/${j.id}`} className="font-semibold underline">
-                      <Ltr>{j.number}</Ltr>
+                      <Ltr className="whitespace-nowrap">{j.number}</Ltr>
                     </Link>
                   </td>
-                  <td className={td}>
+                  <td className={`${td} whitespace-nowrap`}>
                     <Ltr>{j.postingDate}</Ltr>
                   </td>
                   <td className={td}>{j.description}</td>
                   <td className={`${td} text-end`}>
-                    <Ltr>
-                      {j.totalDebit} {j.currency}
+                    <Ltr className="whitespace-nowrap">
+                      {groupDigits(j.totalDebit)} {j.currency}
                     </Ltr>
                   </td>
                   <td className={td}>

@@ -1,97 +1,126 @@
 import { createTranslator, getDirection, type Locale } from '@erp/localization';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { sidebarCollapsed, themePreference } from '@/lib/preferences';
 import { currentPath } from '@/lib/session';
-import { SignOutButton } from './SignOutButton';
+import { CompanySwitcher, ProfileMenu } from './shell/Menus';
+import { DesktopSidebar, MobileNav, type SidebarGroup } from './shell/Sidebar';
 
-export interface NavItem {
+export interface Crumb {
   href: string;
   label: string;
 }
 
-/** Header, navigation and main landmark for signed-in pages. */
+/**
+ * Application shell: role-filtered sidebar (desktop) / drawer (mobile), 64 px header with
+ * breadcrumbs, company switcher, language and profile menus, and the main landmark.
+ */
 export async function AppShell({
   locale,
   title,
   titleHref,
-  userLabel,
-  nav = [],
+  user,
+  groups = [],
+  crumbs = [],
+  companies = [],
+  currentCompany,
+  canCreateCompany = false,
   children,
 }: {
   locale: Locale;
   title: string;
   titleHref: string;
-  userLabel?: string;
-  nav?: NavItem[];
+  user?: { name: string; email?: string };
+  groups?: SidebarGroup[];
+  crumbs?: Crumb[];
+  companies?: { id: string; name: string; code: string }[];
+  currentCompany?: { id: string; name: string };
+  canCreateCompany?: boolean;
   children: ReactNode;
 }) {
   const t = createTranslator(locale);
   const other: Locale = locale === 'ar' ? 'en' : 'ar';
   const path = await currentPath();
   const switchHref = path.replace(/^\/(en|ar)(?=\/|$|\?)/, `/${other}`);
-  const active = path.split('?')[0] ?? path;
+  const [collapsed, theme] = await Promise.all([sidebarCollapsed(), themePreference()]);
+  const hasNav = groups.some((g) => g.items.length);
+  const trail: Crumb[] = [{ href: `/${locale}`, label: t('common.home') }, ...crumbs];
   return (
-    <div dir={getDirection(locale)} className="min-h-dvh">
+    <div dir={getDirection(locale)} className="flex min-h-dvh">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-10 focus:rounded focus:bg-[var(--color-surface)] focus:p-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded focus:bg-[var(--color-surface)] focus:p-2"
       >
         {locale === 'ar' ? 'تخطي إلى المحتوى' : 'Skip to content'}
       </a>
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 flex-col">
-            <Link href={`/${locale}`} className="text-sm text-[var(--color-text-muted)]">
-              {t('app.erp.name')}
+      {hasNav ? (
+        <DesktopSidebar
+          locale={locale}
+          groups={groups}
+          initialCollapsed={collapsed}
+          companyName={currentCompany?.name}
+        />
+      ) : null}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 backdrop-blur sm:px-6">
+          {hasNav ? <MobileNav locale={locale} groups={groups} companyName={currentCompany?.name} /> : null}
+          {!hasNav ? (
+            <Link href={`/${locale}`} className="flex items-center gap-2 font-bold" dir="ltr">
+              <span className="rounded-md bg-[var(--color-sidebar)] px-2 py-1 text-xs tracking-wide text-white">
+                AUTO360
+              </span>
             </Link>
-            <Link href={titleHref} className="truncate text-lg font-bold">
-              {title}
-            </Link>
+          ) : null}
+          <nav aria-label={t('nav.breadcrumb')} className="hidden min-w-0 flex-1 md:block">
+            <ol className="flex items-center gap-1 text-sm text-[var(--color-text-muted)]">
+              {trail.map((c, i) => (
+                <li key={`${c.href}-${i}`} className="flex min-w-0 items-center gap-1">
+                  {i > 0 ? (
+                    <ChevronRight aria-hidden size={14} className="shrink-0 rtl:-scale-x-100" />
+                  ) : null}
+                  {i === trail.length - 1 ? (
+                    <span aria-current="page" className="truncate font-medium text-[var(--color-text)]">
+                      {c.label}
+                    </span>
+                  ) : (
+                    <Link href={c.href} className="truncate hover:text-[var(--color-text)]">
+                      {c.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+          <div className="min-w-0 flex-1 truncate font-semibold md:hidden">
+            <Link href={titleHref}>{title}</Link>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {userLabel ? (
-              <span className="text-sm text-[var(--color-text-muted)]">
-                {t('auth.signedInAs')} <bdi>{userLabel}</bdi>
+          <div className="ms-auto flex items-center gap-2">
+            {user ? (
+              <span className="hidden sm:block">
+                <CompanySwitcher
+                  locale={locale}
+                  current={currentCompany}
+                  companies={companies}
+                  canCreate={canCreateCompany}
+                />
               </span>
             ) : null}
             <Link
               href={switchHref}
               hrefLang={other}
               lang={other}
-              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border)] px-3 font-semibold"
+              className="inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold"
             >
               {t('common.switchLanguage')}
             </Link>
-            {userLabel ? <SignOutButton locale={locale} /> : null}
+            {user ? <ProfileMenu locale={locale} name={user.name} email={user.email} theme={theme} /> : null}
           </div>
-        </div>
-        {nav.length ? (
-          <nav aria-label={t('nav.mainLabel')} className="mx-auto max-w-6xl overflow-x-auto px-4">
-            <ul className="flex gap-1">
-              {nav.map((n) => {
-                const current =
-                  active === n.href || (n.href !== nav[0]?.href && active.startsWith(`${n.href}/`));
-                return (
-                  <li key={n.href}>
-                    <Link
-                      href={n.href}
-                      aria-current={current ? 'page' : undefined}
-                      className={`inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-3 ${
-                        current ? 'border-[var(--color-primary)] font-semibold' : 'border-transparent'
-                      }`}
-                    >
-                      {n.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        ) : null}
-      </header>
-      <main id="main" className="mx-auto max-w-6xl px-4 py-6">
-        {children}
-      </main>
+        </header>
+        <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { AppShell } from '@/components/AppShell';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
 import { Card, Notice, PageHeader } from '@/components/ui';
-import { loadUser } from '@/lib/context';
+import { companyName, loadUser } from '@/lib/context';
 import { createCompanyAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,18 @@ export default async function NewCompanyPage({ params }: { params: Promise<{ loc
       locale={locale}
       title={t('company.new')}
       titleHref={`/${locale}/companies/new`}
-      userLabel={user.ok ? user.data.me.user.displayName : undefined}
+      user={user.ok ? { name: user.data.me.user.displayName, email: user.data.me.user.email } : undefined}
+      companies={
+        user.ok
+          ? user.data.me.companies.map((c) => ({
+              id: c.companyId,
+              name: companyName(c, locale),
+              code: c.code,
+            }))
+          : []
+      }
+      canCreateCompany
+      crumbs={[{ href: `/${locale}/companies/new`, label: t('company.new') }]}
     >
       {!user.ok ? (
         <ProblemNotice result={user} locale={locale} />

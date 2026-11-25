@@ -193,6 +193,17 @@ enum AccountType {
   @@schema("accounting")
 }
 
+enum AccountReportingClass {
+  cash
+  bank
+  receivable
+  payable
+  inventory
+  cogs
+
+  @@schema("accounting")
+}
+
 enum PeriodStatus {
   open
   closed
@@ -208,18 +219,20 @@ enum JournalSource {
 }
 
 model Account {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId String       @map("company_id") @db.Uuid
-  code      String
-  name      String
-  nameAr    String?      @map("name_ar")
-  type      AccountType
-  parentId  String?      @map("parent_id") @db.Uuid
-  isPosting Boolean      @map("is_posting")
-  status    RecordStatus @default(active)
-  version   Int          @default(1)
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String                 @map("company_id") @db.Uuid
+  code           String
+  name           String
+  nameAr         String?                @map("name_ar")
+  type           AccountType
+  parentId       String?                @map("parent_id") @db.Uuid
+  isPosting      Boolean                @map("is_posting")
+  /// Explicit classification used by reports (cash position, gross profit); null = none.
+  reportingClass AccountReportingClass? @map("reporting_class")
+  status         RecordStatus           @default(active)
+  version        Int                    @default(1)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   company  Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
   parent   Account?      @relation("hierarchy", fields: [companyId, parentId], references: [companyId, id], onDelete: Restrict)

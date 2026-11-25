@@ -192,7 +192,8 @@ async function main() {
       });
       assert(completed.password && completed.totp, JSON.stringify(completed));
       await page.getByRole('heading', { name: 'Choose a company' }).waitFor();
-      assert(await page.getByText('E2E Owner').count(), 'user name not shown');
+      // The signed-in user is named in the profile button's accessible label.
+      await page.getByRole('button', { name: 'Profile and settings: E2E Owner' }).waitFor();
     });
 
     await check('Session cookie is httpOnly and not readable by page scripts', async () => {
@@ -218,7 +219,9 @@ async function main() {
         page.getByRole('button', { name: 'Create company' }).click(),
       ]);
       companyId = page.url().split('/c/')[1];
-      await page.getByRole('heading', { name: `${code} Auto Parts W.L.L.` }).waitFor();
+      // The company opens on the executive dashboard (WEB-001).
+      await page.getByRole('heading', { name: 'Executive overview' }).waitFor();
+      await page.getByRole('navigation', { name: 'Main navigation' }).waitFor();
     });
 
     const base = () => `${WEB}/en/c/${companyId}`;
@@ -378,6 +381,21 @@ async function main() {
       await page.getByRole('cell', { name: 'Month end' }).waitFor();
     });
 
+    await check('Executive dashboard shows ledger-based KPIs and exceptions', async () => {
+      await page.goto(`${base()}?from=2026-11&to=2026-11`);
+      await page.getByRole('heading', { name: 'Executive overview' }).waitFor();
+      const kpis = await page.getByRole('region', { name: 'Executive overview' }).innerText();
+      // November holds a capital injection (cash vs equity) and its reversal: no P&L effect.
+      assert(/Revenue[\s\S]*0\.00/.test(kpis), kpis);
+      assert(/Journals posted\s*2/.test(kpis), kpis);
+      const exceptions = await page.locator('#exceptions-title').locator('xpath=../..').innerText();
+      assert(/No account is marked as cash or bank/.test(exceptions), exceptions);
+      assert(/Journal reversed in this period/.test(exceptions), exceptions);
+      await page.getByText('Show data as a table').click();
+      await page.getByRole('rowheader', { name: '2026-11' }).waitFor();
+      await shot('dashboard-en');
+    });
+
     await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
@@ -392,7 +410,8 @@ async function main() {
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);
-          await page.getByRole('navigation', { name: 'التنقل الرئيسي' }).waitFor();
+          // On phones the sidebar becomes a drawer behind the menu button.
+          await page.getByRole('button', { name: 'فتح القائمة' }).waitFor();
           const overflow = await page.evaluate(
             () => document.documentElement.scrollWidth - window.innerWidth,
           );
@@ -400,7 +419,11 @@ async function main() {
           if (path === 'journals/new') await shot('journal-new-ar-phone');
           if (path === `journals/${journalId}`) await shot('journal-detail-ar-phone');
         }
-        await page.getByRole('link', { name: 'القيود' }).waitFor();
+        await page.getByRole('button', { name: 'فتح القائمة' }).click();
+        const drawer = page.getByRole('dialog');
+        await drawer.getByRole('navigation', { name: 'التنقل الرئيسي' }).waitFor();
+        await drawer.getByRole('link', { name: 'القيود' }).waitFor();
+        await page.keyboard.press('Escape');
         await page.setViewportSize({ width: 1280, height: 900 });
       },
     );
@@ -415,6 +438,7 @@ async function main() {
 
     await check('Sign out ends the ERP and the Keycloak session', async () => {
       await page.goto(`${WEB}/en/c/${companyId}`);
+      await page.getByRole('button', { name: /^Profile and settings/ }).click();
       await Promise.all([
         page.waitForURL((u) => u.toString().startsWith(WEB) && !u.toString().includes('/c/')),
         page.getByRole('button', { name: 'Sign out' }).click(),

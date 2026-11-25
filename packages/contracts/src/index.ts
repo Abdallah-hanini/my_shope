@@ -20,6 +20,7 @@ export type JournalLine = Schemas['JournalLineDto'];
 export type JournalPage = Schemas['JournalPageDto'];
 export type AuditEvent = Schemas['AuditEventDto'];
 export type AuditEventPage = Schemas['AuditEventPageDto'];
+export type FinancialSummary = Schemas['FinancialSummaryDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

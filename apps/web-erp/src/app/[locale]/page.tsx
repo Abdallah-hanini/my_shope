@@ -61,9 +61,19 @@ export default async function HomePage({
   return (
     <AppShell
       locale={locale}
-      title={t('app.erp.name')}
+      title={t('app.brand')}
       titleHref={`/${locale}`}
-      userLabel={user?.ok ? user.data.me.user.displayName : session ? '—' : undefined}
+      user={user?.ok ? { name: user.data.me.user.displayName, email: user.data.me.user.email } : undefined}
+      companies={
+        user?.ok
+          ? user.data.me.companies.map((c) => ({
+              id: c.companyId,
+              name: companyName(c, locale),
+              code: c.code,
+            }))
+          : []
+      }
+      canCreateCompany={user?.ok ? user.data.me.user.isPlatformAdmin : false}
     >
       <div className="flex flex-col gap-6">
         {signinError ? <Notice tone="danger">{t(signinError)}</Notice> : null}

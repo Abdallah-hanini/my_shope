@@ -1,5 +1,5 @@
 import { unwrap } from '@erp/api-client';
-import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
+import { createTranslator, formatDateTime, groupDigits, isLocale } from '@erp/localization';
 import { randomUUID } from 'node:crypto';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -114,10 +114,10 @@ export default async function JournalPage({
                 </td>
                 <td className={td}>{l.description ?? ''}</td>
                 <td className={`${td} text-end`}>
-                  <Ltr>{l.debit}</Ltr>
+                  <Ltr>{groupDigits(l.debit)}</Ltr>
                 </td>
                 <td className={`${td} text-end`}>
-                  <Ltr>{l.credit}</Ltr>
+                  <Ltr>{groupDigits(l.credit)}</Ltr>
                 </td>
               </tr>
             ))}
@@ -128,10 +128,10 @@ export default async function JournalPage({
                 {t('common.total')} (<Ltr>{j.currency}</Ltr>)
               </th>
               <td className={`${td} text-end font-semibold`}>
-                <Ltr>{j.totalDebit}</Ltr>
+                <Ltr>{groupDigits(j.totalDebit)}</Ltr>
               </td>
               <td className={`${td} text-end font-semibold`}>
-                <Ltr>{j.totalCredit}</Ltr>
+                <Ltr>{groupDigits(j.totalCredit)}</Ltr>
               </td>
             </tr>
           </tfoot>

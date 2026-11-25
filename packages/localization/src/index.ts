@@ -38,3 +38,15 @@ export function formatDateTime(locale: Locale, value: Date | string, timeZone?: 
     ...(timeZone ? { timeZone } : {}),
   }).format(date);
 }
+
+/**
+ * Adds thousands separators to an exact decimal string ("50000.00" → "50,000.00", "-1234.5" →
+ * "-1,234.5") without converting to a number, so no value can lose precision. Digits stay
+ * Western in both languages (docs/DECISIONS.md T-27).
+ */
+export function groupDigits(value: string): string {
+  const m = /^(-?)(\d+)(\.\d+)?$/.exec(value.trim());
+  if (!m) return value;
+  const [, sign, int, frac = ''] = m;
+  return `${sign}${(int as string).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${frac}`;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { createTranslator, type Locale } from '@erp/localization';
+import { createTranslator, groupDigits, type Locale } from '@erp/localization';
 import { formatMinorUnits, MONEY_PATTERN, toMinorUnits } from '@erp/validation';
 import { useActionState, useMemo, useState } from 'react';
 import type { FormState } from '@/lib/form-state';
@@ -239,20 +239,21 @@ export function JournalForm({
         <span>
           {t('journal.debit')}:{' '}
           <Ltr>
-            {formatMinorUnits(totals.debit, scale)} {currency}
+            {groupDigits(formatMinorUnits(totals.debit, scale))} {currency}
           </Ltr>
         </span>
         <span>
           {t('journal.credit')}:{' '}
           <Ltr>
-            {formatMinorUnits(totals.credit, scale)} {currency}
+            {groupDigits(formatMinorUnits(totals.credit, scale))} {currency}
           </Ltr>
         </span>
         {balanced ? (
           <span className="erp-badge erp-badge--up">✓ {t('journal.balanced')}</span>
         ) : (
           <span className="erp-badge erp-badge--down">
-            {t('journal.unbalanced')} <Ltr>{formatMinorUnits(totals.debit - totals.credit, scale)}</Ltr>
+            {t('journal.unbalanced')}{' '}
+            <Ltr>{groupDigits(formatMinorUnits(totals.debit - totals.credit, scale))}</Ltr>
           </span>
         )}
       </div>
