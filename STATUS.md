@@ -41,7 +41,7 @@
 | `pnpm --filter @erp/worker test:integration` | ✅ 2/2: heartbeat processed, unknown job fails |
 | `pnpm test:smoke` | ✅ 10/10: API live/ready, docs off in production, worker ready with heartbeat, web `/healthz`, locale redirect, `/en` and `/ar` at 1280 px and 390 px in Chromium (correct `dir`/`lang`, live status, no horizontal scroll, no page errors) |
 | `expo install --check` (both apps) | ✅ "Dependencies are up to date". The check ran offline against Expo's bundled SDK 54 map, so treat it as indicative |
-| `pnpm contracts:check` | ⚠️ exit 0, but run before the first commit, so the untracked files were not really compared. Re-run after commit (see below) |
+| `pnpm contracts:check` (after commit) | ✅ exit 0 when current. Negative check: editing a DTO description made it exit 1 (drift detected), and it returned to exit 0 after reverting |
 | Parent repo `npm test` (profile site) | ✅ 11/11. The existing site is unaffected |
 
 ### Not tested / not done
