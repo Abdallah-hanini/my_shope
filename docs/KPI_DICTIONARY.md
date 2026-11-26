@@ -34,4 +34,29 @@ Reconciliation, enforced by tests in `apps/api/test/reporting.int.test.ts`:
 - The sum of monthly figures equals the totals.
 - Cash carries forward across empty months.
 
+## Ledger reports (WEB-122 trial balance, WEB-100 general ledger)
+
+Code: `apps/api/src/reporting/ledger.ts` (pure arithmetic, unit-tested) and `ledger.service.ts`. Same view, scope, branch and freshness rules as above, with **day** ranges (`from`/`to` are dates, at most 3 years).
+
+| Figure | Definition |
+|---|---|
+| Balance (signed) | Σ(debit − credit). Positive = debit balance ("Dr"), negative = credit balance ("Cr") |
+| Opening | Balance of all posted lines **before** `from` (all history) |
+| Period debit / credit | Σ debit and Σ credit of lines from `from` to `to` |
+| Closing | Opening + period debit − period credit |
+| Header account | Sum of its descendants; never counted in totals (header accounts cannot hold lines) |
+| Totals | Posting accounts only. Debit totals add positive balances, credit totals add negative ones |
+| Balanced | Opening, period and closing debit totals equal the credit totals. Shown as a red warning, never hidden, if not |
+| Period result | Net profit formula above applied to the period movements |
+| Running balance (GL) | Opening + Σ(debit − credit) of the lines up to and including this one, in (posting date, journal number, line number) order. Page 2+ starts from the balance brought forward |
+| Line description | The line's own text, else the journal description |
+
+Year-end closing is not set up (no transfer of revenue and expense to retained earnings), so revenue and expense balances accumulate from the first journal. The trial balance says so on screen (T-37).
+
+Reconciliation, enforced by `apps/api/test/reporting.int.test.ts`:
+- The trial balance period result equals the dashboard net profit for the same months.
+- Closing balances of one range are the openings of the next.
+- A branch trial balance balances on its own, because every journal belongs to one branch.
+- General ledger pages chain: page 2's brought-forward equals page 1's last balance.
+
 The other REPORTING.md KPIs (stock turnover, utilisation, first-time fix, AR ageing) are defined here when their modules exist.

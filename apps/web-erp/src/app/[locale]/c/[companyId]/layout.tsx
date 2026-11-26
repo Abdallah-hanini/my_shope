@@ -4,8 +4,7 @@ import type { ReactNode } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { companyName, loadCompany } from '@/lib/context';
-import { companyNavigation, sectionFor } from '@/lib/navigation';
-import { currentPath } from '@/lib/session';
+import { companyNavigation } from '@/lib/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,8 +30,6 @@ export default async function CompanyLayout({
   const name = companyName(company, locale);
   const base = `/${locale}/c/${companyId}`;
   const groups = companyNavigation(locale, companyId, can);
-  const path = (await currentPath()).split('?')[0] ?? '';
-  const section = path === base ? undefined : sectionFor(groups, path);
   return (
     <AppShell
       locale={locale}
@@ -40,7 +37,8 @@ export default async function CompanyLayout({
       titleHref={base}
       user={{ name: me.user.displayName, email: me.user.email }}
       groups={groups}
-      crumbs={[{ href: base, label: name }, ...(section ? [section] : [])]}
+      crumbs={[{ href: base, label: name }]}
+      sectionBase={base}
       companies={me.companies.map((c) => ({ id: c.companyId, name: companyName(c, locale), code: c.code }))}
       currentCompany={{ id: company.id, name }}
       canCreateCompany={me.user.isPlatformAdmin}

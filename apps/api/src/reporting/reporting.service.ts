@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { FinancialSummaryQuery } from '@erp/validation';
 import type { CompanyScope } from '../auth/principal';
-import { forbidden, unprocessable } from '../common/errors';
 import { PrismaService } from '../infra/prisma.service';
 import { formatMoney } from '../accounting/money';
+import { ledgerBranchFilter } from './report-scope';
 import type { FinancialSummaryDto } from './reporting.dto';
 import {
   grossMarginPercent,
@@ -28,21 +28,9 @@ export class ReportingService {
    */
   async financialSummary(scope: CompanyScope, q: FinancialSummaryQuery): Promise<FinancialSummaryDto> {
     const company = await this.prisma.company.findUniqueOrThrow({ where: { id: scope.companyId } });
-    if (q.branchId) {
-      const branch = await this.prisma.branch.findUnique({
-        where: { companyId_id: { companyId: scope.companyId, id: q.branchId } },
-      });
-      if (!branch) throw unprocessable('branchId is not a branch of this company');
-      if (!scope.allBranches && !scope.branchIds.includes(q.branchId))
-        throw forbidden('Branch is outside your reporting scope');
-    }
     const fromDate = `${q.from}-01`;
     const toDate = lastDayOfMonth(q.to);
-    const branchFilter = q.branchId
-      ? Prisma.sql`AND branch_id = ${q.branchId}::uuid`
-      : scope.allBranches
-        ? Prisma.empty
-        : Prisma.sql`AND branch_id = ANY(${scope.branchIds}::uuid[])`;
+    const branchFilter = await ledgerBranchFilter(this.prisma, scope, q.branchId);
 
     const sums = Prisma.sql`
       coalesce(sum(credit - debit) FILTER (WHERE account_type = 'revenue'), 0) AS revenue,

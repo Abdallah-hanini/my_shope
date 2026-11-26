@@ -28,6 +28,12 @@ export function companyNavigation(
         ...(can('accounting.account.read')
           ? [{ href: `${base}/accounts`, label: t('nav.accounts'), icon: 'ListTree' as const }]
           : []),
+        ...(can('accounting.journal.read')
+          ? [{ href: `${base}/ledger`, label: t('nav.generalLedger'), icon: 'BookOpen' as const }]
+          : []),
+        ...(can('reports.financial.read')
+          ? [{ href: `${base}/trial-balance`, label: t('nav.trialBalance'), icon: 'Scale' as const }]
+          : []),
         ...(can('accounting.period.read')
           ? [{ href: `${base}/periods`, label: t('nav.periods'), icon: 'CalendarRange' as const }]
           : []),

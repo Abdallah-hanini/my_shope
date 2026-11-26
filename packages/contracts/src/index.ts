@@ -23,6 +23,8 @@ export type AuditEventPage = Schemas['AuditEventPageDto'];
 export type FinancialSummary = Schemas['FinancialSummaryDto'];
 export type StaffMember = Schemas['StaffMemberDto'];
 export type StaffCreated = Schemas['StaffCreatedDto'];
+export type TrialBalance = Schemas['TrialBalanceDto'];
+export type GeneralLedger = Schemas['GeneralLedgerDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

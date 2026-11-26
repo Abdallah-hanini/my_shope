@@ -137,7 +137,7 @@ Counts are summarised at the end.
 |---|---|---|---|---|---|---|
 | WEB-098 | Finance dashboard | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
 | WEB-099 | Chart of accounts | ACC-001 | 1 | Implemented | /[locale]/c/[id]/accounts | e2e "Build a chart of accounts…" |
-| WEB-100 | General ledger | ACC-002 | 1 | Next | — | — |
+| WEB-100 | General ledger | ACC-002 | 1 | Implemented — one posting account, opening/running/closing balance, keyset pages, drill to journal, branch filter | /[locale]/c/[id]/ledger | e2e "Drill down", "General ledger without an account"; reporting.int GL tests |
 | WEB-101 | Journal entries | ACC-002 | 1 | Implemented | /[locale]/c/[id]/journals | e2e "Journal list…" |
 | WEB-102 | Create journal voucher | ACC-002 | 1 | Implemented | /[locale]/c/[id]/journals/new | e2e "Journal form…", "Post a balanced journal…" |
 | WEB-103 | Journal reversal | ACC-002 | 1 | Implemented | /[locale]/c/[id]/journals/[journalId] (reverse) | e2e "Reverse the journal…" |
@@ -159,7 +159,7 @@ Counts are summarised at the end.
 | WEB-119 | Cost centers | ACC-009 | 1 | Planned | — | — |
 | WEB-120 | Budget management | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
 | WEB-121 | Budget versus actual | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
-| WEB-122 | Trial balance | ACC-016, REPORTING | 1 | Next | — | — |
+| WEB-122 | Trial balance | ACC-016, REPORTING | 1 | Implemented — opening, period debit/credit, closing; header roll-up; balanced check; period result; branch filter; drill to ledger. No export yet (WEB-205) | /[locale]/c/[id]/trial-balance | e2e "Trial balance"; reporting.int TB tests (hand-calculated) |
 | WEB-123 | Profit and loss | ACC-016 | 5 | Planned | — | — |
 | WEB-124 | Balance sheet | ACC-016 | 5 | Planned | — | — |
 | WEB-125 | Cash flow statement | ACC-016 | 5 | Planned | — | — |
@@ -463,8 +463,8 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 10 |
-| Next | 3 |
+| Implemented | 12 |
+| Next | 1 |
 | Partial | 6 |
 | Planned | 289 |
 | Postponed | 70 |

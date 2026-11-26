@@ -175,6 +175,44 @@ export const financialSummaryQuerySchema = z
   });
 export type FinancialSummaryQuery = z.infer<typeof financialSummaryQuerySchema>;
 
+/** Longest date range for the trial balance and general ledger (keeps queries bounded). */
+export const MAX_LEDGER_RANGE_DAYS = 3 * 366;
+const ledgerRange = z.object({ from: isoDate, to: isoDate, branchId: uuid.optional() });
+type Range = { from: string; to: string };
+const rangeOrdered: [(v: Range) => boolean, { message: string; path: string[] }] = [
+  (v) => v.from <= v.to,
+  { message: 'from must not be after to', path: ['to'] },
+];
+const rangeBounded: [(v: Range) => boolean, { message: string; path: string[] }] = [
+  (v) => (Date.parse(v.to) - Date.parse(v.from)) / 86_400_000 < MAX_LEDGER_RANGE_DAYS,
+  { message: 'at most 3 years', path: ['to'] },
+];
+const queryBool = z
+  .enum(['true', 'false'])
+  .optional()
+  .transform((v) => v === 'true');
+
+/** WEB-122. Opening balances are all history before `from`. */
+export const trialBalanceQuerySchema = ledgerRange
+  .extend({ includeZero: queryBool })
+  .refine(...rangeOrdered)
+  .refine(...rangeBounded);
+export type TrialBalanceQuery = z.infer<typeof trialBalanceQuerySchema>;
+
+/** WEB-100. One posting account; keyset pagination by `cursor` (opaque). */
+export const generalLedgerQuerySchema = ledgerRange
+  .extend({
+    accountId: uuid,
+    cursor: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,200}$/, 'invalid cursor')
+      .optional(),
+    limit: z.coerce.number().int().min(1).max(500).default(200),
+  })
+  .refine(...rangeOrdered)
+  .refine(...rangeBounded);
+export type GeneralLedgerQuery = z.infer<typeof generalLedgerQuerySchema>;
+
 /** Inclusive number of calendar months between two YYYY-MM values. */
 export function monthsBetween(from: string, to: string): number {
   const [fy, fm] = from.split('-').map(Number) as [number, number];

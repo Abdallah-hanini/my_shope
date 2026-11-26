@@ -400,6 +400,64 @@ async function main() {
       await shot('dashboard-en');
     });
 
+    const nov = 'from=2026-11-01&to=2026-11-30';
+    await check('Trial balance: chart order, header roll-up, balanced totals, period result', async () => {
+      await page.goto(`${base()}/trial-balance?${nov}`);
+      await page.getByRole('heading', { name: 'Trial balance' }).waitFor();
+      await page.getByText('Balanced: total debits equal total credits').waitFor();
+      const rows = await page.locator('tbody tr').allInnerTexts();
+      // Header "1 Assets" first, then its child "1100 Cash", then "3100 Owner capital".
+      assert(
+        /^1\s*Assets/.test(rows[0]) && /1100\s*Cash/.test(rows[1]) && /3100/.test(rows[2]),
+        rows.join(' | '),
+      );
+      assert(/100\.10[\s\S]*100\.10/.test(rows[0]), `header roll-up: ${rows[0]}`);
+      const foot = await page.locator('tfoot').innerText();
+      assert((foot.match(/200\.20/g) ?? []).length === 2, foot);
+      assert((await page.getByTestId('period-result').innerText()).includes('0.00'), 'period result');
+      await shot('trial-balance-en');
+    });
+
+    await check('Drill down: trial balance → general ledger → journal', async () => {
+      await Promise.all([
+        page.waitForURL(/\/ledger\?account=[0-9a-f-]{36}&from=2026-11-01&to=2026-11-30$/),
+        page.getByRole('link', { name: 'Open the general ledger for 1100 Cash' }).click(),
+      ]);
+      await page.getByRole('heading', { name: '1100 — Cash' }).waitFor();
+      // After in-app navigation the header must follow the URL (layouts are not re-rendered).
+      const crumb = page.getByRole('navigation', { name: 'Breadcrumb' }).locator('[aria-current=page]');
+      assert((await crumb.innerText()) === 'General ledger', `breadcrumb: ${await crumb.innerText()}`);
+      const ar = await page.getByRole('link', { name: 'العربية' }).getAttribute('href');
+      assert(/^\/ar\/c\/[0-9a-f-]{36}\/ledger\?account=/.test(ar), `language switch: ${ar}`);
+      const lines = await page.locator('tbody tr').allInnerTexts();
+      assert(/Opening balance[\s\S]*0\.00/.test(lines[0]), lines[0]);
+      assert(/JV-2026-000001[\s\S]*100\.10[\s\S]*100\.10\s*Dr/.test(lines[1]), lines[1]);
+      assert(/JV-2026-000002[\s\S]*100\.10[\s\S]*0\.00$/.test(lines[2].trim()), lines[2]);
+      assert(/Closing balance\s*0\.00/.test(await page.locator('tfoot').innerText()), 'closing');
+      await shot('general-ledger-en');
+      await Promise.all([
+        page.waitForURL(/\/journals\/[0-9a-f-]{36}$/),
+        page.getByRole('link', { name: 'JV-2026-000001' }).click(),
+      ]);
+      await page.getByRole('heading', { name: /JV-2026-000001/ }).waitFor();
+    });
+
+    await check(
+      'General ledger without an account asks for one; header accounts are not offered',
+      async () => {
+        await page.goto(`${base()}/ledger`);
+        await page.getByText('Choose an account, or open one from the trial balance.').waitFor();
+        const options = await page.locator('#f-account option').allInnerTexts();
+        assert(!options.some((o) => /^1 — /.test(o)), `header offered: ${options}`);
+        await page.locator('#f-account').selectOption({ label: '3100 — Owner capital' });
+        await page.getByLabel('From').fill('2026-11-01');
+        await page.getByLabel('To').fill('2026-11-30');
+        await Promise.all([page.waitForURL(/account=/), page.getByRole('button', { name: 'Apply' }).click()]);
+        await page.getByRole('heading', { name: '3100 — Owner capital' }).waitFor();
+        assert(/100\.10\s*Cr/.test(await page.locator('tbody').innerText()), 'credit balance not shown');
+      },
+    );
+
     await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
@@ -411,6 +469,8 @@ async function main() {
           'accounts',
           'periods',
           'audit',
+          `trial-balance?${nov}`,
+          'ledger',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);
@@ -422,6 +482,7 @@ async function main() {
           assert(overflow <= 0, `${path}: horizontal scroll of ${overflow}px`);
           if (path === 'journals/new') await shot('journal-new-ar-phone');
           if (path === `journals/${journalId}`) await shot('journal-detail-ar-phone');
+          if (path.startsWith('trial-balance')) await shot('trial-balance-ar-phone');
         }
         await page.getByRole('button', { name: 'فتح القائمة' }).click();
         const drawer = page.getByRole('dialog');
@@ -515,6 +576,11 @@ async function main() {
       await nav.getByRole('link', { name: 'Journals' }).waitFor();
       assert((await nav.getByRole('link', { name: 'Users' }).count()) === 0, 'Users link shown');
       assert((await nav.getByRole('link', { name: 'Branches' }).count()) === 0, 'Branches link shown');
+      await nav.getByRole('link', { name: 'General ledger' }).waitFor();
+      assert(
+        (await nav.getByRole('link', { name: 'Trial balance' }).count()) === 0,
+        'Trial balance link shown',
+      );
       await staffPage.goto(`${base()}/users`);
       await staffPage.getByText('You do not have permission for this.').waitFor();
     });

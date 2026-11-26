@@ -394,6 +394,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/reports/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opening, period movements and closing balance per account, from posted journals */
+        get: operations["getTrialBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/general-ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Posted lines of one account with opening, running and closing balance */
+        get: operations["getGeneralLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -814,6 +848,101 @@ export interface components {
             months: components["schemas"]["MonthlyFigureDto"][];
             branches: components["schemas"]["BranchFigureDto"][];
             exceptions: components["schemas"]["ReportExceptionDto"][];
+        };
+        LedgerAccountDto: {
+            id: string;
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            /** @enum {string} */
+            type: "asset" | "liability" | "equity" | "revenue" | "expense";
+            isPosting: boolean;
+            /** @enum {string} */
+            status: "active" | "inactive";
+        };
+        TrialBalanceRowDto: {
+            account: components["schemas"]["LedgerAccountDto"];
+            /** @description Depth in the chart of accounts (0 = top level) */
+            level: number;
+            /** @description Balance before "from". Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            opening: string;
+            periodDebit: string;
+            periodCredit: string;
+            /** @description opening + periodDebit − periodCredit. Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            closing: string;
+        };
+        TrialBalanceTotalsDto: {
+            openingDebit: string;
+            openingCredit: string;
+            periodDebit: string;
+            periodCredit: string;
+            closingDebit: string;
+            closingCredit: string;
+        };
+        TrialBalanceDto: {
+            currency: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /** @enum {string} */
+            scope: "company" | "branches";
+            /**
+             * Format: date-time
+             * @description When the figures were read from the posted ledger
+             */
+            asOf: string;
+            /** @description Chart order; header accounts show the sum of their descendants */
+            rows: components["schemas"]["TrialBalanceRowDto"][];
+            /** @description Posting accounts only */
+            totals: components["schemas"]["TrialBalanceTotalsDto"];
+            /** @description Debits equal credits for opening, period and closing */
+            balanced: boolean;
+            /** @description Revenue − COGS − operating expenses in the range (same formula as the dashboard) */
+            periodResult: string;
+        };
+        GeneralLedgerLineDto: {
+            lineId: string;
+            journalId: string;
+            journalNumber: string;
+            /** Format: date */
+            postingDate: string;
+            /** @enum {string} */
+            sourceType: "manual" | "reversal";
+            description: string;
+            debit: string;
+            credit: string;
+            /** @description Running balance after this line. Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            balance: string;
+        };
+        GeneralLedgerDto: {
+            currency: string;
+            account: components["schemas"]["LedgerAccountDto"];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /** @enum {string} */
+            scope: "company" | "branches";
+            /** Format: date-time */
+            asOf: string;
+            /** @description Balance before "from". Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            opening: string;
+            /** @description Whole range, not just this page */
+            periodDebit: string;
+            /** @description Whole range, not just this page */
+            periodCredit: string;
+            /** @description Balance at the end of "to". Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            closing: string;
+            /** @description Number of lines in the whole range */
+            lineCount: number;
+            /** @description Balance before the first line of this page. Signed amount in the company currency: positive = debit balance, negative = credit balance */
+            pageOpening: string;
+            lines: components["schemas"]["GeneralLedgerLineDto"][];
+            /** @description Pass as "cursor" for the next page */
+            nextCursor?: string | null;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -1594,6 +1723,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FinancialSummaryDto"];
+                };
+            };
+        };
+    };
+    getTrialBalance: {
+        parameters: {
+            query: {
+                /** @description Show accounts without activity */
+                includeZero?: "true" | "false";
+                /** @description Limit to one branch */
+                branchId?: unknown;
+                /** @description Last day (YYYY-MM-DD); at most 3 years */
+                to: unknown;
+                /** @description First day (YYYY-MM-DD) */
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialBalanceDto"];
+                };
+            };
+        };
+    };
+    getGeneralLedger: {
+        parameters: {
+            query: {
+                /** @description 1–500, default 200 */
+                limit?: unknown;
+                /** @description nextCursor of the previous page */
+                cursor?: unknown;
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+                /** @description A posting account */
+                accountId: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeneralLedgerDto"];
                 };
             };
         };

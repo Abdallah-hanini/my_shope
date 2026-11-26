@@ -1,16 +1,13 @@
 import { createTranslator, getDirection, type Locale } from '@erp/localization';
-import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { sidebarCollapsed, themePreference } from '@/lib/preferences';
 import { currentPath } from '@/lib/session';
+import { Breadcrumbs, LanguageSwitch, type Crumb } from './shell/HeaderLinks';
 import { CompanySwitcher, ProfileMenu } from './shell/Menus';
 import { DesktopSidebar, MobileNav, type SidebarGroup } from './shell/Sidebar';
 
-export interface Crumb {
-  href: string;
-  label: string;
-}
+export type { Crumb };
 
 /**
  * Application shell: role-filtered sidebar (desktop) / drawer (mobile), 64 px header with
@@ -23,6 +20,7 @@ export async function AppShell({
   user,
   groups = [],
   crumbs = [],
+  sectionBase,
   companies = [],
   currentCompany,
   canCreateCompany = false,
@@ -34,6 +32,8 @@ export async function AppShell({
   user?: { name: string; email?: string };
   groups?: SidebarGroup[];
   crumbs?: Crumb[];
+  /** Company home path; the current section crumb is then derived from the URL. */
+  sectionBase?: string;
   companies?: { id: string; name: string; code: string }[];
   currentCompany?: { id: string; name: string };
   canCreateCompany?: boolean;
@@ -72,26 +72,7 @@ export async function AppShell({
               </span>
             </Link>
           ) : null}
-          <nav aria-label={t('nav.breadcrumb')} className="hidden min-w-0 flex-1 md:block">
-            <ol className="flex items-center gap-1 text-sm text-[var(--color-text-muted)]">
-              {trail.map((c, i) => (
-                <li key={`${c.href}-${i}`} className="flex min-w-0 items-center gap-1">
-                  {i > 0 ? (
-                    <ChevronRight aria-hidden size={14} className="shrink-0 rtl:-scale-x-100" />
-                  ) : null}
-                  {i === trail.length - 1 ? (
-                    <span aria-current="page" className="truncate font-medium text-[var(--color-text)]">
-                      {c.label}
-                    </span>
-                  ) : (
-                    <Link href={c.href} className="truncate hover:text-[var(--color-text)]">
-                      {c.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </nav>
+          <Breadcrumbs locale={locale} trail={trail} sectionBase={sectionBase} groups={groups} />
           <div className="min-w-0 flex-1 truncate font-semibold md:hidden">
             <Link href={titleHref}>{title}</Link>
           </div>
@@ -106,14 +87,20 @@ export async function AppShell({
                 />
               </span>
             ) : null}
-            <Link
-              href={switchHref}
-              hrefLang={other}
-              lang={other}
-              className="inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold"
+            <Suspense
+              fallback={
+                <Link
+                  href={switchHref}
+                  hrefLang={other}
+                  lang={other}
+                  className="inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold"
+                >
+                  {t('common.switchLanguage')}
+                </Link>
+              }
             >
-              {t('common.switchLanguage')}
-            </Link>
+              <LanguageSwitch locale={locale} />
+            </Suspense>
             {user ? <ProfileMenu locale={locale} name={user.name} email={user.email} theme={theme} /> : null}
           </div>
         </header>

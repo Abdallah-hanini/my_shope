@@ -1,6 +1,7 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import { accountReportingClasses, accountTypes } from '@erp/validation';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
@@ -119,7 +120,18 @@ export default async function AccountsPage({
                       <Ltr className={a.isPosting ? '' : 'font-semibold'}>{a.code}</Ltr>
                     </span>
                   </td>
-                  <td className={`${td} ${a.isPosting ? '' : 'font-semibold'}`}>{localName(a, locale)}</td>
+                  <td className={`${td} ${a.isPosting ? '' : 'font-semibold'}`}>
+                    {a.isPosting && can('accounting.journal.read') ? (
+                      <Link
+                        href={`/${locale}/c/${companyId}/ledger?account=${a.id}`}
+                        className="text-[var(--color-primary)] hover:underline"
+                      >
+                        {localName(a, locale)}
+                      </Link>
+                    ) : (
+                      localName(a, locale)
+                    )}
+                  </td>
                   <td className={td}>{typeLabel(a.type)}</td>
                   <td className={td}>{t(a.isPosting ? 'account.posting' : 'account.header')}</td>
                   <td className={td}>

@@ -324,3 +324,181 @@ describe('reporting classification rules', () => {
     expect(roles.every((r) => r.permissions.includes('reports.financial.read'))).toBe(true);
   });
 });
+
+// Trial balance (WEB-122) and general ledger (WEB-100) on the same fixture. Hand calculation, Q1 2026:
+//   CASH  +2000 (J2) +1000 (J4) −300 (J6) +300 (reversal)      = 3000 Dr
+//   BANK  +50000 (J1) −500 (J3) −4500 (J5)                     = 45000 Dr
+//   CAP −50000, SVC −1200, PARTS −1800 (Cr); COGS 500, RENT 4500 (Dr); SAL +300 −300 = 0
+//   period debits = credits = 58600; closing Dr = Cr = 53000; result 3000 − 500 − 4500 = −2000
+describe('trial balance and general ledger (WEB-122, WEB-100)', () => {
+  const tb = (q: string, t = token) => api(app, t).get(`/companies/${companyId}/reports/trial-balance?${q}`);
+  const gl = (q: string, t = token) => api(app, t).get(`/companies/${companyId}/reports/general-ledger?${q}`);
+  type TbRow = { account: { code: string; isPosting: boolean }; closing: string; level: number };
+  const byCode = (rows: TbRow[]): Record<string, TbRow> =>
+    Object.fromEntries(rows.map((r) => [r.account.code, r]));
+
+  beforeAll(async () => {
+    const c = api(app, token);
+    ids.OVH = (
+      await c
+        .post(`/companies/${companyId}/accounts`, {
+          code: '6000',
+          name: 'Overheads',
+          type: 'expense',
+          isPosting: false,
+        })
+        .expect(201)
+    ).body.id;
+    ids.UTIL = (
+      await c
+        .post(`/companies/${companyId}/accounts`, {
+          code: '6100',
+          name: 'Utilities',
+          type: 'expense',
+          isPosting: true,
+          parentId: ids.OVH,
+        })
+        .expect(201)
+    ).body.id;
+    // J7 in April: does not touch Q1.
+    await post({
+      postingDate: '2026-04-02',
+      description: 'electricity',
+      lines: [{ ...line('UTIL', '100'), description: 'April bill' }, line('BANK', '0', '100')],
+    });
+  });
+
+  it('Q1 matches the hand calculation, balances and reconciles to the dashboard', async () => {
+    const r = (await tb('from=2026-01-01&to=2026-03-31').expect(200)).body;
+    const rows = byCode(r.rows);
+    expect(Object.keys(rows)).toEqual(['1100', '1200', '3100', '4100', '4200', '5000', '5100', '5200']);
+    expect(rows['1100']).toMatchObject({
+      opening: '0.00',
+      periodDebit: '3300.00',
+      periodCredit: '300.00',
+      closing: '3000.00',
+    });
+    expect(rows['1200']!.closing).toBe('45000.00');
+    expect(rows['3100']!.closing).toBe('-50000.00');
+    expect(rows['5200']).toMatchObject({ periodDebit: '300.00', periodCredit: '300.00', closing: '0.00' });
+    expect(r.totals).toEqual({
+      openingDebit: '0.00',
+      openingCredit: '0.00',
+      periodDebit: '58600.00',
+      periodCredit: '58600.00',
+      closingDebit: '53000.00',
+      closingCredit: '53000.00',
+    });
+    expect(r).toMatchObject({ balanced: true, periodResult: '-2000.00', currency: 'QAR', scope: 'company' });
+    const dash = (await summary('from=2026-01&to=2026-03').expect(200)).body;
+    expect(r.periodResult).toBe(dash.totals.netProfit);
+  });
+
+  it('carries closing balances forward as openings and rolls header accounts up', async () => {
+    const r = (await tb('from=2026-04-01&to=2026-04-30').expect(200)).body;
+    const rows = byCode(r.rows);
+    expect(rows['1200']).toMatchObject({ opening: '45000.00', periodCredit: '100.00', closing: '44900.00' });
+    expect(rows['6000']).toMatchObject({ level: 0, periodDebit: '100.00', closing: '100.00' });
+    expect(rows['6000']!.account.isPosting).toBe(false);
+    expect(rows['6100']).toMatchObject({ level: 1, closing: '100.00' });
+    expect(r.totals.openingDebit).toBe('53000.00');
+    expect(r.totals.periodDebit).toBe('100.00');
+    expect(r.balanced).toBe(true);
+  });
+
+  it('hides accounts without activity unless asked', async () => {
+    const q1 = (await tb('from=2026-01-01&to=2026-03-31').expect(200)).body;
+    expect(q1.rows.map((x: { account: { code: string } }) => x.account.code)).not.toContain('6000');
+    const all = (await tb('from=2026-01-01&to=2026-03-31&includeZero=true').expect(200)).body;
+    expect(byCode(all.rows)['6100']).toMatchObject({ closing: '0.00', level: 1 });
+  });
+
+  it('a branch trial balance contains only that branch and still balances', async () => {
+    const r = (await tb(`from=2026-01-01&to=2026-03-31&branchId=${ids.DOH}`).expect(200)).body;
+    expect(Object.keys(byCode(r.rows))).toEqual(['1100', '1200', '4100', '4200', '5000']);
+    expect(r).toMatchObject({ balanced: true, periodResult: '1500.00' });
+    expect(r.totals.periodDebit).toBe('2500.00');
+  });
+
+  it('general ledger: opening, running balance and closing per line, in date order', async () => {
+    const r = (await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31`).expect(200)).body;
+    expect(r).toMatchObject({
+      opening: '0.00',
+      periodDebit: '3300.00',
+      periodCredit: '300.00',
+      closing: '3000.00',
+      lineCount: 4,
+      nextCursor: null,
+    });
+    expect(
+      r.lines.map((l: { debit: string; credit: string; balance: string }) => [l.debit, l.credit, l.balance]),
+    ).toEqual([
+      ['2000.00', '0.00', '2000.00'],
+      ['1000.00', '0.00', '3000.00'],
+      ['0.00', '300.00', '2700.00'],
+      ['300.00', '0.00', '3000.00'],
+    ]);
+    expect(r.lines[0]).toMatchObject({
+      postingDate: '2026-02-05',
+      description: 'takings',
+      sourceType: 'manual',
+    });
+    expect(r.lines[3]).toMatchObject({ sourceType: 'reversal', journalNumber: ids.REV });
+    const bank = (await gl(`accountId=${ids.BANK}&from=2026-02-01&to=2026-04-30`).expect(200)).body;
+    expect(bank).toMatchObject({ opening: '50000.00', closing: '44900.00', lineCount: 3 });
+    const util = (await gl(`accountId=${ids.UTIL}&from=2026-04-01&to=2026-04-30`).expect(200)).body;
+    expect(util.lines[0].description).toBe('April bill'); // line text wins over the journal's
+  });
+
+  it('pages keep the running balance continuous', async () => {
+    const p1 = (await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31&limit=2`).expect(200)).body;
+    expect(p1.lines).toHaveLength(2);
+    expect(p1.nextCursor).toEqual(expect.any(String));
+    const p2 = (
+      await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31&limit=2&cursor=${p1.nextCursor}`).expect(
+        200,
+      )
+    ).body;
+    expect(p2.pageOpening).toBe('3000.00');
+    expect(p2.lines.map((l: { balance: string }) => l.balance)).toEqual(['2700.00', '3000.00']);
+    expect(p2.nextCursor).toBeNull();
+    expect(p2.periodDebit).toBe(p1.periodDebit);
+  });
+
+  it('refuses header accounts, unknown accounts, foreign cursors and bad ranges', async () => {
+    await gl(`accountId=${ids.OVH}&from=2026-01-01&to=2026-12-31`).expect(422);
+    await gl(`accountId=${randomUUID()}&from=2026-01-01&to=2026-12-31`).expect(404);
+    await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-12-31&cursor=bm9wZQ`).expect(422);
+    await tb('from=2026-03-01&to=2026-01-01').expect(400);
+    await tb('from=2020-01-01&to=2026-01-01').expect(400);
+  });
+
+  it('branch-limited journal readers see their branch ledger only; the trial balance needs the report permission', async () => {
+    const role = (
+      await api(app, token)
+        .post(`/companies/${companyId}/roles`, {
+          code: `gl-${uid()}`,
+          name: 'GL reader',
+          permissions: ['accounting.journal.read'],
+        })
+        .expect(201)
+    ).body.id;
+    const reader = await createUser(prisma);
+    await api(app, token)
+      .post(`/companies/${companyId}/role-assignments`, {
+        userId: reader.id,
+        roleId: role,
+        branchId: ids.PRT,
+      })
+      .expect(201);
+    const t = await auth.sign(reader.sub);
+    const r = (await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31`, t).expect(200)).body;
+    expect(r).toMatchObject({ scope: 'branches', lineCount: 3, closing: '1000.00' });
+    await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31&branchId=${ids.DOH}`, t).expect(403);
+    await tb('from=2026-01-01&to=2026-03-31', t).expect(403);
+    const outsider = await createUser(prisma);
+    await gl(`accountId=${ids.CASH}&from=2026-01-01&to=2026-03-31`, await auth.sign(outsider.sub)).expect(
+      404,
+    );
+  });
+});

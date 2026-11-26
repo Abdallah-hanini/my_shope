@@ -3,6 +3,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { createTranslator, type Locale } from '@erp/localization';
 import {
+  BookOpen,
   BookText,
   Building2,
   CalendarRange,
@@ -14,6 +15,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Scale,
   ShieldCheck,
   Users,
   X,
@@ -36,6 +38,8 @@ export interface SidebarGroup {
 const icons = {
   LayoutDashboard,
   BookText,
+  BookOpen,
+  Scale,
   ListTree,
   CalendarRange,
   Building2,

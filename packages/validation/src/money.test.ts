@@ -132,6 +132,40 @@ describe('reporting schemas', () => {
     expect(r.financialSummaryQuerySchema.safeParse({ from: '2026-13', to: '2026-13' }).success).toBe(false);
     expect(r.monthsBetween('2025-11', '2026-02')).toBe(4);
   });
+
+  it('validates trial balance and general ledger queries', () => {
+    const tb = r.trialBalanceQuerySchema.safeParse({ from: '2026-01-01', to: '2026-12-31' });
+    expect(tb.success && tb.data.includeZero).toBe(false);
+    expect(
+      r.trialBalanceQuerySchema.parse({ from: '2026-01-01', to: '2026-01-01', includeZero: 'true' })
+        .includeZero,
+    ).toBe(true);
+    expect(r.trialBalanceQuerySchema.safeParse({ from: '2026-02-01', to: '2026-01-31' }).success).toBe(false);
+    expect(r.trialBalanceQuerySchema.safeParse({ from: '2026-02-30', to: '2026-03-01' }).success).toBe(false);
+    expect(r.trialBalanceQuerySchema.safeParse({ from: '2020-01-01', to: '2026-01-01' }).success).toBe(false);
+    const id = '11111111-1111-4111-8111-111111111111';
+    const gl = r.generalLedgerQuerySchema.parse({ from: '2026-01-01', to: '2026-01-31', accountId: id });
+    expect(gl.limit).toBe(200);
+    expect(r.generalLedgerQuerySchema.safeParse({ from: '2026-01-01', to: '2026-01-31' }).success).toBe(
+      false,
+    );
+    expect(
+      r.generalLedgerQuerySchema.safeParse({
+        from: '2026-01-01',
+        to: '2026-01-31',
+        accountId: id,
+        cursor: 'a b',
+      }).success,
+    ).toBe(false);
+    expect(
+      r.generalLedgerQuerySchema.safeParse({
+        from: '2026-01-01',
+        to: '2026-01-31',
+        accountId: id,
+        limit: '501',
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe('staff and role schemas', () => {

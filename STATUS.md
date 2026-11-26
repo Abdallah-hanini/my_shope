@@ -6,11 +6,38 @@
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
-| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). Next: trial balance and general ledger (WEB-122/100), global search (WEB-237). |
+| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). Next: global search (WEB-237). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
 
-## 2026-11-26: AUTO360 UI/UX increment 2 (users, roles, permission matrix)
+## 2026-11-26: AUTO360 UI/UX increment 3 (trial balance, general ledger)
+
+### Changes
+
+- **API:**
+  - `GET /companies/{id}/reports/trial-balance` (`reports.financial.read`): opening, period debit and credit, and closing per account in chart order. Header accounts show their descendants' sum. Debit and credit totals, a `balanced` flag, and the period result using the dashboard's net-profit formula.
+  - `GET /companies/{id}/reports/general-ledger` (`accounting.journal.read`): one posting account with opening, running and closing balance, in date order with keyset pages (200 lines). Header accounts are refused with 422.
+  - Both read one REPEATABLE READ snapshot of `reporting.ledger_line`, with the same branch scoping as the dashboard (shared helper `report-scope.ts`). Arithmetic is in exact decimals, in `reporting/ledger.ts`.
+  - Migration `ledger_line_detail` appends line id, line number and description to the reporting view. Existing columns are unchanged.
+- **Web:**
+  - Finance → **Trial balance** and **General ledger**, with date range and branch filters in the URL, presets (this month, last month, this year), and Dr/Cr display.
+  - Drill-down: trial balance → general ledger → journal. The chart of accounts also links each posting account to its ledger.
+  - English and Arabic, phone layout.
+- **Fix (T-38):** the breadcrumb and the language-switch link went stale after in-app navigation, because layouts stay mounted. Both now follow the URL in the browser. The language link also keeps the filters.
+
+### Evidence (2026-11-26, Linux Docker)
+
+- Unit tests: validation 65, API 63 (6 new ledger tests), web 26 (3 new), localization 19.
+- Integration on a fresh database: 100/100. The 8 new tests compare against a hand-calculated fixture: Q1 totals 58,600 Dr = Cr; closing 53,000 Dr = Cr; period result −2,000, equal to the dashboard net profit; carry-forward; header roll-up; zero-activity accounts; branch trial balance; running balance; page continuity; refusals; branch-limited ledger reader.
+- Browser end-to-end: 31/31. New checks: trial balance; drill-down to ledger and journal, with correct breadcrumb and language link; ledger account picker; Arabic phone layout; and the staff member sees General ledger but not Trial balance.
+- Migration drift: none. Production test stack upgraded in place: migration applied, deployment checks 15/15.
+
+### Not done / open
+
+- Year-end closing is not set up, so revenue and expense balances accumulate from the first journal (T-37). Needs the accountant's fiscal-year and retained-earnings decisions.
+- No comparison column or export yet (planned with the export centre, WEB-205, which audits exports).
+
+ (users, roles, permission matrix)
 
 ### Changes
 

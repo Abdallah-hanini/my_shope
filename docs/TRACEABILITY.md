@@ -101,7 +101,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | POS-010 | Receipts | 3 | Not started | — |
 | POS-011 | Delivery | 3 | Not started | — |
 | POS-012 | Commissions | 3 | Not started | — |
-| ACC-001 | Chart of accounts | 1 | Done (API + web, verified) | Hierarchy, header vs posting, type consistency; no template (D-04); `accounting.account`; integration; web screens + `scripts/e2e-web.mjs` |
+| ACC-001 | Chart of accounts | 1 | Done (API + web, verified) | Hierarchy, header vs posting, type consistency; no template (D-04); `accounting.account`; integration; web screens + `scripts/e2e-web.mjs`; general ledger WEB-100 |
 | ACC-002 | Journals and GL | 1 | Done (API + web, verified) | Balanced, immutable, idempotent, gapless-numbered journals and reversal; DB-enforced; journal.service.ts + migration triggers; integration incl. concurrency; web screens + `scripts/e2e-web.mjs` |
 | ACC-003 | AR/AP | 1–3 | Not started | — |
 | ACC-004 | Cash and bank | 1–3 | Not started | — |
@@ -116,7 +116,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | ACC-013 | WIP | 3 | Not started | — |
 | ACC-014 | Opening balances | 1 | Not started | — |
 | ACC-015 | Accruals and prepayments | 1 | Not started | — |
-| ACC-016 | Financial statements | 5 | Not started | — |
+| ACC-016 | Financial statements | 5 | Partial — trial balance (WEB-122) | `reporting/ledger.ts`, `ledger.service.ts`; reporting.int + e2e. P&L, balance sheet and cash flow not started |
 | ACC-017 | Intercompany policy | 1 (blocked: entity structure) | Not started | — |
 | HR-001 | Employee contracts and documents | 6 | Not started | — |
 | HR-002 | Attendance and shifts | 6 | Not started | — |
