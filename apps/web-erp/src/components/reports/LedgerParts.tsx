@@ -78,7 +78,7 @@ export function LedgerFilters({
     { label: t('ledger.thisYear'), ...p.thisYear },
   ];
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 print:hidden">
       <form
         method="get"
         action={action}

@@ -10,7 +10,9 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
     /journals                               Journal list  → /journals/[id] (detail, reverse) · /journals/new
     /accounts                               Chart of accounts (create)
     /ledger?account=&from=&to=&branch=      General ledger (accounting.journal.read) → journal detail
-    /trial-balance?from=&to=&branch=&zero=  Trial balance (reports.financial.read) → general ledger
+    /trial-balance?from=&to=&branch=&zero=  Trial balance (reports.financial.read) → general ledger; Export
+    /exports                                Export centre (either permission): request, status, download
+      /exports/[id]/download                File (route handler; requester only, rechecked, audited)
     /periods                                Fiscal periods (create, close)
   Organization
     /branches                               Branches (create)

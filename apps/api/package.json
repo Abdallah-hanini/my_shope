@@ -19,12 +19,15 @@
     "iam:bootstrap-admin": "node dist/cli/bootstrap-admin.js"
   },
   "dependencies": {
+    "@erp/localization": "workspace:*",
     "@erp/validation": "workspace:*",
     "@nestjs/common": "11.2.12",
     "@nestjs/core": "11.2.12",
     "@nestjs/platform-express": "11.2.12",
     "@nestjs/swagger": "11.4.8",
     "@prisma/client": "6.19.3",
+    "bullmq": "5.81.6",
+    "exceljs": "4.4.0",
     "helmet": "8.1.0",
     "ioredis": "5.11.1",
     "jose": "5.10.0",

@@ -1585,6 +1585,190 @@
           "search"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/exports": {
+      "post": {
+        "operationId": "requestExport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Queue a report file (CSV or Excel)",
+        "tags": [
+          "exports"
+        ]
+      },
+      "get": {
+        "operationId": "listMyExports",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExportJobDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller’s exports in this company, newest first (50)",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/exports/{exportId}": {
+      "get": {
+        "operationId": "getMyExport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "exportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/exports/{exportId}/download": {
+      "get": {
+        "operationId": "downloadExport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "exportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The file (requester only; permission re-checked; audited). 410 when expired",
+        "tags": [
+          "exports"
+        ]
+      }
     }
   },
   "info": {
@@ -3380,6 +3564,130 @@
         "required": [
           "query",
           "groups"
+        ]
+      },
+      "CreateExportDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trial_balance",
+              "general_ledger",
+              "journal_lines"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ],
+            "default": "en",
+            "description": "Language of headers and labels"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?}"
+          }
+        },
+        "required": [
+          "kind",
+          "format",
+          "params"
+        ]
+      },
+      "ExportJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trial_balance",
+              "general_ledger",
+              "journal_lines"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Report filters as requested"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "expired"
+            ]
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "rowCount": {
+            "type": "number",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "sizeBytes": {
+            "type": "number",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "The file is deleted after this time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "format",
+          "locale",
+          "params",
+          "status",
+          "createdAt"
         ]
       },
       "ProblemDetailsDto": {

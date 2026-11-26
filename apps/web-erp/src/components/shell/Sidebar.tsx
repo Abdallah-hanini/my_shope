@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarRange,
   CarFront,
+  FileDown,
   Grid3x3,
   KeyRound,
   LayoutDashboard,
@@ -40,6 +41,7 @@ const icons = {
   BookText,
   BookOpen,
   Scale,
+  FileDown,
   ListTree,
   CalendarRange,
   Building2,
@@ -155,7 +157,7 @@ export function DesktopSidebar({
   return (
     <aside
       className={cn(
-        'sticky top-0 hidden h-dvh shrink-0 flex-col bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)] lg:flex',
+        'sticky top-0 hidden h-dvh shrink-0 flex-col bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)] lg:flex print:hidden',
         collapsed ? 'w-[72px]' : 'w-[248px]',
       )}
     >

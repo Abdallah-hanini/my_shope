@@ -46,6 +46,16 @@ export const apiEnvSchema = z
     KEYCLOAK_REALM: z.string().min(1).default('erp'),
     KEYCLOAK_ADMIN_CLIENT_ID: z.string().min(1).default('erp-api-admin'),
     KEYCLOAK_ADMIN_CLIENT_SECRET: z.string().min(1).optional(),
+    /** Process export jobs in this API instance (off in tests that drive jobs directly). */
+    EXPORT_WORKER: z.enum(['on', 'off']).default('on'),
+    EXPORT_RETENTION_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+    /** Largest file kept in the database; bigger exports fail with "narrow the range". */
+    EXPORT_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1024)
+      .max(100 * 1024 * 1024)
+      .default(25 * 1024 * 1024),
   })
   .superRefine((env, ctx) => {
     const set = [env.OIDC_ISSUER, env.OIDC_AUDIENCE, env.OIDC_JWKS_URL].filter(Boolean).length;

@@ -6,11 +6,50 @@
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
-| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). All "Next" catalog items are now implemented. |
+| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
 
-## 2026-11-26: AUTO360 UI/UX increment 4 (global search)
+## 2026-11-26: AUTO360 UI/UX increment 5 (export centre)
+
+### Changes
+
+- **API:** `POST /companies/{id}/exports` (202) and `GET` list, detail and download.
+  - Kinds: trial balance, general ledger and journal lines, as CSV or Excel, with English or Arabic labels.
+  - Each kind needs the permission of its screen. The requester's current scope is applied when the file is produced.
+  - Downloads are for the requester only, with the permission and branch coverage checked again. Every request and download is audited. Limit: 3 in progress per person.
+- **Processing (T-41):** BullMQ queue `exports` in the API process.
+  - PostgreSQL is authoritative: a conditional claim makes a replayed message a no-op.
+  - A sweep each minute re-queues lost jobs, fails interrupted ones and deletes expired files.
+- **Migration `export_centre`:** table `platform.export_job` with checks: closed vocabularies; a file exists exactly while the job is "succeeded"; a failure always has a reason.
+- **Files (T-42, T-43):**
+  - CSV: UTF-8 with BOM, formula-injection-safe.
+  - Excel (ExcelJS): numeric money, frozen header, filter, right-to-left in Arabic, and an "About" sheet describing how the file was produced.
+  - Kept 7 days. PDF via the browser's Print → Save as PDF, with new print styles.
+- **Web:** Finance → Export centre (request form, own exports with live status, download through a route handler that keeps the token on the server), and "Export" on the trial balance and general ledger pages.
+- **Fixes:**
+  - Table scroll containers are now `position: relative` (T-46): a screen-reader label widened the page on phones.
+  - The drift check failed on its second run (T-45).
+
+### Evidence (2026-11-26, Linux Docker)
+
+- Unit tests: validation 67, API 66 (writers: CSV quoting and formula safety, Excel read-back), web 28.
+- Integration on a fresh database: 122/122. The 14 export tests cover:
+  - the file equals the screen for all three kinds (trial balance row by row and totals; general ledger across pages; journal lines with a branch filter);
+  - Arabic Excel, branch-limited staff scope, isolation between people, permission recheck (403), failure when the permission is removed before processing;
+  - validation, the 429 limit, expiry 410 and sweep, the database checks, audit events, and a real BullMQ run.
+- Browser end-to-end: 35/35. New checks:
+  - the trial balance exported to Excel from its page, downloaded and opened: totals 200.20 on both sides, About sheet;
+  - an Arabic CSV of journal lines with a BOM and Arabic headers, with the download in the audit trail;
+  - the staff member is offered only General ledger and Journal lines and sees no one else's files;
+  - print mode hides the menu, filters and export controls and keeps the company name; Arabic phone layout of the export centre.
+- Dependency audit: ExcelJS adds one moderate advisory (`uuid`), which is not exploitable here (T-44).
+
+### Not done / open
+
+- No server-generated PDF, and no scheduled or emailed reports (they need a mail-server decision).
+
+ (global search)
 
 ### Changes
 

@@ -416,6 +416,22 @@ async function main() {
       assert((foot.match(/200\.20/g) ?? []).length === 2, foot);
       assert((await page.getByTestId('period-result').innerText()).includes('0.00'), 'period result');
       await shot('trial-balance-en');
+      // Print → Save as PDF: no menu, header, filters or export controls; the report stays.
+      await page.emulateMedia({ media: 'print' });
+      assert(
+        !(await page.getByRole('navigation', { name: 'Main navigation' }).first().isVisible()),
+        'sidebar printed',
+      );
+      assert(!(await page.getByRole('form', { name: 'Report filters' }).isVisible()), 'filters printed');
+      assert(
+        !(await page.getByRole('button', { name: 'Export', exact: true }).isVisible()),
+        'export control printed',
+      );
+      assert(await page.getByRole('table').isVisible(), 'report not printed');
+      assert(await page.locator('main > p.print\\:block').isVisible(), 'company name not printed');
+      if (shots)
+        await page.pdf({ path: join(shots, 'trial-balance-en.pdf'), format: 'A4', printBackground: true });
+      await page.emulateMedia({ media: 'screen' });
     });
 
     await check('Drill down: trial balance → general ledger → journal', async () => {
@@ -510,6 +526,73 @@ async function main() {
       },
     );
 
+    const waitReady = async () => {
+      // The export centre refreshes itself until the newest export is ready.
+      const row = page.locator('tbody tr').first();
+      await row.getByText('Ready', { exact: true }).waitFor({ timeout: 30000 });
+      return row;
+    };
+    await check(
+      'Export centre: Excel export of the trial balance from its page, downloaded and equal to the screen',
+      async () => {
+        await page.goto(`${base()}/trial-balance?${nov}`);
+        await page.locator('#x-format').selectOption('xlsx');
+        await Promise.all([
+          page.waitForURL(/\/exports\?new=[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Export', exact: true }).click(),
+        ]);
+        const row = await waitReady();
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          row.getByRole('link', { name: /^Download/ }).click(),
+        ]);
+        assert(
+          /^trial-balance_.+_2026-11-01_2026-11-30\.xlsx$/.test(download.suggestedFilename()),
+          download.suggestedFilename(),
+        );
+        const file = await download.path();
+        const ExcelJS = createRequire(join(root, 'apps/api/package.json'))('exceljs');
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.readFile(file);
+        const ws = wb.getWorksheet('Trial balance');
+        const last = ws.getRow(ws.rowCount);
+        assert(
+          last.getCell(2).value === 'Totals' &&
+            last.getCell(7).value === 200.2 &&
+            last.getCell(8).value === 200.2,
+          JSON.stringify(last.values),
+        );
+        assert(wb.getWorksheet('About').getCell('B1').value === 'Trial balance', 'About sheet');
+        await shot('export-centre-en');
+      },
+    );
+
+    await check('Export centre: Arabic CSV of journal lines; the download is audited', async () => {
+      await page.goto(`${base()}/exports`);
+      await page.locator('#e-kind').selectOption('journal_lines');
+      await page.locator('#e-from').fill('2026-11-01');
+      await page.locator('#e-to').fill('2026-11-30');
+      await page.locator('#e-format').selectOption('csv');
+      await page.locator('#e-lang').selectOption('ar');
+      await Promise.all([
+        page.waitForURL(/\/exports\?new=/),
+        page.getByRole('button', { name: 'Request export' }).click(),
+      ]);
+      const row = await waitReady();
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        row.getByRole('link', { name: /^Download/ }).click(),
+      ]);
+      const { readFileSync } = await import('node:fs');
+      const buf = readFileSync(await download.path());
+      assert(buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf, 'no UTF-8 BOM');
+      const text = buf.subarray(3).toString('utf8');
+      assert(text.startsWith('التاريخ,القيد,السطر'), text.slice(0, 60));
+      assert(/JV-2026-000001,1,/.test(text) && /الإجماليات,,200\.20,200\.20/.test(text), text);
+      await page.goto(`${base()}/audit`);
+      await page.getByText('export.download', { exact: true }).first().waitFor();
+    });
+
     await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
@@ -524,6 +607,7 @@ async function main() {
           `trial-balance?${nov}`,
           'ledger',
           'search?q=cash',
+          'exports',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);
@@ -633,6 +717,11 @@ async function main() {
       // Search respects the role: branches and people are not searchable for this staff member.
       await staffPage.goto(`${base()}/search?q=Doha`);
       await staffPage.getByText('Nothing matches “Doha”.').waitFor();
+      // Export centre offers only the kinds this role may export, and nobody else's files.
+      await staffPage.goto(`${base()}/exports`);
+      const kinds = await staffPage.locator('#e-kind option').allInnerTexts();
+      assert(kinds.join('|') === 'General ledger|Journal lines', `kinds: ${kinds}`);
+      await staffPage.getByText('You have not requested any exports yet.').waitFor();
       assert(
         (await nav.getByRole('link', { name: 'Trial balance' }).count()) === 0,
         'Trial balance link shown',

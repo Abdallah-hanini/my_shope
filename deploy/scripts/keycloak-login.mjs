@@ -27,7 +27,7 @@ export async function keycloakLogin(page, { username, password, done, totpSecret
   await page.fill('#username', username);
   await page.fill('#password', password);
   await Promise.all([page.waitForNavigation(), page.click('#kc-login')]);
-  const completed = { password: false, totp: false, otpAttempts: 0 };
+  const completed = { password: false, totp: false, otpAttempts: 0, totpAttempts: 0 };
   let newPassword = password;
   let totpSecret = knownSecret;
   for (let step = 0; step < 6 && !done(page.url()); step++) {
@@ -52,7 +52,13 @@ export async function keycloakLogin(page, { username, password, done, totpSecret
       await page.fill('#otp', totp(totpSecret));
       await Promise.all([page.waitForNavigation(), page.locator('[type=submit]').first().click()]);
     } else if (await page.locator('#totpSecret').count()) {
-      if (completed.totp) throw new Error('authenticator code was rejected');
+      // Like the sign-in branch: one retry in the next 30 s window, then give up (a real fault
+      // fails twice). Observed once in many runs: a valid code rejected at enrolment.
+      if (completed.totpAttempts >= 2) throw new Error('authenticator code was rejected twice');
+      if (completed.totpAttempts === 1) {
+        await page.waitForTimeout((30 - (Math.floor(Date.now() / 1000) % 30) + 1) * 1000);
+      }
+      completed.totpAttempts = (completed.totpAttempts ?? 0) + 1;
       // The manual-entry key (Base32) is what an authenticator app uses.
       if (await page.locator('#mode-manual').count()) await page.click('#mode-manual');
       totpSecret = (await page.locator('#kc-totp-secret-key').innerText()).trim();

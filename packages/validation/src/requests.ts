@@ -223,6 +223,49 @@ export const searchQuerySchema = z.object({
 });
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 
+/** WEB-205 export centre: what can be exported, in which formats. */
+export const EXPORT_KINDS = ['trial_balance', 'general_ledger', 'journal_lines'] as const;
+export const EXPORT_FORMATS = ['csv', 'xlsx'] as const;
+export type ExportKind = (typeof EXPORT_KINDS)[number];
+/** Permission needed to request, generate and download each kind (same as its screen). */
+export const EXPORT_PERMISSION: Record<ExportKind, string> = {
+  trial_balance: 'reports.financial.read',
+  general_ledger: 'accounting.journal.read',
+  journal_lines: 'accounting.journal.read',
+};
+const exportRange = { from: isoDate, to: isoDate, branchId: uuid.optional() };
+const exportCommon = { format: z.enum(EXPORT_FORMATS), locale: z.enum(['en', 'ar']).default('en') };
+export const createExportSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('trial_balance'),
+    ...exportCommon,
+    params: z
+      .object({ ...exportRange, includeZero: z.boolean().default(false) })
+      .strict()
+      .refine(...rangeOrdered)
+      .refine(...rangeBounded),
+  }),
+  z.object({
+    kind: z.literal('general_ledger'),
+    ...exportCommon,
+    params: z
+      .object({ ...exportRange, accountId: uuid })
+      .strict()
+      .refine(...rangeOrdered)
+      .refine(...rangeBounded),
+  }),
+  z.object({
+    kind: z.literal('journal_lines'),
+    ...exportCommon,
+    params: z
+      .object(exportRange)
+      .strict()
+      .refine(...rangeOrdered)
+      .refine(...rangeBounded),
+  }),
+]);
+export type CreateExportInput = z.infer<typeof createExportSchema>;
+
 /** Inclusive number of calendar months between two YYYY-MM values. */
 export function monthsBetween(from: string, to: string): number {
   const [fy, fm] = from.split('-').map(Number) as [number, number];

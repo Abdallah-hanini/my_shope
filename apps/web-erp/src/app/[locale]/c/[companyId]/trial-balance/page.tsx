@@ -3,6 +3,7 @@ import { createTranslator, formatDateTime, groupDigits, isLocale } from '@erp/lo
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
+import { ExportForm } from '@/components/reports/ExportForm';
 import { Amount, Balance, LedgerFilters, SideTotal } from '@/components/reports/LedgerParts';
 import {
   Badge,
@@ -20,6 +21,7 @@ import {
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
 import { ledgerRange, query } from '@/lib/ledger';
+import { requestExportAction } from '../export-actions';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -73,7 +75,20 @@ export default async function TrialBalancePage({
 
   return (
     <>
-      <PageHeader title={t('nav.trialBalance')}>
+      <PageHeader
+        title={t('nav.trialBalance')}
+        actions={
+          tb.ok ? (
+            <ExportForm
+              compact
+              locale={locale}
+              action={requestExportAction.bind(null, locale, companyId)}
+              kinds={['trial_balance']}
+              initial={{ kind: 'trial_balance', from, to, branchId: branch, includeZero }}
+            />
+          ) : null
+        }
+      >
         {tb.ok ? (
           <span>
             {t('dash.freshness')}{' '}

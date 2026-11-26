@@ -133,6 +133,45 @@ describe('reporting schemas', () => {
     expect(r.monthsBetween('2025-11', '2026-02')).toBe(4);
   });
 
+  it('validates export requests per kind', () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const tb = r.createExportSchema.parse({
+      kind: 'trial_balance',
+      format: 'xlsx',
+      params: { from: '2026-01-01', to: '2026-03-31' },
+    });
+    expect(tb).toMatchObject({ locale: 'en', params: { includeZero: false } });
+    expect(
+      r.createExportSchema.safeParse({
+        kind: 'general_ledger',
+        format: 'csv',
+        params: { from: '2026-01-01', to: '2026-01-31' },
+      }).success,
+    ).toBe(false); // account required
+    expect(
+      r.createExportSchema.safeParse({
+        kind: 'journal_lines',
+        format: 'pdf',
+        params: { from: '2026-01-01', to: '2026-01-31' },
+      }).success,
+    ).toBe(false);
+    expect(
+      r.createExportSchema.safeParse({
+        kind: 'journal_lines',
+        format: 'csv',
+        params: { from: '2026-01-01', to: '2026-01-31', accountId: id },
+      }).success,
+    ).toBe(false); // unknown parameter
+    expect(
+      r.createExportSchema.safeParse({
+        kind: 'journal_lines',
+        format: 'csv',
+        params: { from: '2026-02-01', to: '2026-01-01' },
+      }).success,
+    ).toBe(false);
+    expect(Object.keys(r.EXPORT_PERMISSION).sort()).toEqual([...r.EXPORT_KINDS].sort());
+  });
+
   it('validates search queries', () => {
     expect(r.searchQuerySchema.parse({ q: '  cash   box ' })).toEqual({ q: 'cash box', limit: 5 });
     expect(r.searchQuerySchema.safeParse({ q: ' a ' }).success).toBe(false);

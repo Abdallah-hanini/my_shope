@@ -134,7 +134,9 @@ export function Field({
 
 export function Table({ caption, children }: { caption: string; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto">
+    // "relative": screen-reader-only (absolutely positioned) text inside cells stays inside the
+    // scroll area instead of widening the page on phones.
+    <div className="relative overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">{caption}</caption>
         {children}

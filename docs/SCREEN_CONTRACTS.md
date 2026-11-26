@@ -90,6 +90,15 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Planned:** comparison column, CSV/Excel/PDF export through the export centre with audit (WEB-205).
 - **Tests:** reporting.int (hand-calculated Q1, carry-forward, header roll-up, zero accounts, branch TB, reconciliation with the dashboard) and e2e.
 
+## WEB-205 Export centre
+- **Route:** `/[locale]/c/[id]/exports` (shown with `reports.financial.read` or `accounting.journal.read`). API `POST/GET /companies/{id}/exports`, `GET /exports/{id}`, `GET /exports/{id}/download`.
+- **Request:** from the centre (report, dates, branch, account for the general ledger, CSV or Excel, file language) or with "Export" on the trial balance and general ledger pages, which exports exactly the filters on screen. Only report kinds the role allows are offered; the server checks again.
+- **List:** the caller's own exports, newest first: report and filters, status (waiting, preparing, ready, failed with reason, expired), requested time, rows, size, available-until, Download. The page refreshes itself while an export is being prepared.
+- **Files:** CSV is the table only (UTF-8 with BOM, CRLF, formula-safe). Excel has the table (frozen header, filter, number formats, right-to-left in Arabic, bold headers and totals) and an "About" sheet: report, company, period, branch, scope, currency, generated at and by, source; for the trial balance also "balanced" and the period result.
+- **Security:** requester-only (others get 404); permission and branch coverage rechecked at download (403); expired 410; every request and download audited; at most 3 in progress (429).
+- **PDF:** Print → Save as PDF on the report page (print styles; T-43).
+- **Tests:** exports.int (14: file equals screen for all three kinds, Arabic Excel, GL paging, branch scope, isolation, recheck, failure, limits, expiry, DB checks, audit, real queue) and e2e.
+
 ## WEB-237 Global search
 - **Route:** `/[locale]/c/[id]/search?q=` (any member). API `GET /companies/{id}/search?q=&limit=`.
 - **Entry:** header search box on screens ≥ 1024 px (`/` or Ctrl/⌘+K focuses it); a search icon on smaller screens. A plain GET form that works without JavaScript.

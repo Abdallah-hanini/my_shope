@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "platform", "iam", "org", "accounting"]
+  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting"]
 }
 
 enum RecordStatus {
@@ -39,6 +39,7 @@ model Company {
   fiscalPeriods   FiscalPeriod[]
   journals        Journal[]
   journalLines    JournalLine[]
+  exportJobs      ExportJob[]
 
   @@map("company")
   @@schema("org")
@@ -81,6 +82,7 @@ model User {
   updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   roleAssignments RoleAssignment[] @relation("assignee")
+  exportJobs      ExportJob[]
 
   @@unique([oidcIssuer, oidcSubject])
   @@map("user")
@@ -321,4 +323,41 @@ model JournalLine {
   @@index([companyId, accountId])
   @@map("journal_line")
   @@schema("accounting")
+}
+
+// ─────────────────────────── exports (WEB-205) ──────────────────────────
+
+/// One requested report file. PostgreSQL is authoritative for status; the BullMQ message carries
+/// only the id. Files live here for EXPORT_RETENTION_DAYS, then the content is deleted.
+model ExportJob {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  requestedBy      String    @map("requested_by") @db.Uuid
+  kind             String
+  format           String
+  locale           String
+  params           Json
+  status           String    @default("queued")
+  /// Branch scope the file was produced with (copied at generation); downloads must still cover it.
+  scopeAllBranches Boolean   @default(false) @map("scope_all_branches")
+  scopeBranchIds   String[]  @default([]) @map("scope_branch_ids") @db.Uuid
+  attempts         Int       @default(0)
+  error            String?
+  rowCount         Int?      @map("row_count")
+  fileName         String?   @map("file_name")
+  contentType      String?   @map("content_type")
+  sizeBytes        Int?      @map("size_bytes")
+  content          Bytes?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt        DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt       DateTime? @map("finished_at") @db.Timestamptz(6)
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz(6)
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  requester User    @relation(fields: [requestedBy], references: [id], onDelete: Restrict)
+
+  @@index([companyId, requestedBy, createdAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@map("export_job")
+  @@schema("platform")
 }

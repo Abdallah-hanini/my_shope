@@ -445,6 +445,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller’s exports in this company, newest first (50) */
+        get: operations["listMyExports"];
+        put?: never;
+        /** Queue a report file (CSV or Excel) */
+        post: operations["requestExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/exports/{exportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/exports/{exportId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The file (requester only; permission re-checked; audited). 410 when expired */
+        get: operations["downloadExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -990,6 +1041,50 @@ export interface components {
             query: string;
             /** @description Only the record types the caller may read, in a fixed order; empty groups included */
             groups: components["schemas"]["SearchGroupDto"][];
+        };
+        CreateExportDto: {
+            /** @enum {string} */
+            kind: "trial_balance" | "general_ledger" | "journal_lines";
+            /** @enum {string} */
+            format: "csv" | "xlsx";
+            /**
+             * @description Language of headers and labels
+             * @default en
+             * @enum {string}
+             */
+            locale: "en" | "ar";
+            /** @description trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?} */
+            params: {
+                [key: string]: unknown;
+            };
+        };
+        ExportJobDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "trial_balance" | "general_ledger" | "journal_lines";
+            /** @enum {string} */
+            format: "csv" | "xlsx";
+            /** @enum {string} */
+            locale: "en" | "ar";
+            /** @description Report filters as requested */
+            params: {
+                [key: string]: unknown;
+            };
+            /** @enum {string} */
+            status: "queued" | "running" | "succeeded" | "failed" | "expired";
+            error?: string | null;
+            rowCount?: number | null;
+            fileName?: string | null;
+            sizeBytes?: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            /**
+             * Format: date-time
+             * @description The file is deleted after this time
+             */
+            expiresAt?: string | null;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -1857,6 +1952,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResultDto"];
+                };
+            };
+        };
+    };
+    listMyExports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportJobDto"][];
+                };
+            };
+        };
+    };
+    requestExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExportDto"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportJobDto"];
+                };
+            };
+        };
+    };
+    getMyExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportJobDto"];
+                };
+            };
+        };
+    };
+    downloadExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
                 };
             };
         };

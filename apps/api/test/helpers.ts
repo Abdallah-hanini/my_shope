@@ -44,9 +44,17 @@ export async function createTestAuth(): Promise<{
   return { auth, jwks };
 }
 
-export async function bootApp(): Promise<{ app: INestApplication; auth: TestAuth; prisma: PrismaClient }> {
+/**
+ * Boots the API against the test database. Export jobs are not processed in the background unless
+ * a test opts in with { EXPORT_WORKER: 'on' }; tests drive ExportService.process directly.
+ */
+export async function bootApp(
+  overrides: Record<string, string> = {},
+): Promise<{ app: INestApplication; auth: TestAuth; prisma: PrismaClient }> {
   const env = loadApiEnv({
     ...process.env,
+    EXPORT_WORKER: 'off',
+    ...overrides,
     LOG_LEVEL: 'error',
     OIDC_ISSUER: ISSUER,
     OIDC_AUDIENCE: AUDIENCE,

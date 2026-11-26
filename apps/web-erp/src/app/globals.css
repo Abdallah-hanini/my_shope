@@ -118,3 +118,30 @@ html[dir='rtl'] body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Printing a report (Print → Save as PDF): light palette whatever the theme, no app chrome
+   (sidebar, header, filters and export controls carry print:hidden), full width. */
+@media print {
+  :root,
+  :root[data-theme='dark'] {
+    --color-background: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f1f5f9;
+    --color-text: #101828;
+    --color-text-muted: #475569;
+    --color-border: #cbd5e1;
+    --color-primary: #1d4ed8;
+    --shadow-card: none;
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff;
+  }
+  main {
+    max-width: none;
+    padding: 0;
+  }
+  a {
+    text-decoration: none;
+  }
+}

@@ -159,7 +159,7 @@ Counts are summarised at the end.
 | WEB-119 | Cost centers | ACC-009 | 1 | Planned | — | — |
 | WEB-120 | Budget management | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
 | WEB-121 | Budget versus actual | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
-| WEB-122 | Trial balance | ACC-016, REPORTING | 1 | Implemented — opening, period debit/credit, closing; header roll-up; balanced check; period result; branch filter; drill to ledger. No export yet (WEB-205) | /[locale]/c/[id]/trial-balance | e2e "Trial balance"; reporting.int TB tests (hand-calculated) |
+| WEB-122 | Trial balance | ACC-016, REPORTING | 1 | Implemented — opening, period debit/credit, closing; header roll-up; balanced check; period result; branch filter; drill to ledger; CSV/Excel export (WEB-205); print to PDF | /[locale]/c/[id]/trial-balance | e2e "Trial balance"; reporting.int TB tests (hand-calculated) |
 | WEB-123 | Profit and loss | ACC-016 | 5 | Planned | — | — |
 | WEB-124 | Balance sheet | ACC-016 | 5 | Planned | — | — |
 | WEB-125 | Cash flow statement | ACC-016 | 5 | Planned | — | — |
@@ -262,7 +262,7 @@ Counts are summarised at the end.
 | WEB-202 | KPI drill-down | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
 | WEB-203 | Historical period comparison | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
 | WEB-204 | Scheduled reports | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
-| WEB-205 | Export and download center | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
+| WEB-205 | Export and download center | REPORTING (RPT), BRD-07 | 5 (early) | Implemented — CSV and Excel for trial balance, general ledger and journal lines; background jobs; requester-only downloads with permission recheck and audit; 7-day retention. PDF via print (T-43) | /[locale]/c/[id]/exports | exports.int (14); e2e "Export centre" (2) + staff check |
 | WEB-206 | Report templates | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
 | WEB-207 | Report reconciliation | REPORTING (RPT), BRD-07 | 5 | Planned | — | — |
 
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 13 |
+| Implemented | 14 |
 | Next | 0 |
 | Partial | 6 |
-| Planned | 289 |
+| Planned | 288 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

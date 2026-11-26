@@ -67,7 +67,7 @@ export async function AppShell({
         />
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 print:hidden shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 backdrop-blur sm:px-6">
           {hasNav ? <MobileNav locale={locale} groups={groups} companyName={currentCompany?.name} /> : null}
           {!hasNav ? (
             <Link href={`/${locale}`} className="flex items-center gap-2 font-bold" dir="ltr">
@@ -114,6 +114,8 @@ export async function AppShell({
           </div>
         </header>
         <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
+          {/* On paper the header is hidden, so the company is named here instead. */}
+          <p className="mb-2 hidden text-sm font-semibold print:block">{title}</p>
           {children}
         </main>
       </div>

@@ -29,7 +29,7 @@ Phases follow docs/ROADMAP.md: 0 foundation · 1 identity/org/accounting · 2 ca
 | ARCH-13 | Transactional outbox (write side) | ARCHITECTURE | 1 | Write side done; relay P1-11 pending | `platform.outbox_event`, `enqueueOutbox` |
 | UX-01 | WCAG contrast and 44pt touch targets in shared tokens | CLAUDE, MOBILE | 0 | Done (verified) | `packages/design-tokens` contrast tests |
 | UX-02 | Responsive web (no horizontal scroll at phone width) | CLAUDE | 0 | Done for shell | smoke: 390px viewport en/ar |
-| RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Schema `reporting` created; rest not started | foundation migration |
+| RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Partial: reporting view, KPI dictionary, dashboard, trial balance, general ledger, export centre (CSV/Excel, background jobs, download recheck, audit, export = screen tests) | `apps/api/src/reporting`, `apps/api/src/exports`; reporting.int, exports.int, e2e |
 | MOB-C | Customer app workflows (booking, approvals, ecommerce, payment) | MOBILE | 4 | Not started | — |
 | MOB-M | Manager app workflows (dashboards, approvals) | MOBILE | 5 | Not started | — |
 

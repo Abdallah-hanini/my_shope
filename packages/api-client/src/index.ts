@@ -6,6 +6,7 @@ export type {
   AuditEvent,
   Branch,
   Company,
+  ExportJob,
   FinancialSummary,
   FiscalPeriod,
   GeneralLedger,

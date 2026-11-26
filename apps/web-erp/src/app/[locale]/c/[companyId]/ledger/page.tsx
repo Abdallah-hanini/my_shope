@@ -3,6 +3,7 @@ import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
+import { ExportForm } from '@/components/reports/ExportForm';
 import { Amount, Balance, LedgerFilters } from '@/components/reports/LedgerParts';
 import {
   buttonSecondary,
@@ -21,6 +22,7 @@ import {
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
 import { ledgerRange, query } from '@/lib/ledger';
+import { requestExportAction } from '../export-actions';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CURSOR = /^[A-Za-z0-9_-]{1,200}$/;
@@ -81,7 +83,20 @@ export default async function GeneralLedgerPage({
 
   return (
     <>
-      <PageHeader title={title}>
+      <PageHeader
+        title={title}
+        actions={
+          g ? (
+            <ExportForm
+              compact
+              locale={locale}
+              action={requestExportAction.bind(null, locale, companyId)}
+              kinds={['general_ledger']}
+              initial={{ kind: 'general_ledger', from, to, branchId: branch, accountId: g.account.id }}
+            />
+          ) : null
+        }
+      >
         {g ? (
           <span>
             {t('nav.generalLedger')} · {t('dash.freshness')}{' '}

@@ -33,7 +33,7 @@ export default async function PermissionMatrixPage({
     <>
       <PageHeader title={t('nav.permissions')}>{t('perm.matrixHelp')}</PageHeader>
       <Card flush>
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">{t('nav.permissions')}</caption>
             <thead>
