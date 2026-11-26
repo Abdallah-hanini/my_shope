@@ -11,6 +11,43 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-28: Additional work approval (WMS-009, WEB-025)
+
+### Changes
+
+- **Propose (T-65):** after the customer authorises the job and before the quality check, a manager or a technician on the job proposes additional work: what was found, plus the tasks and hours. One open proposal per job at a time.
+- **Decide:** a manager records the customer's decision.
+  - Approval records who authorised it and how (in person, by phone or in writing). The tasks join the job unassigned and are numbered after the existing ones; an "assigned" job goes back to "approved" until they have technicians.
+  - A refusal needs a reason and adds nothing.
+  - The proposer or a manager can withdraw an open proposal with a reason. Cancelling the job withdraws it automatically.
+- **Quality check waits** while a proposal is open; the job card explains this and does not offer "Send to quality check".
+- **Records:**
+  - Decided proposals and their tasks never change (database triggers).
+  - The database now refuses any task added after authorisation unless it comes from approved additional work of the same job, which closes the T-53 gap.
+  - Each step is recorded in the timeline, audit trail and outbox.
+- **Notifications:** the branch's managers hear of a new proposal (with the finding); the proposer hears the customer's decision. English and Arabic.
+- **No prices** until the tax decision (D-05); the estimate in hours includes approved additional work.
+- **Migration `additional_work`:** proposal and item tables, checks, the one-open-proposal index, the guards above, and the new timeline and notification kinds.
+- **Contract fix:** the job timeline's event kinds in the OpenAPI document now also list the check-in kinds (inspection, photos), which were missing.
+
+### Evidence (2026-11-28, Linux Docker)
+
+- Validation 82 (proposal and decision rules).
+- Integration (additions.int, 7):
+  - who can propose and when (not in draft, not a technician off the job, not read-only staff);
+  - one open proposal at a time;
+  - the quality check refused while a proposal is open, and not offered;
+  - approval by managers only, with a version check: tasks numbered 2 and 3, unassigned, estimate 3.00, the job stays in progress;
+  - an assigned job goes back to approved;
+  - refusal with a reason; withdrawal by the proposer or a manager only; cancelling withdraws;
+  - database guards (task after authorisation, task from a declined proposal, a decided proposal changed, items changed);
+  - notifications for managers and the proposer.
+- Browser end-to-end 40/40. Job JC-2026-000001 now proposes "Rear brake pads worn to 2 mm", shows "Waiting for the customer" and the QC note, records the approval, and adds task 3 "(from additional work 1)" with an estimate of 3.00. Its three tasks then go to the quality check.
+
+### Notes
+
+- The long-lived local development database `erp` has an older copy of a function from the first migration (`accounting.check_journal_balanced`), so two notification tests fail there. Fresh databases and the deployed database have the current copy, so the gate is unaffected. A fresh local database fixes it.
+
 ## 2026-11-28: Technician time tracking (WMS-007, WEB-023)
 
 ### Changes

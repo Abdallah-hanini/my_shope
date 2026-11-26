@@ -5,6 +5,9 @@ import type {
   AuthorizeJobInput,
   CancelJobInput,
   CreateJobInput,
+  DecideAdditionInput,
+  ProposeAdditionInput,
+  WithdrawAdditionInput,
   DeliverJobInput,
   JobListQuery,
   JobNoteInput,
@@ -365,10 +368,142 @@ export class JobService {
     );
   }
 
+  // ── additional work (WMS-009, WEB-025) ─────────────────────────────────────
+
+  async proposeAddition(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    input: ProposeAdditionInput,
+    ctx: AuditContext,
+  ) {
+    return this.act(scope, p, id, 'proposeAddition', input.version, ctx, async (tx, job) => {
+      if (await tx.jobAddition.count({ where: { jobId: id, status: 'proposed' } }))
+        throw conflict('Additional work is already waiting for the customer; decide or withdraw it first');
+      const seq = (await tx.jobAddition.count({ where: { jobId: id } })) + 1;
+      const a = await tx.jobAddition.create({
+        data: { companyId: job.companyId, jobId: id, seq, finding: input.finding, proposedBy: p.userId },
+      });
+      await tx.jobAdditionItem.createMany({
+        data: input.tasks.map((t, i) => ({
+          additionId: a.id,
+          lineNo: i + 1,
+          description: t.description,
+          estimatedHours: t.estimatedHours,
+        })),
+      });
+      await this.outbox(tx, ctx, job, 'workshop.job.addition_proposed', { additionId: a.id });
+      return {
+        event: { kind: 'addition_proposed', note: input.finding, data: { additionId: a.id, seq } },
+        audit: { action: 'workshop.addition.propose', after: { additionId: a.id, ...input } },
+      };
+    });
+  }
+
+  async decideAddition(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    additionId: string,
+    input: DecideAdditionInput,
+    ctx: AuditContext,
+  ) {
+    return this.act(scope, p, id, 'decideAddition', input.version, ctx, async (tx, job) => {
+      const a = await this.openAddition(tx, id, additionId);
+      const now = new Date();
+      let next = job.status as JobStatus;
+      if (input.decision === 'approve') {
+        await tx.jobAddition.update({
+          where: { id: a.id },
+          data: {
+            status: 'approved',
+            authorizedByName: input.authorizedByName,
+            authorizedVia: input.authorizedVia,
+            decidedAt: now,
+            decidedBy: p.userId,
+          },
+        });
+        const last = job.tasks.reduce((n, t) => Math.max(n, t.lineNo), 0);
+        await tx.jobTask.createMany({
+          data: a.items.map((it, i) => ({
+            companyId: job.companyId,
+            jobId: id,
+            lineNo: last + i + 1,
+            description: it.description,
+            estimatedHours: it.estimatedHours,
+            additionId: a.id,
+          })),
+        });
+        // New tasks have no technician yet: an "assigned" job goes back to "approved".
+        next = statusAfterAssignment(next, false);
+        if (next !== job.status) await tx.jobCard.update({ where: { id }, data: { status: next } });
+      } else {
+        await tx.jobAddition.update({
+          where: { id: a.id },
+          data: { status: 'declined', closeReason: input.reason, decidedAt: now, decidedBy: p.userId },
+        });
+      }
+      await this.outbox(tx, ctx, job, 'workshop.job.addition_decided', {
+        additionId: a.id,
+        decision: input.decision,
+        proposedBy: a.proposedBy,
+      });
+      const approved = input.decision === 'approve';
+      return {
+        event: {
+          kind: approved ? 'addition_approved' : 'addition_declined',
+          toStatus: next !== job.status ? next : undefined,
+          note: approved ? input.authorizedByName : input.reason,
+          data: { additionId: a.id, seq: a.seq },
+        },
+        audit: {
+          action: approved ? 'workshop.addition.approve' : 'workshop.addition.decline',
+          reason: approved ? undefined : input.reason,
+          after: { additionId: a.id, ...input },
+        },
+      };
+    });
+  }
+
+  async withdrawAddition(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    additionId: string,
+    input: WithdrawAdditionInput,
+    ctx: AuditContext,
+  ) {
+    return this.act(scope, p, id, 'withdrawAddition', input.version, ctx, async (tx, job) => {
+      const a = await this.openAddition(tx, id, additionId);
+      if (a.proposedBy !== p.userId && !(await this.actorFor(p, job)).manage)
+        throw forbidden('Only the person who proposed it or a manager can withdraw it');
+      await tx.jobAddition.update({
+        where: { id: a.id },
+        data: { status: 'withdrawn', closeReason: input.reason, decidedAt: new Date(), decidedBy: p.userId },
+      });
+      return {
+        event: { kind: 'addition_withdrawn', note: input.reason, data: { additionId: a.id, seq: a.seq } },
+        audit: { action: 'workshop.addition.withdraw', reason: input.reason, after: { additionId: a.id } },
+      };
+    });
+  }
+
+  private async openAddition(tx: Tx, jobId: string, additionId: string) {
+    const a = await tx.jobAddition.findFirst({
+      where: { id: additionId, jobId },
+      include: { items: { orderBy: { lineNo: 'asc' } } },
+    });
+    if (!a) throw notFound('Additional work');
+    if (a.status !== 'proposed') throw conflict(`This additional work is already ${a.status}`);
+    return a;
+  }
+
   async submitQc(scope: CompanyScope, p: Principal, id: string, input: JobVersionInput, ctx: AuditContext) {
     return this.act(scope, p, id, 'submitQc', input.version, ctx, async (tx, job) => {
       if (job.tasks.some((t) => t.status !== 'done'))
         throw unprocessable('Finish every task before the quality check');
+      if (await tx.jobAddition.count({ where: { jobId: id, status: 'proposed' } }))
+        throw unprocessable('Additional work is waiting for the customer; record the decision first');
       await tx.jobCard.update({ where: { id }, data: { status: 'qc' } });
       return {
         event: { kind: 'status', toStatus: 'qc' },
@@ -441,6 +576,15 @@ export class JobService {
     return this.act(scope, p, id, 'cancel', input.version, ctx, async (tx) => {
       // No parts or deposits exist yet (inventory and invoicing come later), so nothing to return.
       await closeOpenEntries(tx, { jobId: id }, p.userId);
+      await tx.jobAddition.updateMany({
+        where: { jobId: id, status: 'proposed' },
+        data: {
+          status: 'withdrawn',
+          closeReason: 'Job cancelled',
+          decidedAt: new Date(),
+          decidedBy: p.userId,
+        },
+      });
       await tx.jobCard.update({
         where: { id },
         data: { status: 'cancelled', cancelledReason: input.reason },
@@ -839,12 +983,18 @@ export class JobService {
         },
       }),
     ]);
+    const additions = await this.prisma.jobAddition.findMany({
+      where: { jobId: job.id },
+      include: { items: { orderBy: { lineNo: 'asc' } } },
+      orderBy: { seq: 'asc' },
+    });
     const entries = await this.prisma.taskTimeEntry.findMany({
       where: { jobId: job.id },
       orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
     });
     const names = await this.userNames([
       ...entries.flatMap((e) => [e.technicianId, e.createdBy, e.voidedBy]),
+      ...additions.flatMap((a) => [a.proposedBy, a.decidedBy]),
       job.inspectedBy,
       ...photos.map((ph) => ph.uploadedBy),
       job.createdBy,
@@ -913,6 +1063,7 @@ export class JobService {
           t.technicianId === userId &&
           !open.some((e) => e.technicianId === userId),
         myOpenEntryId: open.find((e) => e.taskId === t.id && e.technicianId === userId)?.id ?? null,
+        additionSeq: additions.find((a) => a.id === t.additionId)?.seq ?? null,
       })),
       events: events.map((e) => ({
         id: e.id,
@@ -923,7 +1074,38 @@ export class JobService {
         toStatus: e.toStatus,
         note: e.note,
       })),
-      actions: availableActions(status, actor),
+      // While the customer has not decided, neither a second proposal nor the quality check.
+      actions: availableActions(status, actor).filter(
+        (a) =>
+          !(['proposeAddition', 'submitQc'] as string[]).includes(a) ||
+          !additions.some((x) => x.status === 'proposed'),
+      ),
+      additions: additions.map((a) => {
+        const pending = a.status === 'proposed' && allowedInStatus('decideAddition', status);
+        return {
+          id: a.id,
+          seq: a.seq,
+          finding: a.finding,
+          status: a.status,
+          proposedByName: names.get(a.proposedBy) ?? '—',
+          proposedAt: a.proposedAt.toISOString(),
+          tasks: a.items.map((it) => ({
+            lineNo: it.lineNo,
+            description: it.description,
+            estimatedHours: it.estimatedHours.toFixed(2),
+          })),
+          estimatedHours: a.items
+            .reduce((n, it) => n.plus(it.estimatedHours), new Prisma.Decimal(0))
+            .toFixed(2),
+          authorizedByName: a.authorizedByName,
+          authorizedVia: a.authorizedVia,
+          decidedAt: a.decidedAt?.toISOString() ?? null,
+          decidedByName: a.decidedBy ? (names.get(a.decidedBy) ?? '—') : null,
+          closeReason: a.closeReason,
+          canDecide: pending && permits('decideAddition', actor),
+          canWithdraw: pending && (actor.manage || (actor.work && a.proposedBy === userId)),
+        };
+      }),
       inspection: job.inspectedAt
         ? {
             recordedAt: job.inspectedAt.toISOString(),

@@ -713,6 +713,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose additional work found during the job (the customer decides) */
+        post: operations["proposeAddition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the customer's approval (tasks join the job) or refusal of additional work */
+        post: operations["decideAddition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a proposal before the customer decides */
+        post: operations["withdrawAddition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/assign": {
         parameters: {
             query?: never;
@@ -1718,7 +1769,7 @@ export interface components {
         NotificationDto: {
             id: string;
             /** @enum {string} */
-            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed" | "job_assigned" | "job_rework" | "job_ready";
+            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed" | "job_assigned" | "job_rework" | "job_ready" | "job_addition_proposed" | "job_addition_approved" | "job_addition_declined";
             /** @description Values for the message text, by kind (e.g. number, reversalNumber, role, roleAr, branch, period, actor, exportKind, fileName, error) */
             params: {
                 [key: string]: string | null;
@@ -1905,6 +1956,8 @@ export interface components {
             canClockOn: boolean;
             /** @description The caller's open entry on this task (to clock off) */
             myOpenEntryId?: string | null;
+            /** @description Number of the approved additional work this task came from */
+            additionSeq?: number | null;
         };
         JobEventDto: {
             id: string;
@@ -1912,7 +1965,7 @@ export interface components {
             occurredAt: string;
             actorName: string;
             /** @enum {string} */
-            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated";
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn";
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
@@ -1970,6 +2023,38 @@ export interface components {
             /** @description The caller can clock this open entry off */
             canStop: boolean;
         };
+        AdditionTaskDto: {
+            lineNo: number;
+            description: string;
+            /** @example 1.00 */
+            estimatedHours: string;
+        };
+        JobAdditionDto: {
+            id: string;
+            /** @description 1, 2, … per job */
+            seq: number;
+            finding: string;
+            /** @enum {string} */
+            status: "proposed" | "approved" | "declined" | "withdrawn";
+            proposedByName: string;
+            /** Format: date-time */
+            proposedAt: string;
+            tasks: components["schemas"]["AdditionTaskDto"][];
+            /** @example 1.50 */
+            estimatedHours: string;
+            authorizedByName?: string | null;
+            /** @enum {string|null} */
+            authorizedVia?: "in_person" | "phone" | "written" | null;
+            /** Format: date-time */
+            decidedAt?: string | null;
+            decidedByName?: string | null;
+            /** @description Why it was declined or withdrawn */
+            closeReason?: string | null;
+            /** @description The caller can record the customer's decision now */
+            canDecide: boolean;
+            /** @description The caller can withdraw it now */
+            canWithdraw: boolean;
+        };
         JobCardDto: {
             id: string;
             number: string;
@@ -2006,7 +2091,7 @@ export interface components {
             tasks: components["schemas"]["JobTaskDto"][];
             /** @description Timeline, oldest first */
             events: components["schemas"]["JobEventDto"][];
-            /** @description What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again */
+            /** @description What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again */
             actions: string[];
             /** @description Check-in inspection; null until recorded */
             inspection?: components["schemas"]["InspectionDto"] | null;
@@ -2021,6 +2106,8 @@ export interface components {
             timeEntries: components["schemas"]["TimeEntryDto"][];
             /** @description The caller can enter missed time for a technician */
             canRecordTime: boolean;
+            /** @description Additional work, oldest first */
+            additions: components["schemas"]["JobAdditionDto"][];
         };
         TechnicianDto: {
             id: string;
@@ -2041,6 +2128,27 @@ export interface components {
             authorizedByName: string;
             /** @enum {string} */
             authorizedVia: "in_person" | "phone" | "written";
+        };
+        ProposeAdditionDto: {
+            version: number;
+            /** @description What was found */
+            finding: string;
+            tasks: components["schemas"]["JobTaskInputDto"][];
+        };
+        DecideAdditionDto: {
+            /** @enum {string} */
+            decision: "approve" | "decline";
+            version: number;
+            /** @description approve: who authorised it */
+            authorizedByName?: string;
+            /** @enum {string} */
+            authorizedVia?: "in_person" | "phone" | "written";
+            /** @description decline: why */
+            reason?: string;
+        };
+        CancelJobDto: {
+            version: number;
+            reason: string;
         };
         AssignTaskDto: {
             version: number;
@@ -2063,10 +2171,6 @@ export interface components {
             version: number;
             deliveredToName: string;
             odometerOut: number;
-        };
-        CancelJobDto: {
-            version: number;
-            reason: string;
         };
         PromiseJobDto: {
             version: number;
@@ -3682,6 +3786,86 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AuthorizeJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    proposeAddition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeAdditionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    decideAddition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                additionId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideAdditionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    withdrawAddition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                additionId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelJobDto"];
             };
         };
         responses: {

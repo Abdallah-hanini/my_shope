@@ -771,7 +771,32 @@ async function main() {
           (await page.getByRole('form', { name: 'Enter missed time' }).count()) === 0,
           'own time offered',
         );
-        for (const n of [1, 2]) {
+        // Additional work found during the job: proposed, the QC waits, the customer approves.
+        await page
+          .locator('#additions-title')
+          .locator('xpath=../..')
+          .getByText('Propose additional work')
+          .first()
+          .click();
+        const propose = page.getByRole('form', { name: 'Propose additional work' });
+        await propose.getByLabel('What was found').fill('Rear brake pads worn to 2 mm');
+        await propose.getByLabel('Task 1', { exact: true }).fill('Replace rear brake pads');
+        await propose.getByLabel('Estimated hours 1', { exact: true }).fill('1');
+        await propose.getByRole('button', { name: 'Propose additional work' }).click();
+        const add1 = page.locator('article[data-addition="1"]');
+        await add1.getByText('Waiting for the customer', { exact: true }).waitFor();
+        await page.getByText('the quality check waits for it').waitFor();
+        await shot('additional-work-proposed-en');
+        const decide = page.getByRole('form', { name: 'Record the customer’s decision 1' });
+        await decide.getByLabel('Authorised by').fill('Khalid Al-Marri');
+        await decide.getByRole('button', { name: 'Save decision' }).click();
+        await add1.getByText('Approved', { exact: true }).waitFor();
+        await page.locator('tr[data-task="3"]').getByText('(from additional work 1)').waitFor();
+        assert(
+          (await page.locator('tfoot').first().innerText()).includes('3.00'),
+          'estimate includes the addition',
+        );
+        for (const n of [1, 2, 3]) {
           await page
             .getByRole('form', { name: `Mark done ${n}` })
             .getByRole('button', { name: 'Mark done' })

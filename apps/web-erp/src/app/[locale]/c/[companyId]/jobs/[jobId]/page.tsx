@@ -17,6 +17,7 @@ import {
   th,
   thNum,
 } from '@/components/ui';
+import { AdditionsCard } from '@/components/workshop/Additions';
 import { InspectionCard, PhotosCard } from '@/components/workshop/CheckIn';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobForm } from '@/components/workshop/JobForm';
@@ -24,6 +25,7 @@ import { JobStatus } from '@/components/workshop/JobStatus';
 import { LabourCard, ManualTimeForm, TaskClock } from '@/components/workshop/Labour';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
+import { fill } from '@/lib/notifications';
 import { isoToZonedLocal } from '@/lib/time';
 import {
   jobStepAction,
@@ -169,6 +171,11 @@ export default async function JobPage({
                   <tr key={task.id} data-task={task.lineNo}>
                     <th scope="row" className={`${td} text-start font-normal`}>
                       {task.lineNo}. {task.description}
+                      {task.additionSeq ? (
+                        <span className="ms-2 text-xs text-[var(--color-text-muted)]">
+                          ({fill(t('add.fromAddition'), { seq: String(task.additionSeq) })})
+                        </span>
+                      ) : null}
                     </th>
                     <td className={tdNum}>
                       <Ltr>{task.estimatedHours}</Ltr>
@@ -250,6 +257,8 @@ export default async function JobPage({
             </Table>
           </Card>
 
+          <AdditionsCard job={j} locale={locale} companyId={companyId} timeZone={tz} />
+
           <LabourCard job={j} locale={locale} companyId={companyId} timeZone={tz} />
 
           <Card title={t('job.timeline')} id="timeline">
@@ -322,6 +331,14 @@ export default async function JobPage({
                 {version}
               </InlineForm>
             </Panel>
+          ) : null}
+          {j.additions.some((a) => a.status === 'proposed') ? (
+            <p
+              role="note"
+              className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-sm"
+            >
+              {t('add.waitingNote')}
+            </p>
           ) : null}
           {j.status === 'qc' && !can('qc') ? (
             <p

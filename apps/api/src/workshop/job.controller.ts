@@ -32,6 +32,12 @@ import {
   authorizeJobSchema,
   cancelJobSchema,
   createJobSchema,
+  decideAdditionSchema,
+  proposeAdditionSchema,
+  withdrawAdditionSchema,
+  type DecideAdditionInput,
+  type ProposeAdditionInput,
+  type WithdrawAdditionInput,
   deliverJobSchema,
   jobListQuerySchema,
   jobNoteSchema,
@@ -64,7 +70,9 @@ import {
   AuthorizeJobDto,
   CancelJobDto,
   CreateJobDto,
+  DecideAdditionDto,
   DeliverJobDto,
+  ProposeAdditionDto,
   JobCardDto,
   JobListItemDto,
   JobNoteDto,
@@ -213,6 +221,69 @@ export class JobController {
     @RequestId() rid?: string,
   ): Promise<JobCardDto> {
     return this.jobs.authorize(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/additions')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'proposeAddition',
+    summary: 'Propose additional work found during the job (the customer decides)',
+  })
+  @ApiBody({ type: ProposeAdditionDto })
+  @ApiCreatedResponse({ type: JobCardDto })
+  proposeAddition(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(proposeAdditionSchema)) body: ProposeAdditionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.proposeAddition(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/additions/:additionId/decision')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'additionId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'decideAddition',
+    summary: "Record the customer's approval (tasks join the job) or refusal of additional work",
+  })
+  @ApiBody({ type: DecideAdditionDto })
+  @ApiOkResponse({ type: JobCardDto })
+  decideAddition(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Param('additionId', id404) additionId: string,
+    @Body(new ZodPipe(decideAdditionSchema)) body: DecideAdditionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.decideAddition(scope, p, id, additionId, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/additions/:additionId/withdraw')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'additionId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'withdrawAddition',
+    summary: 'Withdraw a proposal before the customer decides',
+  })
+  @ApiBody({ type: CancelJobDto })
+  @ApiOkResponse({ type: JobCardDto })
+  withdrawAddition(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Param('additionId', id404) additionId: string,
+    @Body(new ZodPipe(withdrawAdditionSchema)) body: WithdrawAdditionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.withdrawAddition(scope, p, id, additionId, body, ctxOf(p, rid));
   }
 
   @Post('jobs/:jobId/tasks/:taskId/assign')

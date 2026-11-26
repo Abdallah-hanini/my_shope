@@ -21,6 +21,38 @@ export class JobTaskDto {
     description: "The caller's open entry on this task (to clock off)",
   })
   myOpenEntryId!: string | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Number of the approved additional work this task came from',
+  })
+  additionSeq!: number | null;
+}
+
+export class AdditionTaskDto {
+  @ApiProperty() lineNo!: number;
+  @ApiProperty() description!: string;
+  @ApiProperty({ example: '1.00' }) estimatedHours!: string;
+}
+
+export class JobAdditionDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ description: '1, 2, … per job' }) seq!: number;
+  @ApiProperty() finding!: string;
+  @ApiProperty({ enum: ['proposed', 'approved', 'declined', 'withdrawn'] }) status!: string;
+  @ApiProperty() proposedByName!: string;
+  @ApiProperty({ format: 'date-time' }) proposedAt!: string;
+  @ApiProperty({ type: [AdditionTaskDto] }) tasks!: AdditionTaskDto[];
+  @ApiProperty({ example: '1.50' }) estimatedHours!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) authorizedByName!: string | null;
+  @ApiPropertyOptional({ nullable: true, enum: ['in_person', 'phone', 'written'], type: String })
+  authorizedVia!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' }) decidedAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) decidedByName!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Why it was declined or withdrawn' })
+  closeReason!: string | null;
+  @ApiProperty({ description: "The caller can record the customer's decision now" }) canDecide!: boolean;
+  @ApiProperty({ description: 'The caller can withdraw it now' }) canWithdraw!: boolean;
 }
 
 export class ClockedOnDto {
@@ -71,6 +103,13 @@ export class JobEventDto {
       'qc_fail',
       'note',
       'updated',
+      'inspection',
+      'photo_added',
+      'photo_removed',
+      'addition_proposed',
+      'addition_approved',
+      'addition_declined',
+      'addition_withdrawn',
     ],
   })
   kind!: string;
@@ -188,7 +227,7 @@ export class JobCardDto {
   @ApiProperty({
     type: [String],
     description:
-      'What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again',
+      'What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again',
   })
   actions!: string[];
   @ApiPropertyOptional({
@@ -205,6 +244,8 @@ export class JobCardDto {
   timeEntries!: TimeEntryDto[];
   @ApiProperty({ description: 'The caller can enter missed time for a technician' })
   canRecordTime!: boolean;
+  @ApiProperty({ type: [JobAdditionDto], description: 'Additional work, oldest first' })
+  additions!: JobAdditionDto[];
 }
 
 export class TechnicianDto {
@@ -343,4 +384,16 @@ export class LabourReportDto {
   @ApiProperty({ type: LabourFiguresDto }) totals!: LabourFiguresDto;
   @ApiProperty({ type: [ClockedOnNowDto], description: 'Open entries (not in the figures)' })
   clockedOnNow!: ClockedOnNowDto[];
+}
+export class ProposeAdditionDto {
+  @ApiProperty() version!: number;
+  @ApiProperty({ description: 'What was found' }) finding!: string;
+  @ApiProperty({ type: [JobTaskInputDto] }) tasks!: JobTaskInputDto[];
+}
+export class DecideAdditionDto {
+  @ApiProperty({ enum: ['approve', 'decline'] }) decision!: string;
+  @ApiProperty() version!: number;
+  @ApiPropertyOptional({ description: 'approve: who authorised it' }) authorizedByName?: string;
+  @ApiPropertyOptional({ enum: ['in_person', 'phone', 'written'] }) authorizedVia?: string;
+  @ApiPropertyOptional({ description: 'decline: why' }) reason?: string;
 }

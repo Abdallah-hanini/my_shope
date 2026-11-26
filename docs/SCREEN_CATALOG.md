@@ -37,7 +37,7 @@ Counts are summarised at the end.
 | WEB-022 | Workshop bay allocation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-023 | Labor time tracking | WMS-001…014, BRD-02 | 3 | Implemented — clock on/off per task, entries with corrections, report per technician | job details; /[locale]/c/[id]/labour-time | labour.int; e2e |
 | WEB-024 | Spare parts reservation and issuance | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-025 | Additional repair requests | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-025 | Additional repair requests | WMS-001…014, BRD-02 | 3 | Implemented — propose, customer decision, withdraw; tasks join the job | job details | additions.int; e2e |
 | WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Partial — status, promised time, overdue, notifications | job details, board | workshop.int |
 | WEB-027 | Outsourced repair services | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-028 | Final inspection | WMS-001…014, BRD-02 | 3 | Implemented — pass/fail with note, reopen tasks; inspector ≠ technician | job details | workshop.int; e2e |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 25 |
+| Implemented | 26 |
 | Next | 0 |
 | Partial | 9 |
-| Planned | 274 |
+| Planned | 273 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

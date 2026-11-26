@@ -59,7 +59,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | WMS-006 | Job cards and assignments | 3 | Done (first slice, no prices/parts): check-in, tasks, technician assignment per branch, board and list | `apps/api/src/workshop`; workshop.int (16); e2e |
 | WMS-007 | Labor time and costs | 3 | Partly done: time per task and technician (clock on/off, one task at a time, manager corrections and voids with reasons, immutable entries), actual against estimate, labour report with efficiency. **Labour cost** waits for pay rates (payroll, a later phase) | `workshop/labour.ts` (unit 3), `labour.service.ts`, migration `labour_time`; labour.int (7); e2e |
 | WMS-008 | Reserve/issue/return parts | 3 | Not started | — |
-| WMS-009 | Additional approvals | 3 | Not started | — |
+| WMS-009 | Additional approvals | 3 | Done (hours only, no prices until D-05): propose additional work with the finding and tasks; customer approval or refusal recorded by a manager; approved tasks join the job; one open proposal at a time; QC waits; immutable records; notifications | `workshop/job.service.ts` (proposeAddition/decideAddition/withdrawAddition), migration `additional_work`; additions.int (7); e2e |
 | WMS-010 | Repair status and ETA | 3 | Done: lifecycle statuses, promised time, overdue flag, timeline, notifications | `workshop/lifecycle.ts`, job timeline (append-only) |
 | WMS-011 | QC/rework | 3 | Done: inspector ≠ technician on the job; failed check reopens chosen tasks; rework count | `lifecycle.ts` permits('qc'); workshop.int |
 | WMS-012 | Invoice/delivery | 3 | Not started | — |

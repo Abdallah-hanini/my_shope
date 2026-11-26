@@ -16,6 +16,7 @@ export type {
   FiscalPeriod,
   GeneralLedger,
   HealthReport,
+  JobAddition,
   JobCard,
   JobListItem,
   Journal,

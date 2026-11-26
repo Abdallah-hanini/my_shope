@@ -2707,6 +2707,189 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions": {
+      "post": {
+        "operationId": "proposeAddition",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeAdditionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose additional work found during the job (the customer decides)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/decision": {
+      "post": {
+        "operationId": "decideAddition",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "additionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAdditionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the customer's approval (tasks join the job) or refusal of additional work",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/withdraw": {
+      "post": {
+        "operationId": "withdrawAddition",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "additionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a proposal before the customer decides",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/assign": {
       "post": {
         "operationId": "assignJobTask",
@@ -6141,7 +6324,10 @@
               "export_failed",
               "job_assigned",
               "job_rework",
-              "job_ready"
+              "job_ready",
+              "job_addition_proposed",
+              "job_addition_approved",
+              "job_addition_declined"
             ]
           },
           "params": {
@@ -6806,6 +6992,11 @@
             "type": "string",
             "nullable": true,
             "description": "The caller's open entry on this task (to clock off)"
+          },
+          "additionSeq": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of the approved additional work this task came from"
           }
         },
         "required": [
@@ -6844,7 +7035,14 @@
               "qc_pass",
               "qc_fail",
               "note",
-              "updated"
+              "updated",
+              "inspection",
+              "photo_added",
+              "photo_removed",
+              "addition_proposed",
+              "addition_approved",
+              "addition_declined",
+              "addition_withdrawn"
             ]
           },
           "fromStatus": {
@@ -7047,6 +7245,114 @@
           "canStop"
         ]
       },
+      "AdditionTaskDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "estimatedHours": {
+            "type": "string",
+            "example": "1.00"
+          }
+        },
+        "required": [
+          "lineNo",
+          "description",
+          "estimatedHours"
+        ]
+      },
+      "JobAdditionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "seq": {
+            "type": "number",
+            "description": "1, 2, … per job"
+          },
+          "finding": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "approved",
+              "declined",
+              "withdrawn"
+            ]
+          },
+          "proposedByName": {
+            "type": "string"
+          },
+          "proposedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdditionTaskDto"
+            }
+          },
+          "estimatedHours": {
+            "type": "string",
+            "example": "1.50"
+          },
+          "authorizedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorizedVia": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "in_person",
+              "phone",
+              "written"
+            ]
+          },
+          "decidedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "decidedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "closeReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it was declined or withdrawn"
+          },
+          "canDecide": {
+            "type": "boolean",
+            "description": "The caller can record the customer's decision now"
+          },
+          "canWithdraw": {
+            "type": "boolean",
+            "description": "The caller can withdraw it now"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "finding",
+          "status",
+          "proposedByName",
+          "proposedAt",
+          "tasks",
+          "estimatedHours",
+          "canDecide",
+          "canWithdraw"
+        ]
+      },
       "JobCardDto": {
         "type": "object",
         "properties": {
@@ -7172,7 +7478,7 @@
             }
           },
           "actions": {
-            "description": "What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again",
+            "description": "What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again",
             "type": "array",
             "items": {
               "type": "string"
@@ -7210,6 +7516,13 @@
           "canRecordTime": {
             "type": "boolean",
             "description": "The caller can enter missed time for a technician"
+          },
+          "additions": {
+            "description": "Additional work, oldest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobAdditionDto"
+            }
           }
         },
         "required": [
@@ -7235,7 +7548,8 @@
           "photos",
           "actualHours",
           "timeEntries",
-          "canRecordTime"
+          "canRecordTime",
+          "additions"
         ]
       },
       "TechnicianDto": {
@@ -7313,6 +7627,79 @@
           "authorizedVia"
         ]
       },
+      "ProposeAdditionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "finding": {
+            "type": "string",
+            "description": "What was found"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobTaskInputDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "finding",
+          "tasks"
+        ]
+      },
+      "DecideAdditionDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "decline"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "authorizedByName": {
+            "type": "string",
+            "description": "approve: who authorised it"
+          },
+          "authorizedVia": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "phone",
+              "written"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "decline: why"
+          }
+        },
+        "required": [
+          "decision",
+          "version"
+        ]
+      },
+      "CancelJobDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "reason"
+        ]
+      },
       "AssignTaskDto": {
         "type": "object",
         "properties": {
@@ -7387,21 +7774,6 @@
           "version",
           "deliveredToName",
           "odometerOut"
-        ]
-      },
-      "CancelJobDto": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number"
-          },
-          "reason": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "version",
-          "reason"
         ]
       },
       "PromiseJobDto": {

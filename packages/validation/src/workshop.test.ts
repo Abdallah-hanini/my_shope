@@ -1,4 +1,6 @@
 import {
+  decideAdditionSchema,
+  proposeAdditionSchema,
   labourReportQuerySchema,
   manualTimeEntrySchema,
   voidTimeEntrySchema,
@@ -197,5 +199,36 @@ describe('labour time', () => {
     expect(labourReportQuerySchema.safeParse({ from: '2026-01-01', to: '2026-12-31' }).success).toBe(true);
     expect(labourReportQuerySchema.safeParse({ from: '2026-11-30', to: '2026-11-01' }).success).toBe(false);
     expect(labourReportQuerySchema.safeParse({ from: '2025-01-01', to: '2026-01-02' }).success).toBe(false);
+  });
+});
+
+describe('additional work', () => {
+  it('a proposal names the finding and at least one task', () => {
+    const task = { description: 'Replace rear pads', estimatedHours: '1' };
+    expect(
+      proposeAdditionSchema.safeParse({ version: 3, finding: 'Rear pads worn to 2 mm', tasks: [task] })
+        .success,
+    ).toBe(true);
+    expect(proposeAdditionSchema.safeParse({ version: 3, finding: 'x', tasks: [] }).success).toBe(false);
+    expect(proposeAdditionSchema.safeParse({ version: 3, finding: ' ', tasks: [task] }).success).toBe(false);
+  });
+  it('approval names who authorised and how; a refusal needs a reason', () => {
+    expect(
+      decideAdditionSchema.safeParse({
+        decision: 'approve',
+        version: 4,
+        authorizedByName: 'Noor',
+        authorizedVia: 'phone',
+      }).success,
+    ).toBe(true);
+    expect(
+      decideAdditionSchema.safeParse({ decision: 'approve', version: 4, authorizedVia: 'phone' }).success,
+    ).toBe(false);
+    expect(decideAdditionSchema.safeParse({ decision: 'decline', version: 4, reason: '' }).success).toBe(
+      false,
+    );
+    expect(
+      decideAdditionSchema.safeParse({ decision: 'decline', version: 4, reason: 'Too expensive' }).success,
+    ).toBe(true);
   });
 });

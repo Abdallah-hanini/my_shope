@@ -356,3 +356,30 @@ export const labourReportQuerySchema = z
     path: ['to'],
   });
 export type LabourReportQuery = z.infer<typeof labourReportQuerySchema>;
+
+// ── additional work (WMS-009, WEB-025) ──────────────────────────────────────
+
+export const ADDITION_STATUSES = ['proposed', 'approved', 'declined', 'withdrawn'] as const;
+
+/** Extra work found during the job: what was found and the tasks it needs (customer decides). */
+export const proposeAdditionSchema = z.object({
+  version,
+  finding: text(2000),
+  tasks: z.array(taskInput).min(1, 'add at least one task').max(20),
+});
+export type ProposeAdditionInput = z.infer<typeof proposeAdditionSchema>;
+
+/** The customer's decision, recorded by a manager (like the first authorisation). */
+export const decideAdditionSchema = z.discriminatedUnion('decision', [
+  z.object({
+    decision: z.literal('approve'),
+    version,
+    authorizedByName: text(200),
+    authorizedVia: z.enum(AUTHORIZATION_METHODS),
+  }),
+  z.object({ decision: z.literal('decline'), version, reason: text(500).pipe(z.string().min(3)) }),
+]);
+export type DecideAdditionInput = z.infer<typeof decideAdditionSchema>;
+
+export const withdrawAdditionSchema = z.object({ version, reason: text(500).pipe(z.string().min(3)) });
+export type WithdrawAdditionInput = z.infer<typeof withdrawAdditionSchema>;

@@ -18,7 +18,10 @@ export type JobAction =
   | 'deliver'
   | 'cancel'
   | 'promise'
-  | 'note';
+  | 'note'
+  | 'proposeAddition'
+  | 'decideAddition'
+  | 'withdrawAddition';
 
 /** Statuses in which each action is possible (permissions are checked separately). */
 export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
@@ -37,6 +40,10 @@ export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
   addPhoto: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
   // Once work is authorised, photos are evidence (the database enforces this too).
   removePhoto: ['draft'],
+  // Additional work is found once the job is authorised and before it goes to the quality check.
+  proposeAddition: ['approved', 'assigned', 'in_progress', 'rework'],
+  decideAddition: ['approved', 'assigned', 'in_progress', 'rework'],
+  withdrawAddition: ['approved', 'assigned', 'in_progress', 'rework'],
 };
 
 export const OPEN_STATUSES: readonly JobStatus[] = OPEN_JOB_STATUSES;
@@ -98,12 +105,24 @@ export function permits(action: JobAction, a: Actor): boolean {
       return a.qc && !a.onJob;
     case 'note':
       return a.manage || a.work || a.qc;
+    case 'proposeAddition':
+      // Whoever finds it: a manager, or a technician working on this job.
+      return a.manage || (a.work && a.onJob);
+    case 'decideAddition':
+      // Recording the customer's decision, like the first authorisation.
+      return a.manage;
+    case 'withdrawAddition':
+      // Managers, or the proposer (checked by the service).
+      return a.manage || a.work;
   }
 }
 
 /** Actions the actor can take now (for the client to show; the server checks again). */
 export function availableActions(status: JobStatus, a: Actor): JobAction[] {
   return (Object.keys(ACTION_STATUSES) as JobAction[]).filter(
-    (k) => k !== 'completeTask' && allowedInStatus(k, status) && permits(k, a),
+    (k) =>
+      !['completeTask', 'decideAddition', 'withdrawAddition'].includes(k) &&
+      allowedInStatus(k, status) &&
+      permits(k, a),
   );
 }

@@ -9,6 +9,9 @@ import {
   createCustomerSchema,
   createJobSchema,
   createVehicleSchema,
+  decideAdditionSchema,
+  proposeAdditionSchema,
+  withdrawAdditionSchema,
   deliverJobSchema,
   INSPECTION_ITEMS,
   PHOTO_LIMITS,
@@ -438,4 +441,96 @@ export async function removePhotoAction(
   });
   if (failed) return failed;
   redirect(`/${locale}/c/${companyId}/jobs/${jobId}#photos`);
+}
+
+// ── additional work (WEB-025) ───────────────────────────────────────────────
+
+export async function proposeAdditionAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const hours = strings(form, 'taskHours');
+  const tasks = strings(form, 'taskDescription')
+    .map((d, i) => ({ description: d.trim(), estimatedHours: (hours[i] ?? '').trim() }))
+    .filter((t) => t.description || t.estimatedHours);
+  const v = validate(proposeAdditionSchema, {
+    version: Number(values.version),
+    finding: values.finding,
+    tasks,
+  });
+  if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+  const failed = await mutate(locale, values, async (api) => {
+    unwrap(
+      await api.POST('/api/v1/companies/{companyId}/jobs/{jobId}/additions', {
+        params: { path: { companyId, jobId } },
+        body: v.data,
+      }),
+    );
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#additions-title`);
+}
+
+export async function decideAdditionAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  additionId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const version = Number(values.version);
+  const v = validate(
+    decideAdditionSchema,
+    values.decision === 'decline'
+      ? { decision: 'decline', version, reason: values.reason }
+      : {
+          decision: 'approve',
+          version,
+          authorizedByName: values.authorizedByName,
+          authorizedVia: values.authorizedVia,
+        },
+  );
+  if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+  const failed = await mutate(locale, values, async (api) => {
+    unwrap(
+      await api.POST('/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/decision', {
+        params: { path: { companyId, jobId, additionId } },
+        body: v.data as never,
+      }),
+    );
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#additions-title`);
+}
+
+export async function withdrawAdditionAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  additionId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const v = validate(withdrawAdditionSchema, { version: Number(values.version), reason: values.reason });
+  if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+  const failed = await mutate(locale, values, async (api) => {
+    unwrap(
+      await api.POST('/api/v1/companies/{companyId}/jobs/{jobId}/additions/{additionId}/withdraw', {
+        params: { path: { companyId, jobId, additionId } },
+        body: v.data,
+      }),
+    );
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#additions-title`);
 }

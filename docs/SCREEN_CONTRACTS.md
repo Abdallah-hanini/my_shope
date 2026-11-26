@@ -80,6 +80,17 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Report:** per technician, with the figures from KPI_DICTIONARY "Labour time", totals, "clocked on now" and the computed-at time. Needs `workshop.job.manage`.
 - **Tests:** labour.int (7); e2e.
 
+## WEB-025 Additional repair requests
+- **Location:** the job card, "Additional work" card. **Requirement:** WMS-009.
+- **Behaviour:**
+  - Propose: what was found, plus up to 3 task rows in the form (the API accepts 20).
+  - Each proposal shows its status, tasks, hours, who proposed it, and the decision (who authorised it and how, or the reason).
+  - Managers record the customer's decision. The proposer or a manager can withdraw an open proposal.
+  - Tasks from approved work are marked "(from additional work n)".
+  - While a proposal is open, a note explains that the quality check waits, and "Send to quality check" is not offered.
+- **Rules:** T-65, enforced by the server and the database.
+- **Tests:** additions.int (7); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

@@ -499,6 +499,7 @@ model JobCard {
   appointment     Appointment?
   photos          JobPhoto[]
   timeEntries     TaskTimeEntry[]
+  additions       JobAddition[]
 
   @@unique([companyId, id])
   @@unique([companyId, number])
@@ -519,9 +520,12 @@ model JobTask {
   status         String    @default("open")
   doneAt         DateTime? @map("done_at") @db.Timestamptz(6)
   doneBy         String?   @map("done_by") @db.Uuid
+  /// Set when the task came from approved additional work (WEB-025).
+  additionId     String?   @map("addition_id") @db.Uuid
 
   job         JobCard         @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Cascade)
   timeEntries TaskTimeEntry[]
+  addition    JobAddition?    @relation(fields: [additionId], references: [id], onDelete: Restrict)
 
   @@unique([jobId, id])
   @@unique([jobId, lineNo])
@@ -681,5 +685,46 @@ model TaskTimeEntry {
   @@index([companyId, technicianId, startedAt])
   @@index([companyId, branchId, startedAt])
   @@map("task_time_entry")
+  @@schema("workshop")
+}
+
+/// Additional work found during a job (WMS-009, WEB-025): proposed, then approved by the customer
+/// (its tasks join the job), declined or withdrawn. Decided proposals are never changed.
+model JobAddition {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  jobId            String    @map("job_id") @db.Uuid
+  seq              Int
+  finding          String
+  /// proposed | approved | declined | withdrawn
+  status           String    @default("proposed")
+  proposedBy       String    @map("proposed_by") @db.Uuid
+  proposedAt       DateTime  @default(now()) @map("proposed_at") @db.Timestamptz(6)
+  authorizedByName String?   @map("authorized_by_name")
+  authorizedVia    String?   @map("authorized_via")
+  decidedAt        DateTime? @map("decided_at") @db.Timestamptz(6)
+  decidedBy        String?   @map("decided_by") @db.Uuid
+  /// Why it was declined or withdrawn.
+  closeReason      String?   @map("close_reason")
+
+  job   JobCard           @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+  items JobAdditionItem[]
+  tasks JobTask[]
+
+  @@unique([jobId, seq])
+  @@map("job_addition")
+  @@schema("workshop")
+}
+
+model JobAdditionItem {
+  additionId     String  @map("addition_id") @db.Uuid
+  lineNo         Int     @map("line_no")
+  description    String
+  estimatedHours Decimal @map("estimated_hours") @db.Decimal(5, 2)
+
+  addition JobAddition @relation(fields: [additionId], references: [id], onDelete: Restrict)
+
+  @@id([additionId, lineNo])
+  @@map("job_addition_item")
   @@schema("workshop")
 }

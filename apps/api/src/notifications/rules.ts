@@ -14,7 +14,10 @@ export interface NotificationDraft {
     | 'export_failed'
     | 'job_assigned'
     | 'job_rework'
-    | 'job_ready';
+    | 'job_ready'
+    | 'job_addition_proposed'
+    | 'job_addition_approved'
+    | 'job_addition_declined';
   params: Record<string, string | null>;
   /** Path inside the company area (checked by the database), or null. */
   link: string | null;
@@ -203,6 +206,24 @@ export const RULES: Record<string, Rule> = {
     return out;
   },
 
+  'workshop.job.addition_proposed': additionProposed,
+
+  'workshop.job.addition_decided': async (tx, e) => {
+    const p = e.payload as { jobId?: string; decision?: string; proposedBy?: string };
+    if (!p.jobId || !p.proposedBy || !p.decision) throw new Error('decision event without job or proposer');
+    if (p.proposedBy === e.actorUserId) return [];
+    const job = await jobSummary(tx, p.jobId);
+    if (!(await canSee(tx, p.proposedBy, e.companyId, 'workshop.job.read', job.branchId))) return [];
+    return [
+      {
+        userId: p.proposedBy,
+        kind: p.decision === 'approve' ? 'job_addition_approved' : 'job_addition_declined',
+        params: { number: job.number, plate: job.plate },
+        link: `jobs/${p.jobId}`,
+      },
+    ];
+  },
+
   'workshop.job.ready': async (tx, e) => {
     const p = e.payload as { jobId?: string };
     if (!p.jobId) throw new Error('ready event without jobId');
@@ -223,6 +244,43 @@ export const RULES: Record<string, Rule> = {
     ];
   },
 };
+
+/** Managers of the job's branch hear of additional work waiting for the customer's decision. */
+async function additionProposed(
+  tx: Tx,
+  e: OutboxEvent & { companyId: string },
+): Promise<NotificationDraft[]> {
+  const p = e.payload as { jobId?: string; additionId?: string };
+  if (!p.jobId || !p.additionId) throw new Error('addition event without job or addition');
+  const job = await jobSummary(tx, p.jobId);
+  const a = await tx.jobAddition.findUniqueOrThrow({
+    where: { id: p.additionId },
+    select: { finding: true },
+  });
+  const rows = await tx.roleAssignment.findMany({
+    where: {
+      companyId: e.companyId,
+      OR: [{ branchId: null }, { branchId: job.branchId }],
+      role: { permissions: { has: 'workshop.job.manage' } },
+      user: { status: 'active' },
+    },
+    select: { userId: true },
+    distinct: ['userId'],
+  });
+  const actor = await actorName(tx, e.actorUserId);
+  const out: NotificationDraft[] = [];
+  for (const { userId } of rows) {
+    if (userId === e.actorUserId) continue;
+    if (!(await canSee(tx, userId, e.companyId, 'workshop.job.manage', job.branchId))) continue;
+    out.push({
+      userId,
+      kind: 'job_addition_proposed',
+      params: { number: job.number, plate: job.plate, finding: a.finding, actor },
+      link: `jobs/${p.jobId}`,
+    });
+  }
+  return out;
+}
 
 async function jobSummary(tx: Tx, jobId: string) {
   const j = await tx.jobCard.findUniqueOrThrow({
