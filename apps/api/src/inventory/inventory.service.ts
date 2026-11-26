@@ -4,19 +4,18 @@ import type {
   AdjustStockInput,
   CreatePartInput,
   PartListQuery,
+  PartPriceInput,
   ReceiveStockInput,
   UpdatePartInput,
 } from '@erp/validation';
-import { postSystemJournal } from '../accounting/posting';
 import type { CompanyScope, Principal } from '../auth/principal';
 import { AuthzService } from '../authz/authz.service';
 import { resolveScope } from '../authz/scope';
 import { conflict, forbidden, notFound, unprocessable } from '../common/errors';
 import { PrismaService } from '../infra/prisma.service';
 import { writeAudit, type AuditContext } from '../platform/audit';
-import { formatDocumentNumber, nextDocumentNumber } from '../platform/sequence';
-import { localTime } from '../workshop/scheduling';
 import type { PartDto, PartListDto, PartListItemDto, ValuationDto } from './inventory.dto';
+import { applyMovement, type MovementPlan, type PostingAccounts } from './movement';
 import { averageCost, stockIn, stockOut, type StockLevel } from './stock-math';
 
 const D = Prisma.Decimal;
@@ -89,6 +88,7 @@ export class InventoryService {
       brand: string | null;
       unit: string;
       active: boolean;
+      salePrice: Prisma.Decimal | null;
     },
     stock: StockLevel[],
   ): PartListItemDto {
@@ -111,6 +111,7 @@ export class InventoryService {
       onHand: qty(level.onHand),
       value: money(level.value),
       averageCost: avg ? avg.toFixed(4) : null,
+      salePrice: x.salePrice?.toFixed(2) ?? null,
     };
   }
 
@@ -138,6 +139,11 @@ export class InventoryService {
       this.scopeFor(p, scope.companyId, 'inventory.manage'),
       this.scopeFor(p, scope.companyId, 'inventory.adjust'),
     ]);
+    const reserved = await this.prisma.jobPart.groupBy({
+      by: ['branchId'],
+      where: { partId, status: 'reserved' },
+      _sum: { quantity: true },
+    });
     const [users, journals] = await Promise.all([
       this.prisma.user.findMany({
         where: { id: { in: [...new Set(movements.map((m) => m.createdBy))] } },
@@ -154,6 +160,7 @@ export class InventoryService {
       ...this.item(part, stock),
       version: part.version,
       canEdit: !!receive?.allBranches,
+      canSetPrice: await this.can(p, scope.companyId, 'workshop.pricing.manage'),
       branches: branches.map((b) => {
         const s = stock.find((x) => x.branchId === b.id) ?? { onHand: new D(0), value: new D(0) };
         const avg = averageCost(s);
@@ -161,6 +168,7 @@ export class InventoryService {
           branchId: b.id,
           branchCode: b.code,
           onHand: qty(s.onHand),
+          reserved: qty(reserved.find((r) => r.branchId === b.id)?._sum.quantity ?? new D(0)),
           value: money(s.value),
           averageCost: avg ? avg.toFixed(4) : null,
           canReceive: part.active && has(receive, b.id),
@@ -238,6 +246,37 @@ export class InventoryService {
     return this.get(scope, p, partId);
   }
 
+  /** The owner sets (or clears) the selling price used on quotes (T-75). */
+  async setPrice(
+    scope: CompanyScope,
+    p: Principal,
+    partId: string,
+    input: PartPriceInput,
+    ctx: AuditContext,
+  ) {
+    if (!(await this.can(p, scope.companyId, 'workshop.pricing.manage')))
+      throw forbidden('Only the owner (pricing permission for the whole company) sets selling prices');
+    await this.prisma.$transaction(async (tx) => {
+      const n = await tx.part.updateMany({
+        where: { id: partId, companyId: scope.companyId, version: input.version },
+        data: { salePrice: input.salePrice, version: { increment: 1 } },
+      });
+      if (n.count === 0) {
+        if (!(await tx.part.findFirst({ where: { id: partId, companyId: scope.companyId } })))
+          throw notFound('Part');
+        throw conflict('This part was changed by someone else; reload and try again');
+      }
+      await writeAudit(tx, ctx, {
+        action: 'inventory.part.price',
+        entityType: 'part',
+        entityId: partId,
+        companyId: scope.companyId,
+        after: { salePrice: input.salePrice },
+      });
+    });
+    return this.get(scope, p, partId);
+  }
+
   /** Shared frame: idempotency, scope and permission, accounts, stock row locked, movement + journal + balance. */
   private async move(
     scope: CompanyScope,
@@ -246,20 +285,7 @@ export class InventoryService {
     a: { branchId: string; idempotencyKey: string },
     permission: string,
     ctx: AuditContext,
-    plan: (
-      level: StockLevel,
-      acc: { inventory: string; goodsReceived: string | null; adjustment: string | null },
-    ) => {
-      kind: 'receipt' | 'adjustment_in' | 'adjustment_out';
-      quantity: Prisma.Decimal;
-      unitCost: Prisma.Decimal;
-      value: Prisma.Decimal;
-      after: StockLevel;
-      debit: string;
-      credit: string;
-      reference?: string | null;
-      reason?: string | null;
-    },
+    plan: (level: StockLevel, acc: PostingAccounts) => MovementPlan,
   ): Promise<PartDto> {
     const existing = await this.prisma.stockMovement.findUnique({
       where: { companyId_idempotencyKey: { companyId: scope.companyId, idempotencyKey: a.idempotencyKey } },
@@ -278,94 +304,16 @@ export class InventoryService {
       );
     try {
       await this.prisma.$transaction(async (tx) => {
-        const part = await tx.part.findUnique({
-          where: { companyId_id: { companyId: scope.companyId, id: partId } },
-        });
-        if (!part) throw notFound('Part');
         const branch = await tx.branch.findUnique({
           where: { companyId_id: { companyId: scope.companyId, id: a.branchId } },
         });
         if (!branch) throw notFound('Branch');
-        const settings = await tx.postingSettings.findUnique({ where: { companyId: scope.companyId } });
-        if (!settings?.inventoryAccountId)
-          throw unprocessable('The accountant must choose the inventory account first (Posting accounts)');
-        await tx.$executeRaw`INSERT INTO inventory.stock (company_id, branch_id, part_id) VALUES (${scope.companyId}::uuid, ${a.branchId}::uuid, ${partId}::uuid) ON CONFLICT DO NOTHING`;
-        const [row] = await tx.$queryRaw<{ on_hand: Prisma.Decimal; value: Prisma.Decimal }[]>`
-          SELECT on_hand, value FROM inventory.stock WHERE branch_id = ${a.branchId}::uuid AND part_id = ${partId}::uuid FOR UPDATE`;
-        const m = plan(
-          { onHand: new D(row!.on_hand), value: new D(row!.value) },
-          {
-            inventory: settings.inventoryAccountId,
-            goodsReceived: settings.goodsReceivedAccountId,
-            adjustment: settings.stockAdjustmentAccountId,
-          },
-        );
-        if (m.value.isZero())
-          throw unprocessable('The value of this movement rounds to 0.00; check the quantity and cost');
-        const company = await tx.company.findUniqueOrThrow({ where: { id: scope.companyId } });
-        const today = localTime(new Date(), company.timezone).date;
-        const year = today.slice(0, 4);
-        const number = formatDocumentNumber(
-          'SM',
-          year,
-          await nextDocumentNumber(tx, scope.companyId, 'stock_movement', year),
-        );
-        const id = (await tx.$queryRaw<{ id: string }[]>`SELECT gen_random_uuid()::text AS id`)[0]!.id;
-        const label = `${number} · ${part.sku} · ${m.kind.replace('_', ' ')} ${qty(m.quantity)}`;
-        const journal = await postSystemJournal(
+        await applyMovement(
           tx,
           { ...ctx, actorUserId: p.userId },
-          {
-            companyId: scope.companyId,
-            branchId: a.branchId,
-            postingDate: today,
-            description: `${label}${m.reference ? ` · ${m.reference}` : ''}${m.reason ? ` · ${m.reason}` : ''}`,
-            currency: company.baseCurrency,
-            sourceType: 'stock',
-            sourceId: id,
-            lines: [
-              { accountId: m.debit, debit: m.value, credit: new D(0), description: label },
-              { accountId: m.credit, debit: new D(0), credit: m.value, description: label },
-            ],
-          },
+          { companyId: scope.companyId, branchId: a.branchId, partId, idempotencyKey: a.idempotencyKey },
+          plan,
         );
-        await tx.stockMovement.create({
-          data: {
-            id,
-            companyId: scope.companyId,
-            branchId: a.branchId,
-            partId,
-            number,
-            kind: m.kind,
-            quantity: m.quantity,
-            unitCost: m.unitCost,
-            value: m.value,
-            onHandAfter: m.after.onHand,
-            valueAfter: m.after.value,
-            reference: m.reference ?? null,
-            reason: m.reason ?? null,
-            idempotencyKey: a.idempotencyKey,
-            journalId: journal.id,
-            createdBy: p.userId,
-          },
-        });
-        await tx.$executeRaw`UPDATE inventory.stock SET on_hand = ${m.after.onHand}, value = ${m.after.value}, updated_at = now()
-                              WHERE branch_id = ${a.branchId}::uuid AND part_id = ${partId}::uuid`;
-        await writeAudit(tx, ctx, {
-          action: `inventory.stock.${m.kind}`,
-          entityType: 'stock_movement',
-          entityId: id,
-          companyId: scope.companyId,
-          branchId: a.branchId,
-          reason: m.reason ?? undefined,
-          after: {
-            number,
-            sku: part.sku,
-            quantity: qty(m.quantity),
-            value: money(m.value),
-            journal: journal.number,
-          },
-        });
       });
     } catch (e) {
       if (unique(e)) return this.get(scope, p, partId); // the same form, submitted twice at once

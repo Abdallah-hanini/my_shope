@@ -20,6 +20,7 @@ import {
 import { AdditionsCard } from '@/components/workshop/Additions';
 import { QuoteCard } from '@/components/workshop/QuoteCard';
 import { BillingCard } from '@/components/workshop/BillingCard';
+import { JobPartsCard } from '@/components/workshop/JobPartsCard';
 import { InspectionCard, PhotosCard } from '@/components/workshop/CheckIn';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobForm } from '@/components/workshop/JobForm';
@@ -81,6 +82,9 @@ export default async function JobPage({
     : null;
   const quotes = await attempt(async () =>
     unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/quotes', path)),
+  );
+  const jobParts = await attempt(async () =>
+    unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/parts', path)),
   );
   const billing = await attempt(async () =>
     unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/billing', path)),
@@ -290,6 +294,10 @@ export default async function JobPage({
               </tfoot>
             </Table>
           </Card>
+
+          {jobParts.ok ? (
+            <JobPartsCard jobId={j.id} data={jobParts.data} locale={locale} companyId={companyId} />
+          ) : null}
 
           {quotes.ok ? (
             <QuoteCard job={j} data={quotes.data} locale={locale} companyId={companyId} timeZone={tz} />

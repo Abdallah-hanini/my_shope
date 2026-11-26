@@ -3,6 +3,7 @@ import { AccountRefDto } from '../settings/settings.dto';
 
 export class InvoiceLineDto {
   @ApiProperty() lineNo!: number;
+  @ApiProperty({ enum: ['labour', 'part'] }) kind!: string;
   @ApiProperty() description!: string;
   @ApiProperty() hours!: string;
   @ApiProperty() rate!: string;
@@ -100,6 +101,9 @@ export class PostingSettingsDto {
   })
   goodsReceivedAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) stockAdjustmentAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto, description: 'Cost of parts sold' })
+  cogsAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) partsRevenueAccount!: AccountRefDto | null;
   @ApiProperty({ description: '0 until first saved' }) version!: number;
   @ApiProperty() canManage!: boolean;
 }
@@ -115,6 +119,8 @@ export class SetPostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: String }) inventoryAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) goodsReceivedAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) stockAdjustmentAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) cogsAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) partsRevenueAccountId?: string | null;
 }
 export class CreateInvoiceDto {
   @ApiProperty({ description: 'The approved quote to invoice' }) quoteId!: string;

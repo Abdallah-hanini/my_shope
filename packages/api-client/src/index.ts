@@ -23,6 +23,7 @@ export type {
   JobBilling,
   JobCard,
   JobListItem,
+  JobParts,
   JobQuotes,
   Journal,
   LabourReport,

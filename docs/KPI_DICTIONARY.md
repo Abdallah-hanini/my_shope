@@ -101,7 +101,7 @@ Code: `apps/api/src/quotes/quote-math.ts` (unit-tested). The database also check
 
 | Document | Debit | Credit |
 |---|---|---|
-| Invoice | Customer receivable: total | Labour revenue: total − tax; tax payable (tax code's account): tax |
+| Invoice | Customer receivable: total | Labour revenue and parts revenue: total − tax, split in proportion to the labour and part line amounts (parts 2 decimals half up, labour the rest); tax payable (tax code's account): tax |
 | Payment | Cash, card clearing or bank: amount | Customer receivable: amount |
 | Credit note | The invoice journal's lines with debit and credit swapped (a reversal journal) | |
 
@@ -115,3 +115,12 @@ Invoice balance = total − Σ payments (0 for a cancelled invoice). Every posti
 | Value | Σ movement values in − out (2 decimals); receipts and found stock at quantity × unit cost, half up; stock out at quantity × average, half up; the last units take the remaining value |
 | Average cost | Value ÷ on hand (4 decimals); none when nothing is on hand |
 | Reconciliation | Σ stock value (in the shown branches) = debit − credit of the inventory account in the ledger (same branches) |
+
+## Cost of parts sold (T-75)
+
+| Movement | Debit | Credit | Value |
+|---|---|---|---|
+| Issue to a job | Cost of parts sold | Inventory | Quantity × average cost, half up (the last units take the remaining value) |
+| Return from a job | Inventory | Cost of parts sold | Exactly the value it was issued at |
+
+Available to reserve = on hand − Σ reserved quantities at the branch.

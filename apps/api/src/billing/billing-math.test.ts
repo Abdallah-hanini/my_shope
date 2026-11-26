@@ -39,4 +39,35 @@ describe('billing journals', () => {
     ]);
     expect(balanceOf(d('274.31'), [d('100'), d('74.31')]).toFixed(2)).toBe('100.00');
   });
+
+  it('revenue split between labour and parts, discount shared, balanced', () => {
+    // labour 300 + parts 100 = 400; 10 % discount → 360 net; 5 % tax added → 378 total.
+    const ls = invoiceLines(
+      { total: d('378'), tax: d('18'), partsSubtotal: d('100'), subtotal: d('400') },
+      { ...acc, partsRevenue: 'PARTS' },
+      'INV',
+    );
+    expect(show(ls)).toEqual([
+      ['AR', '378.00', '0.00'],
+      ['REV', '0.00', '270.00'],
+      ['PARTS', '0.00', '90.00'],
+      ['TAX', '0.00', '18.00'],
+    ]);
+    expect(() =>
+      invoiceLines({ total: d('100'), tax: d('0'), partsSubtotal: d('100'), subtotal: d('100') }, acc, 'INV'),
+    ).toThrow(/parts revenue/);
+    // parts only: no labour line
+    expect(
+      show(
+        invoiceLines(
+          { total: d('50'), tax: d('0'), partsSubtotal: d('50'), subtotal: d('50') },
+          { ...acc, partsRevenue: 'PARTS' },
+          'INV',
+        ),
+      ),
+    ).toEqual([
+      ['AR', '50.00', '0.00'],
+      ['PARTS', '0.00', '50.00'],
+    ]);
+  });
 });

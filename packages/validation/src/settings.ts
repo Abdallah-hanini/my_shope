@@ -99,6 +99,7 @@ export const updateQuoteSchema = z
     lines: z
       .array(
         z.object({
+          /** A labour line's task, or a parts line's job part. */
           taskId: z.string().uuid(),
           overrideAmount: z
             .string()
@@ -156,6 +157,9 @@ export const postingSettingsSchema = z.object({
   inventoryAccountId: z.string().uuid().nullable().optional(),
   goodsReceivedAccountId: z.string().uuid().nullable().optional(),
   stockAdjustmentAccountId: z.string().uuid().nullable().optional(),
+  /** Parts on jobs (T-75): cost of parts sold, parts revenue. */
+  cogsAccountId: z.string().uuid().nullable().optional(),
+  partsRevenueAccountId: z.string().uuid().nullable().optional(),
 });
 export type PostingSettingsInput = z.infer<typeof postingSettingsSchema>;
 

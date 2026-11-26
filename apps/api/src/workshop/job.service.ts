@@ -539,6 +539,8 @@ export class JobService {
         throw unprocessable('Finish every task before the quality check');
       if (await tx.jobAddition.count({ where: { jobId: id, status: 'proposed' } }))
         throw unprocessable('Additional work is waiting for the customer; record the decision first');
+      if (await tx.jobPart.count({ where: { jobId: id, status: 'reserved' } }))
+        throw unprocessable('Parts are still only reserved; issue or release them before the quality check');
       await tx.jobCard.update({ where: { id }, data: { status: 'qc' } });
       return {
         event: { kind: 'status', toStatus: 'qc' },
@@ -639,6 +641,10 @@ export class JobService {
     return this.act(scope, p, id, 'cancel', input.version, ctx, async (tx) => {
       // No parts or deposits exist yet (inventory and invoicing come later), so nothing to return.
       await closeOpenEntries(tx, { jobId: id }, p.userId);
+      // T-75: issued parts go back to stock first; reservations are simply given back.
+      if (await tx.jobPart.count({ where: { jobId: id, status: 'issued' } }))
+        throw conflict('Parts were issued to this job; return them to stock before cancelling');
+      await tx.jobPart.updateMany({ where: { jobId: id, status: 'reserved' }, data: { status: 'released' } });
       await tx.jobAddition.updateMany({
         where: { jobId: id, status: 'proposed' },
         data: {

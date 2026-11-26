@@ -1,4 +1,11 @@
-import { adjustStockSchema, createPartSchema, quantitySchema, receiveStockSchema } from './inventory';
+import {
+  addJobPartSchema,
+  partPriceSchema,
+  adjustStockSchema,
+  createPartSchema,
+  quantitySchema,
+  receiveStockSchema,
+} from './inventory';
 
 const u = '00000000-0000-4000-8000-000000000001';
 describe('parts and stock', () => {
@@ -57,5 +64,15 @@ describe('parts and stock', () => {
         idempotencyKey: u,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('parts on jobs', () => {
+  it('prices are positive with 2 decimals or cleared; job parts need a quantity', () => {
+    expect(partPriceSchema.safeParse({ version: 1, salePrice: '45.50' }).success).toBe(true);
+    expect(partPriceSchema.safeParse({ version: 1, salePrice: null }).success).toBe(true);
+    expect(partPriceSchema.safeParse({ version: 1, salePrice: '0' }).success).toBe(false);
+    expect(addJobPartSchema.safeParse({ partId: u, quantity: '4.5' }).success).toBe(true);
+    expect(addJobPartSchema.safeParse({ partId: u, quantity: '0' }).success).toBe(false);
   });
 });

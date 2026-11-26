@@ -17,6 +17,8 @@ const FIELDS = [
   { key: 'inventory', type: 'asset' },
   { key: 'goodsReceived', type: 'liability' },
   { key: 'stockAdjustment', type: 'expense' },
+  { key: 'cogs', type: 'expense' },
+  { key: 'partsRevenue', type: 'revenue' },
 ] as const;
 
 /** The accountant's posting accounts for invoices and payments (T-72). */

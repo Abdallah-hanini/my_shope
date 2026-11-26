@@ -118,6 +118,10 @@ export class JobEventDto {
       'credit_note_posted',
       'payment_received',
       'unpaid_release',
+      'part_reserved',
+      'part_released',
+      'part_issued',
+      'part_returned',
     ],
   })
   kind!: string;

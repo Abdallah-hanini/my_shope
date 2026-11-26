@@ -11,6 +11,44 @@
 | 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
 
+## 2026-11-30: Parts on jobs, quotes and invoices (D-06 steps 2–3, T-75)
+
+### Changes
+
+- **Selling price per part,** set by the owner (`workshop.pricing.manage`) on the part page. The part page also shows the quantity reserved per branch.
+- **Parts card on the job card:**
+  - Reserve part: only parts available at the branch (on hand minus reservations, checked by the database with the stock row locked), before the quality check.
+  - Issue to job: only after the customer authorised the work. Stock goes out at weighted average and posts Dr cost of parts sold / Cr inventory.
+  - Return to stock: back in at exactly the issue cost (reverse posting).
+  - Release a reservation.
+  - Each step is on the timeline and in the audit trail; repeated forms record once.
+- **Rules:** the quality check waits while parts are only reserved; a job with issued parts cannot be cancelled until they are returned; cancelling releases reservations.
+- **Quotes:** reserved and issued parts are priced at quantity × selling price, next to labour; a missing price is named ("Set the selling price of …").
+- **Invoices:** revenue is split between labour and parts revenue in proportion to the line amounts, so a discount is shared (T-75, KPI_DICTIONARY).
+- **Posting accounts:** cost of parts sold, parts revenue.
+- **Clean-up:** the stock movement core is shared by receipts, adjustments, issues and returns (`inventory/movement.ts`); quote and invoice lines carry a kind (labour or part) and quantities with 3 decimals.
+- **Text update:** the job board and authorisation help no longer say that prices wait for the tax decision.
+- **Migration `job_parts`:**
+  - the job part table; the selling price; quote and invoice line kinds; issue and return movement kinds; the two posting accounts;
+  - checks (line shape, statuses, issue and return shape), a reservation trigger (availability), a job part guard (immutable, forward-only status), and the new timeline kinds.
+- **Not yet:** special orders for parts not in stock, transfers between branches, supplier bills (clearing "goods received, not yet invoiced"), refunds.
+
+### Evidence (2026-11-30, Linux Docker)
+
+- Unit tests: invoice revenue split 1 new (labour 300 + parts 100, 10 % discount, 5 % tax: 270 / 90 / 18; parts-only; missing account refused).
+- Integration (job-parts.int, 6):
+  - reserve within availability ("Only 6.000 litre of OIL available"); technicians refused; the stock manager reserves; release; reserved shown on the part;
+  - quote refused until priced; the owner sets the price (manager refused); a quote line of 4 × 12.50 = 50.00 for a total of 150.00;
+  - issue refused before authorisation; technicians refused; the stock manager issues: cost 32.00, ledger 5000 = 32.00 and 1400 = 48.00;
+  - issue and return of another litre leaves the ledger unchanged; a second return refused; QC refused while reserved; cancel refused while issued;
+  - invoice 150.00 posting receivable 150 / labour 100 / parts 50; stock value 48.00 = ledger; timeline entries;
+  - cancelling releases reservations; database refusals for a changed job part and over-reservation.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 223/223 across 19 suites on a fresh database; browser end-to-end 46/46.
+- The browser parts check now also covers:
+  - the owner's price of 12.50 per litre and the two new posting accounts;
+  - reserving 4 litres on JC-2026-000002 (shown as Reserved);
+  - the quote's part line at 50.00.
+
 ## 2026-11-30: Parts catalogue and stock at weighted average (D-06 step 1 of 3, T-74)
 
 ### Changes

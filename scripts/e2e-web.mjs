@@ -1503,6 +1503,49 @@ async function main() {
         const rec = page.locator('[data-reconciliation]');
         await rec.getByText('Matches the ledger').waitFor();
         assert((await rec.innerText()).includes('242.25'), await rec.innerText());
+
+        // Parts on a job (T-75): the owner's selling price, the two accounts, reserve, quote line.
+        await page.goto(`${base()}/accounts`);
+        for (const [code, name, type] of [
+          ['5000', 'Cost of parts sold', 'expense'],
+          ['4100', 'Parts revenue', 'revenue'],
+        ]) {
+          await addAccount(code, name, type, 'posting');
+          await page.getByRole('cell', { name, exact: true }).waitFor();
+        }
+        await page.goto(`${base()}/settings/posting`);
+        const ps2 = page.getByRole('form', { name: 'Posting accounts' });
+        await ps2.locator('select[name=cogsAccountId]').selectOption({ label: '5000 — Cost of parts sold' });
+        await ps2
+          .locator('select[name=partsRevenueAccountId]')
+          .selectOption({ label: '4100 — Parts revenue' });
+        await ps2.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        await page.goto(`${base()}/parts?q=oil`);
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'OIL-5W30' }).click(),
+        ]);
+        const price = page.getByRole('form', { name: 'Selling price' });
+        await price.getByLabel(/^Selling price/).fill('12.50');
+        await price.getByRole('button', { name: 'Save' }).click();
+        await page.locator('[data-sale-price]').getByText('12.50 QAR / litre').waitFor();
+        await page.goto(`${base()}/jobs?view=list`);
+        await Promise.all([
+          page.waitForURL(/\/jobs\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'JC-2026-000002' }).click(),
+        ]);
+        const reserve = page.getByRole('form', { name: 'Reserve part' });
+        await reserve
+          .getByLabel('Part (available)')
+          .selectOption({ label: 'OIL-5W30 — Engine oil 5W-30 (28.500 litre)' });
+        await reserve.getByLabel('Quantity').fill('4');
+        await reserve.getByRole('button', { name: 'Reserve part' }).click();
+        await page.locator('tr[data-job-part="OIL-5W30"][data-status=reserved]').waitFor();
+        const quote = page.locator('section[aria-labelledby=quote-title]');
+        await quote.getByRole('button', { name: 'Create quote' }).click();
+        await quote.locator('[data-quote-line="2"]').getByText('50.00').waitFor(); // 4 × 12.50
+        await shot('job-parts-en');
       },
     );
 

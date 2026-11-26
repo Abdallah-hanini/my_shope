@@ -15,12 +15,20 @@ export class PartListItemDto {
   onHand!: string;
   @ApiProperty({ example: '150.00' }) value!: string;
   @ApiPropertyOptional({ nullable: true, type: String, example: '12.5000' }) averageCost!: string | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    example: '45.00',
+    description: 'Selling price per unit',
+  })
+  salePrice!: string | null;
 }
 
 export class BranchStockDto {
   @ApiProperty() branchId!: string;
   @ApiProperty() branchCode!: string;
   @ApiProperty() onHand!: string;
+  @ApiProperty({ description: 'Reserved for jobs' }) reserved!: string;
   @ApiProperty() value!: string;
   @ApiPropertyOptional({ nullable: true, type: String }) averageCost!: string | null;
   @ApiProperty({ description: 'The caller may receive stock here' }) canReceive!: boolean;
@@ -50,6 +58,7 @@ export class PartDto extends PartListItemDto {
   @ApiProperty({ type: [StockMovementDto], description: 'Newest first (up to 100)' })
   movements!: StockMovementDto[];
   @ApiProperty({ description: 'The caller may edit the catalogue entry' }) canEdit!: boolean;
+  @ApiProperty({ description: 'The caller may set the selling price (owner)' }) canSetPrice!: boolean;
 }
 
 export class PartListDto {
@@ -111,4 +120,8 @@ export class AdjustStockDto {
   unitCost?: string | null;
   @ApiProperty() reason!: string;
   @ApiProperty() idempotencyKey!: string;
+}
+export class PartPriceDto {
+  @ApiProperty() version!: number;
+  @ApiPropertyOptional({ nullable: true, type: String, example: '45.00' }) salePrice!: string | null;
 }

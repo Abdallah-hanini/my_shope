@@ -172,6 +172,11 @@ function QuoteView({
                 <tr key={l.taskId} data-quote-line={l.lineNo}>
                   <td className={td}>
                     {l.lineNo}. {l.description}
+                    {l.kind === 'part' ? (
+                      <span className="ms-1 text-xs text-[var(--color-text-muted)]">
+                        ({t('jp.partLine')})
+                      </span>
+                    ) : null}
                     {l.overrideReason ? (
                       <span className="block text-xs text-[var(--color-text-muted)]">{l.overrideReason}</span>
                     ) : null}
@@ -262,6 +267,9 @@ function QuoteView({
               <tr key={l.taskId} data-quote-line={l.lineNo}>
                 <td className={td}>
                   {l.lineNo}. {l.description}
+                  {l.kind === 'part' ? (
+                    <span className="ms-1 text-xs text-[var(--color-text-muted)]">({t('jp.partLine')})</span>
+                  ) : null}
                   {l.overrideReason ? (
                     <span className="block text-xs text-[var(--color-text-muted)]">{l.overrideReason}</span>
                   ) : null}

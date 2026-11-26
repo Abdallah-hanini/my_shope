@@ -108,6 +108,8 @@ export async function postingSettingsAction(
     inventoryAccountId: id('inventoryAccountId'),
     goodsReceivedAccountId: id('goodsReceivedAccountId'),
     stockAdjustmentAccountId: id('stockAdjustmentAccountId'),
+    cogsAccountId: id('cogsAccountId'),
+    partsRevenueAccountId: id('partsRevenueAccountId'),
   });
   if (!v.ok) return { fieldErrors: v.fieldErrors, values };
   const failed = await mutate(locale, values, async (api) => {

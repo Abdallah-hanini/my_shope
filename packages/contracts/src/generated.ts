@@ -1220,6 +1220,74 @@ export interface paths {
         patch: operations["updateBay"];
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJobParts"];
+        put?: never;
+        /** Reserve a part from the branch stock for the job */
+        post: operations["reserveJobPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give a reservation back to stock */
+        post: operations["releaseJobPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the reserved part out of stock for the job (Dr cost of parts sold, Cr inventory) */
+        post: operations["issueJobPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an issued part back into stock at its issue cost */
+        post: operations["returnJobPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/tax": {
         parameters: {
             query?: never;
@@ -1673,6 +1741,23 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updatePart"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/parts/{partId}/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Selling price per unit (owner) */
+        put: operations["setPartPrice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/companies/{companyId}/parts/{partId}/receipts": {
@@ -2523,7 +2608,7 @@ export interface components {
             occurredAt: string;
             actorName: string;
             /** @enum {string} */
-            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay" | "quote_issued" | "quote_approved" | "quote_declined" | "invoice_posted" | "credit_note_posted" | "payment_received" | "unpaid_release";
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay" | "quote_issued" | "quote_approved" | "quote_declined" | "invoice_posted" | "credit_note_posted" | "payment_received" | "unpaid_release" | "part_reserved" | "part_released" | "part_issued" | "part_returned";
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
@@ -2995,6 +3080,51 @@ export interface components {
             name: string;
             active: boolean;
         };
+        JobPartDto: {
+            id: string;
+            partId: string;
+            sku: string;
+            name: string;
+            unit: string;
+            /** @example 4.500 */
+            quantity: string;
+            /** @enum {string} */
+            status: "reserved" | "issued" | "returned" | "released";
+            /** @description Stock value taken out (issued) */
+            cost?: string | null;
+            /** @description Selling price per unit */
+            salePrice?: string | null;
+            issueNumber?: string | null;
+            returnNumber?: string | null;
+            /** @description release, issue, return */
+            actions: string[];
+        };
+        PartChoiceDto: {
+            partId: string;
+            sku: string;
+            name: string;
+            unit: string;
+            /** @description On hand minus reserved at the job’s branch */
+            available: string;
+            salePrice?: string | null;
+        };
+        JobPartsDto: {
+            jobId: string;
+            parts: components["schemas"]["JobPartDto"][];
+            /** @description The caller can reserve parts for this job now */
+            canAdd: boolean;
+            /** @description Parts with stock available at the branch (when canAdd) */
+            choices: components["schemas"]["PartChoiceDto"][];
+        };
+        AddJobPartDto: {
+            partId: string;
+            /** @example 4.5 */
+            quantity: string;
+        };
+        JobPartStepDto: {
+            /** @description A new UUID per form */
+            idempotencyKey: string;
+        };
         AccountRefDto: {
             id: string;
             code: string;
@@ -3124,6 +3254,12 @@ export interface components {
         };
         QuoteLineDto: {
             lineNo: number;
+            /**
+             * @description labour: hours × rate; part: quantity × unit price
+             * @enum {string}
+             */
+            kind: "labour" | "part";
+            /** @description The task (labour) or job part (part) the line prices */
             taskId: string;
             description: string;
             /** @example 1.50 */
@@ -3227,6 +3363,9 @@ export interface components {
             /** @description Goods received, not yet invoiced (liability) */
             goodsReceivedAccount?: components["schemas"]["AccountRefDto"] | null;
             stockAdjustmentAccount?: components["schemas"]["AccountRefDto"] | null;
+            /** @description Cost of parts sold */
+            cogsAccount?: components["schemas"]["AccountRefDto"] | null;
+            partsRevenueAccount?: components["schemas"]["AccountRefDto"] | null;
             /** @description 0 until first saved */
             version: number;
             canManage: boolean;
@@ -3241,9 +3380,13 @@ export interface components {
             inventoryAccountId?: string | null;
             goodsReceivedAccountId?: string | null;
             stockAdjustmentAccountId?: string | null;
+            cogsAccountId?: string | null;
+            partsRevenueAccountId?: string | null;
         };
         InvoiceLineDto: {
             lineNo: number;
+            /** @enum {string} */
+            kind: "labour" | "part";
             description: string;
             hours: string;
             rate: string;
@@ -3363,6 +3506,11 @@ export interface components {
             value: string;
             /** @example 12.5000 */
             averageCost?: string | null;
+            /**
+             * @description Selling price per unit
+             * @example 45.00
+             */
+            salePrice?: string | null;
         };
         PartListDto: {
             parts: components["schemas"]["PartListItemDto"][];
@@ -3381,6 +3529,8 @@ export interface components {
             branchId: string;
             branchCode: string;
             onHand: string;
+            /** @description Reserved for jobs */
+            reserved: string;
             value: string;
             averageCost?: string | null;
             /** @description The caller may receive stock here */
@@ -3425,12 +3575,19 @@ export interface components {
             value: string;
             /** @example 12.5000 */
             averageCost?: string | null;
+            /**
+             * @description Selling price per unit
+             * @example 45.00
+             */
+            salePrice?: string | null;
             version: number;
             branches: components["schemas"]["BranchStockDto"][];
             /** @description Newest first (up to 100) */
             movements: components["schemas"]["StockMovementDto"][];
             /** @description The caller may edit the catalogue entry */
             canEdit: boolean;
+            /** @description The caller may set the selling price (owner) */
+            canSetPrice: boolean;
         };
         UpdatePartDto: {
             version: number;
@@ -3438,6 +3595,11 @@ export interface components {
             nameAr?: string | null;
             brand?: string | null;
             active: boolean;
+        };
+        PartPriceDto: {
+            version: number;
+            /** @example 45.00 */
+            salePrice?: string | null;
         };
         ReceiveStockDto: {
             branchId: string;
@@ -5759,6 +5921,128 @@ export interface operations {
             };
         };
     };
+    getJobParts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    reserveJobPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddJobPartDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    releaseJobPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPartId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    issueJobPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPartId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobPartStepDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    returnJobPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPartId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobPartStepDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
     getTaxSetup: {
         parameters: {
             query?: never;
@@ -6569,6 +6853,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdatePartDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    setPartPrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartPriceDto"];
             };
         };
         responses: {

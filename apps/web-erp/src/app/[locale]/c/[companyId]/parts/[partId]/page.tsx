@@ -67,7 +67,8 @@ export default async function PartPage({
             <strong>
               <Ltr>{`${b.onHand} ${unit}`}</Ltr>
             </strong>{' '}
-            · {t('inv.avgCost')}: <Ltr>{b.averageCost ?? '—'}</Ltr> · {t('inv.value')}:{' '}
+            · {t('jp.reserved')}: <Ltr>{b.reserved}</Ltr> · {t('inv.avgCost')}:{' '}
+            <Ltr>{b.averageCost ?? '—'}</Ltr> · {t('inv.value')}:{' '}
             <Ltr>{`${b.value} ${company.baseCurrency}`}</Ltr>
           </p>
           <div className="flex flex-col gap-4">
@@ -183,6 +184,32 @@ export default async function PartPage({
             ))}
           </tbody>
         </Table>
+      </Card>
+      <Card title={t('jp.salePrice')} id="price">
+        <p className="mb-3 text-sm" data-sale-price>
+          {p.salePrice ? <Ltr>{`${p.salePrice} ${company.baseCurrency} / ${unit}`}</Ltr> : t('jp.noPrice')}
+        </p>
+        {p.canSetPrice ? (
+          <InlineForm
+            action={act({ kind: 'price' })}
+            locale={locale}
+            submitLabel={t('cust.save')}
+            submitClassName={buttonSecondary}
+            ariaLabel={t('jp.salePrice')}
+          >
+            <input type="hidden" name="version" value={p.version} />
+            <label className={field}>
+              {`${t('jp.salePrice')} (${company.baseCurrency})`}
+              <input
+                name="salePrice"
+                defaultValue={p.salePrice ?? ''}
+                inputMode="decimal"
+                dir="ltr"
+                className={`${inputClass} w-32`}
+              />
+            </label>
+          </InlineForm>
+        ) : null}
       </Card>
       {p.canEdit ? (
         <Card title={t('inv.editPart')} id="edit-part">

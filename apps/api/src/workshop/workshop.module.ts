@@ -5,11 +5,13 @@ import { BayController } from './bay.controller';
 import { BayService } from './bay.service';
 import { JobController } from './job.controller';
 import { JobService } from './job.service';
+import { JobPartController } from './job-part.controller';
+import { JobPartService } from './job-part.service';
 import { LabourController } from './labour.controller';
 import { LabourService } from './labour.service';
 
 @Module({
-  controllers: [JobController, AppointmentController, LabourController, BayController],
-  providers: [JobService, AppointmentService, LabourService, BayService],
+  controllers: [JobController, AppointmentController, LabourController, BayController, JobPartController],
+  providers: [JobService, AppointmentService, LabourService, BayService, JobPartService],
 })
 export class WorkshopModule {}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -13,6 +13,8 @@ import {
   adjustStockSchema,
   createPartSchema,
   partListQuerySchema,
+  partPriceSchema,
+  type PartPriceInput,
   receiveStockSchema,
   updatePartSchema,
   type AdjustStockInput,
@@ -30,6 +32,7 @@ import {
   CreatePartDto,
   PartDto,
   PartListDto,
+  PartPriceDto,
   ReceiveStockDto,
   UpdatePartDto,
   ValuationDto,
@@ -103,6 +106,22 @@ export class InventoryController {
     @RequestId() rid?: string,
   ) {
     return this.inventory.update(s, p, id, b, ctxOf(p, rid));
+  }
+
+  @Put('parts/:partId/price')
+  @RequirePermission('inventory.read')
+  @ApiParam({ name: 'partId', format: 'uuid' })
+  @ApiOperation({ operationId: 'setPartPrice', summary: 'Selling price per unit (owner)' })
+  @ApiBody({ type: PartPriceDto })
+  @ApiOkResponse({ type: PartDto })
+  setPrice(
+    @CurrentScope() s: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('partId', id404) id: string,
+    @Body(new ZodPipe(partPriceSchema)) b: PartPriceInput,
+    @RequestId() rid?: string,
+  ) {
+    return this.inventory.setPrice(s, p, id, b, ctxOf(p, rid));
   }
 
   @Post('parts/:partId/receipts')

@@ -32,7 +32,14 @@ type InvoiceRow = Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>;
 /** Accounts invoicing needs (shown as missing on the job card). */
 const BILLING_ACCOUNTS = ['labourRevenue', 'receivable', 'cash', 'card', 'bank'] as const;
 /** Every posting setting, with stock (T-74). */
-const ACCOUNTS = [...BILLING_ACCOUNTS, 'inventory', 'goodsReceived', 'stockAdjustment'] as const;
+const ACCOUNTS = [
+  ...BILLING_ACCOUNTS,
+  'inventory',
+  'goodsReceived',
+  'stockAdjustment',
+  'cogs',
+  'partsRevenue',
+] as const;
 const METHOD_ACCOUNT = { cash: 'cashAccountId', card: 'cardAccountId', bank: 'bankAccountId' } as const;
 /** Account types each posting setting accepts. */
 const ACCOUNT_TYPES: Record<(typeof ACCOUNTS)[number], string> = {
@@ -44,6 +51,8 @@ const ACCOUNT_TYPES: Record<(typeof ACCOUNTS)[number], string> = {
   inventory: 'asset',
   goodsReceived: 'liability',
   stockAdjustment: 'expense',
+  cogs: 'expense',
+  partsRevenue: 'revenue',
 };
 
 /**
@@ -96,6 +105,8 @@ export class BillingService {
       inventoryAccount: ref(s?.inventoryAccountId),
       goodsReceivedAccount: ref(s?.goodsReceivedAccountId),
       stockAdjustmentAccount: ref(s?.stockAdjustmentAccountId),
+      cogsAccount: ref(s?.cogsAccountId),
+      partsRevenueAccount: ref(s?.partsRevenueAccountId),
       version: s?.version ?? 0,
       canManage: await this.can(p, scope.companyId, 'accounting.account.manage'),
     };
@@ -129,6 +140,8 @@ export class BillingService {
       inventoryAccountId: input.inventoryAccountId ?? null,
       goodsReceivedAccountId: input.goodsReceivedAccountId ?? null,
       stockAdjustmentAccountId: input.stockAdjustmentAccountId ?? null,
+      cogsAccountId: input.cogsAccountId ?? null,
+      partsRevenueAccountId: input.partsRevenueAccountId ?? null,
     };
     await this.prisma.$transaction(async (tx) => {
       if (input.version === 0) {
@@ -256,8 +269,9 @@ export class BillingService {
       createdAt: d.createdAt.toISOString(),
       lines: d.lines.map((l) => ({
         lineNo: l.lineNo,
+        kind: l.kind,
         description: l.description,
-        hours: l.hours.toFixed(2),
+        hours: l.kind === 'part' ? l.hours.toFixed(3) : l.hours.toFixed(2),
         rate: money(l.rate),
         amount: money(l.amount),
       })),
@@ -333,6 +347,11 @@ export class BillingService {
           );
         taxAccount = code.outputAccountId;
       }
+      const partsSubtotal = q.lines
+        .filter((l) => l.kind === 'part')
+        .reduce((n, l) => n.plus(l.amount), new Prisma.Decimal(0));
+      if (partsSubtotal.greaterThan(0) && !settings.partsRevenueAccountId)
+        throw unprocessable('The accountant must choose the parts revenue account first (Posting accounts)');
       const today = localTime(new Date(), job.company.timezone).date;
       const year = today.slice(0, 4);
       const number = formatDocumentNumber(
@@ -353,10 +372,11 @@ export class BillingService {
           sourceType: 'invoice',
           sourceId: id,
           lines: invoiceLines(
-            { total: q.total, tax: q.taxAmount },
+            { total: q.total, tax: q.taxAmount, partsSubtotal, subtotal: q.subtotal },
             {
               receivable: settings.receivableAccountId,
               revenue: settings.labourRevenueAccountId,
+              partsRevenue: settings.partsRevenueAccountId,
               tax: taxAccount,
             },
             number,
@@ -389,6 +409,7 @@ export class BillingService {
           lines: {
             create: q.lines.map((l) => ({
               lineNo: l.lineNo,
+              kind: l.kind,
               description: l.description,
               hours: l.hours,
               rate: l.rate,
@@ -597,6 +618,7 @@ export class BillingService {
           lines: {
             create: inv.lines.map((l) => ({
               lineNo: l.lineNo,
+              kind: l.kind,
               description: l.description,
               hours: l.hours,
               rate: l.rate,

@@ -4564,6 +4564,259 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/parts": {
+      "get": {
+        "operationId": "getJobParts",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "post": {
+        "operationId": "reserveJobPart",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddJobPartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reserve a part from the branch stock for the job",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/release": {
+      "post": {
+        "operationId": "releaseJobPart",
+        "parameters": [
+          {
+            "name": "jobPartId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a reservation back to stock",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/issue": {
+      "post": {
+        "operationId": "issueJobPart",
+        "parameters": [
+          {
+            "name": "jobPartId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobPartStepDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take the reserved part out of stock for the job (Dr cost of parts sold, Cr inventory)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/return": {
+      "post": {
+        "operationId": "returnJobPart",
+        "parameters": [
+          {
+            "name": "jobPartId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobPartStepDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put an issued part back into stock at its issue cost",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/tax": {
       "get": {
         "operationId": "getTaxSetup",
@@ -6189,6 +6442,61 @@
           }
         ],
         "summary": "",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/parts/{partId}/price": {
+      "put": {
+        "operationId": "setPartPrice",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartPriceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Selling price per unit (owner)",
         "tags": [
           "inventory"
         ]
@@ -9040,7 +9348,11 @@
               "invoice_posted",
               "credit_note_posted",
               "payment_received",
-              "unpaid_release"
+              "unpaid_release",
+              "part_reserved",
+              "part_released",
+              "part_issued",
+              "part_returned"
             ]
           },
           "fromStatus": {
@@ -10589,6 +10901,165 @@
           "active"
         ]
       },
+      "JobPartDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "4.500"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "issued",
+              "returned",
+              "released"
+            ]
+          },
+          "cost": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stock value taken out (issued)"
+          },
+          "salePrice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Selling price per unit"
+          },
+          "issueNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "returnNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "actions": {
+            "description": "release, issue, return",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "partId",
+          "sku",
+          "name",
+          "unit",
+          "quantity",
+          "status",
+          "actions"
+        ]
+      },
+      "PartChoiceDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "available": {
+            "type": "string",
+            "description": "On hand minus reserved at the job’s branch"
+          },
+          "salePrice": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "partId",
+          "sku",
+          "name",
+          "unit",
+          "available"
+        ]
+      },
+      "JobPartsDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPartDto"
+            }
+          },
+          "canAdd": {
+            "type": "boolean",
+            "description": "The caller can reserve parts for this job now"
+          },
+          "choices": {
+            "description": "Parts with stock available at the branch (when canAdd)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartChoiceDto"
+            }
+          }
+        },
+        "required": [
+          "jobId",
+          "parts",
+          "canAdd",
+          "choices"
+        ]
+      },
+      "AddJobPartDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "4.5"
+          }
+        },
+        "required": [
+          "partId",
+          "quantity"
+        ]
+      },
+      "JobPartStepDto": {
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "description": "A new UUID per form"
+          }
+        },
+        "required": [
+          "idempotencyKey"
+        ]
+      },
       "AccountRefDto": {
         "type": "object",
         "properties": {
@@ -11012,8 +11483,17 @@
           "lineNo": {
             "type": "number"
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "labour",
+              "part"
+            ],
+            "description": "labour: hours × rate; part: quantity × unit price"
+          },
           "taskId": {
-            "type": "string"
+            "type": "string",
+            "description": "The task (labour) or job part (part) the line prices"
           },
           "description": {
             "type": "string"
@@ -11043,6 +11523,7 @@
         },
         "required": [
           "lineNo",
+          "kind",
           "taskId",
           "description",
           "hours",
@@ -11404,6 +11885,25 @@
               }
             ]
           },
+          "cogsAccount": {
+            "nullable": true,
+            "description": "Cost of parts sold",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "partsRevenueAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
           "version": {
             "type": "number",
             "description": "0 until first saved"
@@ -11454,6 +11954,14 @@
           "stockAdjustmentAccountId": {
             "type": "string",
             "nullable": true
+          },
+          "cogsAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partsRevenueAccountId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -11465,6 +11973,13 @@
         "properties": {
           "lineNo": {
             "type": "number"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "labour",
+              "part"
+            ]
           },
           "description": {
             "type": "string"
@@ -11481,6 +11996,7 @@
         },
         "required": [
           "lineNo",
+          "kind",
           "description",
           "hours",
           "rate",
@@ -11871,6 +12387,12 @@
             "type": "string",
             "nullable": true,
             "example": "12.5000"
+          },
+          "salePrice": {
+            "type": "string",
+            "nullable": true,
+            "example": "45.00",
+            "description": "Selling price per unit"
           }
         },
         "required": [
@@ -11948,6 +12470,10 @@
           "onHand": {
             "type": "string"
           },
+          "reserved": {
+            "type": "string",
+            "description": "Reserved for jobs"
+          },
           "value": {
             "type": "string"
           },
@@ -11968,6 +12494,7 @@
           "branchId",
           "branchCode",
           "onHand",
+          "reserved",
           "value",
           "canReceive",
           "canAdjust"
@@ -12090,6 +12617,12 @@
             "nullable": true,
             "example": "12.5000"
           },
+          "salePrice": {
+            "type": "string",
+            "nullable": true,
+            "example": "45.00",
+            "description": "Selling price per unit"
+          },
           "version": {
             "type": "number"
           },
@@ -12109,6 +12642,10 @@
           "canEdit": {
             "type": "boolean",
             "description": "The caller may edit the catalogue entry"
+          },
+          "canSetPrice": {
+            "type": "boolean",
+            "description": "The caller may set the selling price (owner)"
           }
         },
         "required": [
@@ -12122,7 +12659,8 @@
           "version",
           "branches",
           "movements",
-          "canEdit"
+          "canEdit",
+          "canSetPrice"
         ]
       },
       "UpdatePartDto": {
@@ -12150,6 +12688,22 @@
           "version",
           "name",
           "active"
+        ]
+      },
+      "PartPriceDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "salePrice": {
+            "type": "string",
+            "nullable": true,
+            "example": "45.00"
+          }
+        },
+        "required": [
+          "version"
         ]
       },
       "ReceiveStockDto": {

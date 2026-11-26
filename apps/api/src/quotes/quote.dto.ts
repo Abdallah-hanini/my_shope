@@ -2,7 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class QuoteLineDto {
   @ApiProperty() lineNo!: number;
-  @ApiProperty() taskId!: string;
+  @ApiProperty({ enum: ['labour', 'part'], description: 'labour: hours × rate; part: quantity × unit price' })
+  kind!: string;
+  @ApiProperty({ description: 'The task (labour) or job part (part) the line prices' }) taskId!: string;
   @ApiProperty() description!: string;
   @ApiProperty({ example: '1.50' }) hours!: string;
   @ApiProperty({ example: '150.00', description: 'Labour rate per hour used' }) rate!: string;

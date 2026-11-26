@@ -98,25 +98,54 @@ export class QuoteService {
     if (!pr.rate)
       throw unprocessable('Set the labour rate of this branch first (Labour rates and discounts)');
     if (!job.tasks.length) throw unprocessable('The job has no tasks to price');
-    const lines = job.tasks.map((t) => ({ t, o: overrides.get(t.id) ?? { amount: null, reason: null } }));
+    // Labour: each task at hours × the branch rate. Parts (T-75): each reserved or issued job part
+    // at quantity × its selling price (in the line's hours and rate).
+    const parts = await tx.jobPart.findMany({
+      where: { jobId: job.id, status: { in: ['reserved', 'issued'] } },
+      include: { part: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const unpriced = parts.find((x) => !x.part.salePrice);
+    if (unpriced) throw unprocessable(`Set the selling price of ${unpriced.part.sku} first (part page)`);
+    const none = { amount: null, reason: null };
+    const lines = [
+      ...job.tasks.map((t) => ({
+        kind: 'labour' as const,
+        key: t.id,
+        description: t.description,
+        hours: t.estimatedHours,
+        rate: pr.rate!,
+        o: overrides.get(t.id) ?? none,
+      })),
+      ...parts.map((x) => ({
+        kind: 'part' as const,
+        key: x.id,
+        description: `${x.part.sku} ${x.part.name}`,
+        hours: x.quantity,
+        rate: x.part.salePrice!,
+        o: overrides.get(x.id) ?? none,
+      })),
+    ];
     const totals = quoteTotals(
-      lines.map(({ t, o }) => ({ hours: t.estimatedHours, rate: pr.rate!, override: o.amount })),
+      lines.map((l) => ({ hours: l.hours, rate: l.rate, override: l.o.amount })),
       q.discountPct,
       pr.taxPct,
       pr.pricesIncludeTax,
     );
     await tx.quoteLine.deleteMany({ where: { quoteId: q.id } });
     await tx.quoteLine.createMany({
-      data: lines.map(({ t, o }, i) => ({
+      data: lines.map((l, i) => ({
         quoteId: q.id,
         lineNo: i + 1,
         jobId: job.id,
-        taskId: t.id,
-        description: t.description,
-        hours: t.estimatedHours,
-        rate: pr.rate!,
-        overrideAmount: o.amount,
-        overrideReason: o.amount !== null ? o.reason : null,
+        kind: l.kind,
+        taskId: l.kind === 'labour' ? l.key : null,
+        jobPartId: l.kind === 'part' ? l.key : null,
+        description: l.description,
+        hours: l.hours,
+        rate: l.rate,
+        overrideAmount: l.o.amount,
+        overrideReason: l.o.amount !== null ? l.o.reason : null,
         amount: totals.lines[i]!,
       })),
     });
@@ -200,9 +229,10 @@ export class QuoteService {
       total: money(q.total),
       lines: q.lines.map((l) => ({
         lineNo: l.lineNo,
-        taskId: l.taskId,
+        kind: l.kind,
+        taskId: (l.taskId ?? l.jobPartId)!,
         description: l.description,
-        hours: l.hours.toFixed(2),
+        hours: l.kind === 'part' ? l.hours.toFixed(3) : l.hours.toFixed(2),
         rate: money(l.rate),
         overrideAmount: l.overrideAmount ? money(l.overrideAmount) : null,
         overrideReason: l.overrideReason,
@@ -287,7 +317,7 @@ export class QuoteService {
       const overrides = new Map(
         (last?.lines ?? [])
           .filter((l) => l.overrideAmount !== null)
-          .map((l) => [l.taskId, { amount: l.overrideAmount, reason: l.overrideReason }]),
+          .map((l) => [(l.taskId ?? l.jobPartId)!, { amount: l.overrideAmount, reason: l.overrideReason }]),
       );
       await this.reprice(tx, q, job, overrides);
       await this.audit(tx, ctx, q, 'workshop.quote.create', { revision: q.revision });
@@ -326,13 +356,14 @@ export class QuoteService {
       const q = await this.draft(tx, scope, quoteId, input.version);
       const pctIn = new D(input.discountPct);
       const changed = !pctIn.equals(q.discountPct) || (input.discountReason ?? null) !== q.discountReason;
-      const known = new Set(job.tasks.map((t) => t.id));
+      const jobParts = await tx.jobPart.findMany({ where: { jobId: job.id }, select: { id: true } });
+      const known = new Set([...job.tasks.map((t) => t.id), ...jobParts.map((x) => x.id)]);
       for (const l of input.lines)
-        if (!known.has(l.taskId)) throw unprocessable('A price change refers to a task not on this job');
+        if (!known.has(l.taskId)) throw unprocessable('A price change refers to a line not on this job');
       const overrides = new Map(
         q.lines
           .filter((l) => l.overrideAmount !== null)
-          .map((l) => [l.taskId, { amount: l.overrideAmount, reason: l.overrideReason }]),
+          .map((l) => [(l.taskId ?? l.jobPartId)!, { amount: l.overrideAmount, reason: l.overrideReason }]),
       );
       for (const l of input.lines)
         overrides.set(l.taskId, {
@@ -408,7 +439,7 @@ export class QuoteService {
       const overrides = new Map(
         q.lines
           .filter((l) => l.overrideAmount !== null)
-          .map((l) => [l.taskId, { amount: l.overrideAmount, reason: l.overrideReason }]),
+          .map((l) => [(l.taskId ?? l.jobPartId)!, { amount: l.overrideAmount, reason: l.overrideReason }]),
       );
       const { today, limit } = await this.reprice(tx, q, job, overrides);
       if (q.discountPct.greaterThan(limit) && !q.discountApprovedBy)

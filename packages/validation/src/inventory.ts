@@ -76,3 +76,25 @@ export const partListQuerySchema = z.object({
   includeInactive: z.enum(['true', 'false']).optional(),
 });
 export type PartListQuery = z.infer<typeof partListQuerySchema>;
+
+// ── parts on jobs (T-75) ─────────────────────────────────────────────────────
+
+/** Selling price per unit, before or including tax per the tax set-up's price basis (owner). */
+export const partPriceSchema = z.object({
+  version,
+  salePrice: z
+    .string()
+    .trim()
+    .regex(/^\d{1,10}(\.\d{1,2})?$/, 'a price, e.g. 45 or 45.50')
+    .refine((v) => Number(v) > 0, 'must be more than 0')
+    .nullable(),
+});
+export type PartPriceInput = z.infer<typeof partPriceSchema>;
+
+/** Reserve a part from the job's branch stock for the job. */
+export const addJobPartSchema = z.object({ partId: z.string().uuid(), quantity: quantitySchema });
+export type AddJobPartInput = z.infer<typeof addJobPartSchema>;
+
+export const JOB_PART_STATUSES = ['reserved', 'issued', 'returned', 'released'] as const;
+export const jobPartStepSchema = z.object({ idempotencyKey: z.string().uuid() });
+export type JobPartStepInput = z.infer<typeof jobPartStepSchema>;

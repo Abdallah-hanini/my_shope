@@ -54,6 +54,7 @@ export type PostingSettings = Schemas['PostingSettingsDto'];
 export type PartList = Schemas['PartListDto'];
 export type Part = Schemas['PartDto'];
 export type StockValuation = Schemas['ValuationDto'];
+export type JobParts = Schemas['JobPartsDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

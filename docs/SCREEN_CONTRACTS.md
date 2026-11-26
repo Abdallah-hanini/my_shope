@@ -150,6 +150,12 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Permissions:** `inventory.read`; `inventory.manage` (catalogue company-wide, receipts at the branch); `inventory.adjust`. Posting accounts: inventory, goods received not invoiced, stock adjustments.
 - **Tests:** inventory.int (7); e2e.
 
+## WEB-024 Parts on the job card (T-75)
+- **Location:** the "Parts" card on the job card. It lists parts with quantity, status (reserved, issued, returned, released), cost and movement numbers, with Issue to job, Release and Return to stock. "Reserve part" offers parts available at the branch.
+- **Part page:** reserved quantity per branch; the selling price (set by the owner).
+- **Quote:** part lines (quantity × selling price) are marked "part". **Invoice:** parts revenue is posted separately.
+- **Tests:** job-parts.int (6); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.
