@@ -129,7 +129,8 @@
             "required": true,
             "in": "path",
             "schema": {
-              "format": "uuid"
+              "format": "uuid",
+              "type": "string"
             }
           }
         ],
@@ -150,7 +151,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Company header; any member of the company",
         "tags": [
           "organization"
         ]
@@ -501,6 +502,320 @@
           }
         ],
         "summary": "",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/roles/{roleId}": {
+      "patch": {
+        "operationId": "updateRole",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a role and change its permissions (not system roles)",
+        "tags": [
+          "identity"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteRole",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an unused, non-system role",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/users": {
+      "get": {
+        "operationId": "listStaff",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffMemberDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "People holding roles in this company (within your branch scope)",
+        "tags": [
+          "identity"
+        ]
+      },
+      "post": {
+        "operationId": "createStaff",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCreatedDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a sign-in account and give it a role (temporary password returned once)",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/users/{userId}": {
+      "get": {
+        "operationId": "getStaffMember",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMemberDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/users/{userId}/reset-password": {
+      "post": {
+        "operationId": "resetStaffPassword",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemporaryPasswordDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue a temporary password and end the user’s sessions",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/users/{userId}/status": {
+      "post": {
+        "operationId": "setStaffStatus",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetUserStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMemberDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deactivate (blocks sign-in immediately) or reactivate",
         "tags": [
           "identity"
         ]
@@ -1513,6 +1828,10 @@
           },
           "version": {
             "type": "number"
+          },
+          "memberCount": {
+            "type": "number",
+            "description": "Number of role assignments using this role"
           }
         },
         "required": [
@@ -1522,7 +1841,8 @@
           "name",
           "permissions",
           "isSystem",
-          "version"
+          "version",
+          "memberCount"
         ]
       },
       "CreateRoleAssignmentDto": {
@@ -1582,6 +1902,201 @@
           "userId",
           "roleId",
           "createdAt"
+        ]
+      },
+      "UpdateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "number",
+            "description": "Version you last read (optimistic lock)"
+          }
+        },
+        "required": [
+          "name",
+          "permissions",
+          "version"
+        ]
+      },
+      "StaffAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string"
+          },
+          "roleId": {
+            "type": "string"
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "roleNameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = all branches"
+          }
+        },
+        "required": [
+          "assignmentId",
+          "roleId",
+          "roleCode",
+          "roleName"
+        ]
+      },
+      "StaffMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "isPlatformAdmin": {
+            "type": "boolean"
+          },
+          "inOtherCompanies": {
+            "type": "boolean",
+            "description": "Also holds roles in other companies (managed by a platform administrator)"
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffAssignmentDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "status",
+          "isPlatformAdmin",
+          "inOtherCompanies",
+          "assignments"
+        ]
+      },
+      "CreateStaffDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "ahmed.k"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "ar"
+            ]
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Omit for all branches"
+          },
+          "requireOtp": {
+            "type": "boolean",
+            "description": "Require an authenticator app at first sign-in (default true)"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "firstName",
+          "lastName",
+          "roleId"
+        ]
+      },
+      "StaffCreatedDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/StaffMemberDto"
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Shown once; the user must change it at first sign-in"
+          }
+        },
+        "required": [
+          "user",
+          "temporaryPassword"
+        ]
+      },
+      "TemporaryPasswordDto": {
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Shown once; the user must change it at next sign-in"
+          }
+        },
+        "required": [
+          "temporaryPassword"
+        ]
+      },
+      "SetUserStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason"
         ]
       },
       "CreateAccountDto": {

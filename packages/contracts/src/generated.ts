@@ -63,6 +63,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Company header; any member of the company */
         get: operations["getCompany"];
         put?: never;
         post?: never;
@@ -167,6 +168,92 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revokeRoleAssignment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an unused, non-system role */
+        delete: operations["deleteRole"];
+        options?: never;
+        head?: never;
+        /** Rename a role and change its permissions (not system roles) */
+        patch: operations["updateRole"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** People holding roles in this company (within your branch scope) */
+        get: operations["listStaff"];
+        put?: never;
+        /** Create a sign-in account and give it a role (temporary password returned once) */
+        post: operations["createStaff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getStaffMember"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/users/{userId}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a temporary password and end the user’s sessions */
+        post: operations["resetStaffPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/users/{userId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate (blocks sign-in immediately) or reactivate */
+        post: operations["setStaffStatus"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -435,6 +522,8 @@ export interface components {
             permissions: string[];
             isSystem: boolean;
             version: number;
+            /** @description Number of role assignments using this role */
+            memberCount: number;
         };
         CreateRoleAssignmentDto: {
             /** Format: uuid */
@@ -456,6 +545,65 @@ export interface components {
             grantedBy?: string | null;
             /** Format: date-time */
             createdAt: string;
+        };
+        UpdateRoleDto: {
+            name: string;
+            nameAr?: string | null;
+            permissions: string[];
+            /** @description Version you last read (optimistic lock) */
+            version: number;
+        };
+        StaffAssignmentDto: {
+            assignmentId: string;
+            roleId: string;
+            roleCode: string;
+            roleName: string;
+            roleNameAr?: string | null;
+            /** @description null = all branches */
+            branchId?: string | null;
+        };
+        StaffMemberDto: {
+            id: string;
+            email: string;
+            displayName: string;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            isPlatformAdmin: boolean;
+            /** @description Also holds roles in other companies (managed by a platform administrator) */
+            inOtherCompanies: boolean;
+            assignments: components["schemas"]["StaffAssignmentDto"][];
+        };
+        CreateStaffDto: {
+            /** @example ahmed.k */
+            username: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+            /** @enum {string} */
+            locale?: "en" | "ar";
+            /** Format: uuid */
+            roleId: string;
+            /**
+             * Format: uuid
+             * @description Omit for all branches
+             */
+            branchId?: string | null;
+            /** @description Require an authenticator app at first sign-in (default true) */
+            requireOtp?: boolean;
+        };
+        StaffCreatedDto: {
+            user: components["schemas"]["StaffMemberDto"];
+            /** @description Shown once; the user must change it at first sign-in */
+            temporaryPassword: string;
+        };
+        TemporaryPasswordDto: {
+            /** @description Shown once; the user must change it at next sign-in */
+            temporaryPassword: string;
+        };
+        SetUserStatusDto: {
+            /** @enum {string} */
+            status: "active" | "inactive";
+            reason: string;
         };
         CreateAccountDto: {
             /** @example 1100 */
@@ -781,7 +929,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                companyId: unknown;
+                companyId: string;
             };
             cookie?: never;
         };
@@ -994,6 +1142,168 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    deleteRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleDto"];
+                };
+            };
+        };
+    };
+    listStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMemberDto"][];
+                };
+            };
+        };
+    };
+    createStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCreatedDto"];
+                };
+            };
+        };
+    };
+    getStaffMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMemberDto"];
+                };
+            };
+        };
+    };
+    resetStaffPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemporaryPasswordDto"];
+                };
+            };
+        };
+    };
+    setStaffStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserStatusDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMemberDto"];
+                };
             };
         };
     };

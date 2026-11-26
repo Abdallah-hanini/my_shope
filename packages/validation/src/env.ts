@@ -38,6 +38,14 @@ export const apiEnvSchema = z
     OIDC_ISSUER: z.string().url().optional(),
     OIDC_AUDIENCE: z.string().min(1).optional(),
     OIDC_JWKS_URL: z.string().url().optional(),
+    /**
+     * Keycloak Admin API access for staff onboarding (service client limited to user management
+     * in the realm). Base URL without the realm, e.g. http://keycloak:8080/auth. Unset = off.
+     */
+    KEYCLOAK_ADMIN_BASE_URL: z.string().url().optional(),
+    KEYCLOAK_REALM: z.string().min(1).default('erp'),
+    KEYCLOAK_ADMIN_CLIENT_ID: z.string().min(1).default('erp-api-admin'),
+    KEYCLOAK_ADMIN_CLIENT_SECRET: z.string().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     const set = [env.OIDC_ISSUER, env.OIDC_AUDIENCE, env.OIDC_JWKS_URL].filter(Boolean).length;
@@ -61,6 +69,24 @@ export const apiEnvSchema = z
         path: ['OIDC_JWKS_URL'],
         message:
           'must use https in production (plain http is allowed only for an internal service name such as http://keycloak:8080)',
+      });
+    }
+    if (Boolean(env.KEYCLOAK_ADMIN_BASE_URL) !== Boolean(env.KEYCLOAK_ADMIN_CLIENT_SECRET)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['KEYCLOAK_ADMIN_BASE_URL'],
+        message: 'KEYCLOAK_ADMIN_BASE_URL and KEYCLOAK_ADMIN_CLIENT_SECRET must be set together',
+      });
+    }
+    if (
+      env.NODE_ENV === 'production' &&
+      env.KEYCLOAK_ADMIN_BASE_URL &&
+      !isSecureJwksUrl(env.KEYCLOAK_ADMIN_BASE_URL)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['KEYCLOAK_ADMIN_BASE_URL'],
+        message: 'must use https or an internal service name',
       });
     }
   });

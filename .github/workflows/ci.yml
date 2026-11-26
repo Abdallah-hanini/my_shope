@@ -109,9 +109,12 @@ jobs:
             echo "KC_BOOTSTRAP_ADMIN_PASSWORD=$(r)"
             echo "ERP_WEB_CLIENT_SECRET=$(r)"
             echo "WEB_SESSION_SECRET=$(r)"
+            echo "ERP_API_ADMIN_CLIENT_SECRET=$(r)"
           } > deploy/.env
       - name: Build and start the production stack
-        run: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build --wait --wait-timeout 900
+        run: |
+          docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d --build --wait --wait-timeout 900
+          docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env exec -T keycloak bash /erp-scripts/keycloak-ensure-api-client.sh
       - name: Verify sign-in, API and backups end to end
         run: node deploy/scripts/verify-deployment.mjs --env-file deploy/.env
       - name: Service logs

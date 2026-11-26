@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -57,11 +57,13 @@ export class OrgController {
 
   @Get(':companyId')
   @ApiParam({ name: 'companyId', format: 'uuid' })
-  @RequirePermission('org.company.read')
-  @ApiOperation({ operationId: 'getCompany' })
+  @ApiOperation({ operationId: 'getCompany', summary: 'Company header; any member of the company' })
   @ApiOkResponse({ type: CompanyDto })
-  get(@CurrentScope() scope: CompanyScope): Promise<CompanyDto> {
-    return this.org.getCompany(scope.companyId);
+  get(
+    @CurrentPrincipal() p: Principal,
+    @Param('companyId', new ParseUUIDPipe({ errorHttpStatusCode: 404 })) companyId: string,
+  ): Promise<CompanyDto> {
+    return this.org.getCompanyForMember(p.userId, p.isPlatformAdmin, companyId);
   }
 
   @Post(':companyId/branches')

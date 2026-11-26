@@ -84,6 +84,7 @@ export function api(app: INestApplication, token?: string) {
       withAuth(request(server).post(`/api/v1${url}`))
         .set(headers)
         .send(body ?? {}),
+    patch: (url: string, body?: object) => withAuth(request(server).patch(`/api/v1${url}`)).send(body ?? {}),
     delete: (url: string) => withAuth(request(server).delete(`/api/v1${url}`)),
   };
 }

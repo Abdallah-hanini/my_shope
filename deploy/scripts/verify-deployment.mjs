@@ -280,6 +280,22 @@ async function main() {
     }
   });
 
+  await check('API service account can manage users but not the realm (staff onboarding)', async () => {
+    // Runs inside the API container with its configuration (same defaults as the API's env schema);
+    // it only counts users and creates nothing.
+    const probe = `
+      const b = process.env.KEYCLOAK_ADMIN_BASE_URL, r = process.env.KEYCLOAK_REALM ?? 'erp';
+      const t = await fetch(b + '/realms/' + r + '/protocol/openid-connect/token', { method: 'POST',
+        body: new URLSearchParams({ grant_type: 'client_credentials', client_id: process.env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'erp-api-admin',
+          client_secret: process.env.KEYCLOAK_ADMIN_CLIENT_SECRET }) });
+      if (!t.ok) { console.log('TOKEN=' + t.status); process.exit(0); }
+      const h = { authorization: 'Bearer ' + (await t.json()).access_token };
+      const s = async (p) => (await fetch(b + '/admin/realms/' + r + p, { headers: h })).status;
+      console.log('USERS=' + (await s('/users/count')) + ' FLOWS=' + (await s('/authentication/flows')) + ' CLIENTS=' + (await s('/clients')));`;
+    const out = compose('exec', '-T', 'api', 'node', '--input-type=module', '-e', probe).trim();
+    assert(out === 'USERS=200 FLOWS=403 CLIENTS=403', `unexpected service account access: ${out}`);
+  });
+
   await check('Database backup runs and restores into a scratch database', async () => {
     const once = compose('exec', '-T', 'backup', '/bin/sh', '/erp-backup/backup.sh', 'once');
     assert(/backup ok: erp-/.test(once) && /backup ok: keycloak-/.test(once), once);

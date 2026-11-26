@@ -48,6 +48,7 @@ function New-ErpEnvContent {
       KC_BOOTSTRAP_ADMIN_PASSWORD = New-ErpSecret
       ERP_WEB_CLIENT_SECRET = New-ErpSecret
       WEB_SESSION_SECRET = New-ErpSecret
+      ERP_API_ADMIN_CLIENT_SECRET = New-ErpSecret
     }
   }
   $backup = $BackupDir.Replace('\', '/')
@@ -64,11 +65,12 @@ function New-ErpEnvContent {
     "KC_BOOTSTRAP_ADMIN_PASSWORD=$($Secrets.KC_BOOTSTRAP_ADMIN_PASSWORD)"
     "ERP_WEB_CLIENT_SECRET=$($Secrets.ERP_WEB_CLIENT_SECRET)"
     "WEB_SESSION_SECRET=$($Secrets.WEB_SESSION_SECRET)"
+    "ERP_API_ADMIN_CLIENT_SECRET=$($Secrets.ERP_API_ADMIN_CLIENT_SECRET)"
   ) -join "`n"
 }
 
 # Secrets added by later versions. Upgrades append any that are missing, keeping existing values.
-$script:GeneratedSecretKeys = @('POSTGRES_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KC_BOOTSTRAP_ADMIN_PASSWORD', 'ERP_WEB_CLIENT_SECRET', 'WEB_SESSION_SECRET')
+$script:GeneratedSecretKeys = @('POSTGRES_PASSWORD', 'KEYCLOAK_DB_PASSWORD', 'KC_BOOTSTRAP_ADMIN_PASSWORD', 'ERP_WEB_CLIENT_SECRET', 'WEB_SESSION_SECRET', 'ERP_API_ADMIN_CLIENT_SECRET')
 
 function Get-ErpMissingSecretLines {
   <# Pure: given the current .env text, returns lines to append for secrets it lacks. #>
@@ -114,6 +116,11 @@ function Assert-ErpPrerequisites {
   if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not running. Start it and wait until it says "Engine running".' }
   & docker compose version *> $null
   if ($LASTEXITCODE -ne 0) { throw 'docker compose is not available. Update Docker Desktop.' }
+}
+
+function Invoke-ErpEnsureKeycloakClients {
+  <# Creates or updates the API's staff-onboarding service client in Keycloak (idempotent). #>
+  Invoke-ErpCompose exec -T keycloak bash /erp-scripts/keycloak-ensure-api-client.sh
 }
 
 function Write-ErpStep { param([string]$Message) Write-Host "==> $Message" -ForegroundColor Cyan }

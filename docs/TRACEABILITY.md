@@ -152,7 +152,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | QAS-007 | Preventive maintenance/calibration | 6 | Not started | — |
 | QAS-008 | Asset assignment | 6 | Not started | — |
 | ADM-001 | Company/branch configuration | 1 | Partial | Company and branch create/list with audit; update/deactivate pending; `apps/api/src/org/*`; integration; web: create company, branches |
-| ADM-002 | RBAC and scopes | 1 | Done (API, verified) | Roles, company/branch scoped assignments, permission guard; `apps/api/src/authz`, `iam`; integration |
+| ADM-002 | RBAC and scopes | 1 | Done (API + web, verified) | Roles, company/branch scoped assignments, permission guard; `apps/api/src/authz`, `iam`; staff onboarding `iam/staff.service.ts`; web Users/Roles/Permission matrix (WEB-224/225/226); integration (staff.int) + e2e |
 | ADM-003 | Approval matrix | 1 | Not started | — |
 | ADM-004 | Feature flags | 1 | Not started | — |
 | ADM-005 | Templates | 5 | Not started | — |

@@ -53,6 +53,8 @@ The first run takes several minutes, because it builds the software. When it fin
 
    The script prints a **temporary password once**. Open `https://192.168.1.50` and sign in. You will be asked to choose a new password and to scan a QR code with an authenticator app (Google Authenticator, Microsoft Authenticator or similar). From then on, each sign-in needs your password and the 6-digit code.
 
+5. **Add your staff** from the web: **Administration → Users → Add staff member**. Choose a role (create your own under **Roles**, for example "Cashier" with only the permissions that person needs). The page shows a **temporary password once**; give it to the person privately. At first sign-in they choose their own password and, if you left the box ticked, set up an authenticator app. If someone leaves, open their profile and **Deactivate** them with a reason: sign-in stops immediately and their history stays in the audit trail.
+
 ## 3. Everyday commands
 
 Run these from `C:\my_shope` in PowerShell.
@@ -94,9 +96,9 @@ Everything entered after that backup is lost.
 - **`status.ps1` shows a service as unhealthy:** run `.\deploy\windows\stop.ps1`, then `.\deploy\windows\start.ps1`. If it stays unhealthy, save the output of `docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env logs --tail 200` and send it to whoever supports the system.
 - **`status.ps1` says BACKUP FAILURE:** check that the backup disk is connected and has space, then run `backup-now.ps1`. The failure message clears after the next successful backup.
 - **The browser says the connection is not private:** the device does not trust the shop certificate yet (step 2.3), or the address typed is different from `-SiteHost`.
-- **Sign-in administration** (resetting a staff password, unlocking an account after too many attempts): open `https://<PC address>/auth/admin` on the shop PC. Use the user `kcadmin` with `KC_BOOTSTRAP_ADMIN_PASSWORD` from `deploy\.env`, then switch to the **erp** realm. Keycloak shows a banner because this is a temporary admin account. Create a permanent administrator in the **master** realm and then delete `kcadmin`.
+- **Sign-in administration** (unlocking an account after too many attempts; staff passwords are reset from the user's profile in the ERP): open `https://<PC address>/auth/admin` on the shop PC. Use the user `kcadmin` with `KC_BOOTSTRAP_ADMIN_PASSWORD` from `deploy\.env`, then switch to the **erp** realm. Keycloak shows a banner because this is a temporary admin account. Create a permanent administrator in the **master** realm and then delete `kcadmin`.
 
 ## What is not done yet
 
-- Web screens available now: companies, branches, chart of accounts, fiscal periods, journals (entry, list, detail, reversal) and the audit trail. Adding staff users and roles from the web is the next step; until then, use `add-admin.ps1` for administrators.
+- Web screens available now: companies, branches, chart of accounts, fiscal periods, journals (entry, list, detail, reversal), users, roles, the permission matrix and the audit trail. Password recovery by email is not available (no mail server decided); an administrator resets a password from the user's profile instead.
 - Customer-facing access from the internet is postponed (owner decision). Do not forward router ports to this PC.

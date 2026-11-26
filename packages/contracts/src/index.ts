@@ -21,6 +21,8 @@ export type JournalPage = Schemas['JournalPageDto'];
 export type AuditEvent = Schemas['AuditEventDto'];
 export type AuditEventPage = Schemas['AuditEventPageDto'];
 export type FinancialSummary = Schemas['FinancialSummaryDto'];
+export type StaffMember = Schemas['StaffMemberDto'];
+export type StaffCreated = Schemas['StaffCreatedDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

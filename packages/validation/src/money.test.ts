@@ -133,3 +133,38 @@ describe('reporting schemas', () => {
     expect(r.monthsBetween('2025-11', '2026-02')).toBe(4);
   });
 });
+
+describe('staff and role schemas', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const r = require('./requests') as typeof import('./requests');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const p = require('./permissions') as typeof import('./permissions');
+  const base = {
+    username: 'Ahmed.K',
+    email: 'ahmed@shop.test',
+    firstName: 'Ahmed',
+    lastName: 'K',
+    roleId: '7d0c3f0e-5f8a-4a43-9a6e-4c1b2c3d4e5f',
+  };
+
+  it('normalizes usernames and defaults to requiring an authenticator', () => {
+    const v = r.createStaffSchema.parse(base);
+    expect(v.username).toBe('ahmed.k');
+    expect(v.requireOtp).toBe(true);
+  });
+
+  it.each(['ab', 'has space', '-leading', 'x'.repeat(51), 'ümlaut'])('rejects username %p', (u) => {
+    expect(r.createStaffSchema.safeParse({ ...base, username: u }).success).toBe(false);
+  });
+
+  it('every catalog permission is in exactly one matrix group', () => {
+    const grouped = p.PERMISSION_GROUPS.flatMap((g) => g.permissions);
+    expect([...grouped].sort()).toEqual([...p.COMPANY_PERMISSIONS].sort());
+    expect(new Set(grouped).size).toBe(grouped.length);
+  });
+
+  it('role updates need a version and at least one permission', () => {
+    expect(r.updateRoleSchema.safeParse({ name: 'x', permissions: [], version: 1 }).success).toBe(false);
+    expect(r.updateRoleSchema.safeParse({ name: 'x', permissions: ['audit.read'] }).success).toBe(false);
+  });
+});

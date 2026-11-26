@@ -181,3 +181,39 @@ export function monthsBetween(from: string, to: string): number {
   const [ty, tm] = to.split('-').map(Number) as [number, number];
   return (ty - fy) * 12 + (tm - fm) + 1;
 }
+
+/** Keycloak-compatible username: lower-case letters, digits, dot, dash, underscore. */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9._-]{2,49}$/, '3–50 characters: letters, digits, ".", "-" or "_"');
+
+export const createStaffSchema = z.object({
+  username: usernameSchema,
+  email: z.string().trim().email().max(320),
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  locale: z.enum(['en', 'ar']).default('en'),
+  roleId: uuid,
+  /** Omit (or null) for every branch of the company. */
+  branchId: uuid.nullable().optional(),
+  /** Require an authenticator app (TOTP) at first sign-in. */
+  requireOtp: z.boolean().default(true),
+});
+export type CreateStaffInput = z.infer<typeof createStaffSchema>;
+
+export const updateRoleSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  nameAr: z.string().trim().min(1).max(200).nullable().optional(),
+  permissions: z.array(z.string().min(1)).min(1).max(200),
+  /** Optimistic lock: the version the editor loaded. */
+  version: z.number().int().min(1),
+});
+export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
+
+export const setUserStatusSchema = z.object({
+  status: z.enum(['active', 'inactive']),
+  reason: z.string().trim().min(3).max(500),
+});
+export type SetUserStatusInput = z.infer<typeof setUserStatusSchema>;

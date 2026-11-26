@@ -7,12 +7,15 @@ import {
   Building2,
   CalendarRange,
   CarFront,
+  Grid3x3,
+  KeyRound,
   LayoutDashboard,
   ListTree,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,7 +33,17 @@ export interface SidebarGroup {
   items: SidebarItem[];
 }
 
-const icons = { LayoutDashboard, BookText, ListTree, CalendarRange, Building2, ShieldCheck } as const;
+const icons = {
+  LayoutDashboard,
+  BookText,
+  ListTree,
+  CalendarRange,
+  Building2,
+  ShieldCheck,
+  Users,
+  KeyRound,
+  Grid3x3,
+} as const;
 
 function isActive(path: string, href: string, exact: boolean) {
   return exact ? path === href : path === href || path.startsWith(`${href}/`);

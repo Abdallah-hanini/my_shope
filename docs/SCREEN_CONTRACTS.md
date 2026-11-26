@@ -77,6 +77,20 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 ## WEB-222 / WEB-223 Company and branch configuration (partial)
 - **Routes:** `/[locale]/companies/new` (platform admin) and `/[locale]/c/[id]/branches`. Create and list only; editing and deactivation are planned.
 
+## WEB-224 User management
+- **Routes:** `/[locale]/c/[id]/users` and `/users/[userId]`. Needs `iam.assignment.read`; adding, resetting and deactivating need `iam.user.manage`; giving and removing roles need `iam.assignment.manage`.
+- **API:** `GET/POST /companies/{id}/users`, `GET /users/{userId}`, `POST /users/{userId}/reset-password`, `POST /users/{userId}/status`, `POST/DELETE /role-assignments`.
+- **Shows:** name, email, roles with branch, status, badges (you, platform administrator, also in another company). Add staff: first and last name, username, email, role, branch (or all branches if the admin is company-wide), language, authenticator required (default on).
+- **States:** the temporary password is shown once with a copy button and is not shown again after reload. Server errors (duplicate username 409, escalation 403, identity server unavailable 503) appear above the form. Your own profile shows a note instead of account actions.
+- **Tests:** staff.int (22) and e2e (add, sign in as staff, give/remove role, deactivate).
+
+## WEB-225 Role management
+- **Routes:** `/[locale]/c/[id]/roles` and `/roles/[roleId]`. Needs `iam.role.read`; changes need `iam.role.manage`.
+- **Behaviour:** permissions as grouped checkboxes with English or Arabic labels and the code. Saving sends the version; a concurrent change answers 409. System roles are read-only. Delete appears only when nobody holds the role. Only permissions the admin holds company-wide can be granted.
+
+## WEB-226 Permission matrix
+- **Route:** `/[locale]/c/[id]/permissions` (`iam.role.read`). Read-only: roles as columns, grouped permissions as rows, with a sticky first column. Each cell is labelled "Granted" or "Not granted" for screen readers.
+
 ## WEB-231 Audit logs (partial)
 - **Route:** `/[locale]/c/[id]/audit`.
 - **Shows:** time in the company time zone, action, record, user, reason. Keyset pagination; branch-limited users see only their branches.

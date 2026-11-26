@@ -7,6 +7,11 @@ import { AuthModule } from './auth/auth.module';
 import { API_ENV, type ApiEnv } from './config/env';
 import { HealthModule } from './health/health.module';
 import { IamModule } from './iam/iam.module';
+import {
+  createProvisioner,
+  IDENTITY_PROVISIONER,
+  type IdentityProvisioner,
+} from './iam/identity-provisioner';
 import { InfraModule } from './infra/infra.module';
 import { OrgModule } from './org/org.module';
 import { PlatformModule } from './platform/platform.module';
@@ -16,7 +21,10 @@ const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
 @Module({})
 export class AppModule {
-  static register(env: ApiEnv, opts: { keyResolver?: JWTVerifyGetKey } = {}): DynamicModule {
+  static register(
+    env: ApiEnv,
+    opts: { keyResolver?: JWTVerifyGetKey; provisioner?: IdentityProvisioner } = {},
+  ): DynamicModule {
     return {
       module: AppModule,
       global: true,
@@ -47,8 +55,11 @@ export class AppModule {
         PlatformModule,
         ReportingModule,
       ],
-      providers: [{ provide: API_ENV, useValue: env }],
-      exports: [API_ENV],
+      providers: [
+        { provide: API_ENV, useValue: env },
+        { provide: IDENTITY_PROVISIONER, useFactory: () => opts.provisioner ?? createProvisioner(env) },
+      ],
+      exports: [API_ENV, IDENTITY_PROVISIONER],
     };
   }
 }

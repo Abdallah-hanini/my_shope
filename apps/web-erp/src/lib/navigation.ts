@@ -41,7 +41,20 @@ export function companyNavigation(
     },
     {
       label: t('nav.groupAdministration'),
-      items: can('audit.read') ? [{ href: `${base}/audit`, label: t('nav.audit'), icon: 'ShieldCheck' }] : [],
+      items: [
+        ...(can('iam.assignment.read')
+          ? [{ href: `${base}/users`, label: t('nav.users'), icon: 'Users' as const }]
+          : []),
+        ...(can('iam.role.read')
+          ? [
+              { href: `${base}/roles`, label: t('nav.roles'), icon: 'KeyRound' as const },
+              { href: `${base}/permissions`, label: t('nav.permissions'), icon: 'Grid3x3' as const },
+            ]
+          : []),
+        ...(can('audit.read')
+          ? [{ href: `${base}/audit`, label: t('nav.audit'), icon: 'ShieldCheck' as const }]
+          : []),
+      ],
     },
   ];
   return groups.filter((g) => g.items.length);

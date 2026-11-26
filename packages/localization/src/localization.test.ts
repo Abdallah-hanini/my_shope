@@ -1,3 +1,4 @@
+import { COMPANY_PERMISSIONS, PERMISSION_GROUPS } from '@erp/validation';
 import { ar } from './messages/ar';
 import { en } from './messages/en';
 import { createTranslator, formatDateTime, getDirection, groupDigits, resolveLocale } from './index';
@@ -53,5 +54,18 @@ describe('groupDigits', () => {
     ['not money', 'not money'],
   ])('%s → %s', (input, expected) => {
     expect(groupDigits(input)).toBe(expected);
+  });
+});
+
+describe('permission labels', () => {
+  it('every permission and group has an English and Arabic label', () => {
+    // Keys contain dots, so compare against the key list (toHaveProperty would read a path).
+    const enKeys = Object.keys(en);
+    const arKeys = Object.keys(ar);
+    for (const p of COMPANY_PERMISSIONS) {
+      expect(enKeys).toContain(`perm.${p}`);
+      expect(arKeys).toContain(`perm.${p}`);
+    }
+    for (const g of PERMISSION_GROUPS) expect(enKeys).toContain(`perm.group.${g.id}`);
   });
 });

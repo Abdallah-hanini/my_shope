@@ -138,3 +138,18 @@ describe('web env', () => {
     ).toThrow(/internal service name/);
   });
 });
+
+describe('Keycloak admin settings', () => {
+  it('must be set together and use an internal or https URL in production', () => {
+    expect(() =>
+      parseEnv(apiEnvSchema, { ...valid, KEYCLOAK_ADMIN_BASE_URL: 'http://keycloak:8080/auth' }),
+    ).toThrow(/set together/);
+    const ok = parseEnv(apiEnvSchema, {
+      ...valid,
+      KEYCLOAK_ADMIN_BASE_URL: 'http://keycloak:8080/auth',
+      KEYCLOAK_ADMIN_CLIENT_SECRET: 's',
+    });
+    expect(ok.KEYCLOAK_REALM).toBe('erp');
+    expect(ok.KEYCLOAK_ADMIN_CLIENT_ID).toBe('erp-api-admin');
+  });
+});

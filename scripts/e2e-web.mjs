@@ -110,6 +110,10 @@ async function main() {
     OIDC_ISSUER: ISSUER,
     OIDC_AUDIENCE: 'erp-api',
     OIDC_JWKS_URL: `${ISSUER}/protocol/openid-connect/certs`,
+    // Staff onboarding uses the least-privilege erp-api-admin service client (pnpm auth:up).
+    KEYCLOAK_ADMIN_BASE_URL: KC,
+    KEYCLOAK_REALM: 'erp',
+    KEYCLOAK_ADMIN_CLIENT_SECRET: process.env.ERP_API_ADMIN_CLIENT_SECRET ?? 'erp_api_admin_local_dev_only',
   });
   const nextBin = createRequire(join(root, 'apps/web-erp/package.json')).resolve('next/dist/bin/next');
   start('web', 'apps/web-erp', [nextBin, 'start', '--port', '3000'], {
@@ -427,6 +431,138 @@ async function main() {
         await page.setViewportSize({ width: 1280, height: 900 });
       },
     );
+
+    const staffUser = `staff-${randomBytes(3).toString('hex')}`;
+    let staffPassword = '';
+    let staffProfile = '';
+    await check('Create a custom role with grouped permissions; it appears in the matrix', async () => {
+      await page.goto(`${base()}/roles`);
+      const form = page.locator('#new-role-title').locator('xpath=../..');
+      await form.getByLabel('Code').fill('JOURNAL_VIEWER');
+      await form.getByLabel('Name', { exact: true }).fill('Journal viewer');
+      for (const p of ['accounting.journal.read', 'accounting.account.read'])
+        await form.locator(`input[name=permissions][value="${p}"]`).check();
+      await Promise.all([
+        page.waitForURL(/\/roles\/[0-9a-f-]{36}$/),
+        form.getByRole('button', { name: 'New role' }).click(),
+      ]);
+      await page.getByRole('heading', { name: 'Journal viewer' }).waitFor();
+      await page.goto(`${base()}/permissions`);
+      await page.getByRole('columnheader', { name: 'Journal viewer' }).waitFor();
+      const row = page.getByRole('row', { name: /View journals/ });
+      assert((await row.getByLabel('Granted').count()) >= 2, 'matrix does not show the grant');
+      await shot('permission-matrix-en');
+    });
+
+    await check('System roles are read-only', async () => {
+      await page.goto(`${base()}/roles`);
+      await page.getByRole('link', { name: 'Company administrator' }).click();
+      await page.getByText('System roles cannot be changed or deleted.').waitFor();
+      assert(await page.locator('#role-name').isDisabled(), 'system role name is editable');
+      assert((await page.getByRole('button', { name: 'Save changes' }).count()) === 0, 'save offered');
+    });
+
+    await check('Add a staff member: the temporary password is shown once', async () => {
+      await page.goto(`${base()}/users`);
+      await page.getByLabel('First name').fill('Sara');
+      await page.getByLabel('Last name').fill('Cashier');
+      await page.getByLabel('Username').fill(staffUser);
+      await page.getByLabel('Email').fill(`${staffUser}@shop.invalid`);
+      await page.getByLabel('Role').selectOption({ label: 'Journal viewer' });
+      await page.getByRole('button', { name: 'Add staff member' }).click();
+      const secret = page.getByTestId('temporary-password');
+      await secret.waitFor();
+      staffPassword = (await secret.innerText()).trim();
+      assert(/^[A-Za-z0-9_-]{16}$/.test(staffPassword), 'unexpected temporary password format');
+      await page
+        .getByRole('cell', { name: /Journal viewer/ })
+        .first()
+        .waitFor();
+      await shot('users-en');
+      staffProfile = await page.getByRole('link', { name: 'Open profile' }).getAttribute('href');
+      // Reloading does not show the password again.
+      await page.reload();
+      assert((await page.getByTestId('temporary-password').count()) === 0, 'password shown again');
+    });
+
+    await check('Duplicate username is refused with a clear message', async () => {
+      await page.getByLabel('First name').fill('Other');
+      await page.getByLabel('Last name').fill('Person');
+      await page.getByLabel('Username').fill(staffUser);
+      await page.getByLabel('Email').fill(`other-${staffUser}@shop.invalid`);
+      await page.getByLabel('Role').selectOption({ label: 'Journal viewer' });
+      await page.getByRole('button', { name: 'Add staff member' }).click();
+      const alert = page.locator('form [role=alert]');
+      await alert.waitFor();
+      assert((await alert.innerText()).includes('already exists'), await alert.innerText());
+    });
+
+    const staffContext = await browser.newContext({
+      locale: 'en-GB',
+      viewport: { width: 1280, height: 900 },
+    });
+    const staffPage = await staffContext.newPage();
+    staffPage.on('pageerror', (e) => pageErrors.push(e.message));
+    await check('The new staff member signs in and sees only what the role allows', async () => {
+      await staffPage.goto(`${base()}/journals`);
+      ({ newPassword: staffPassword } = await keycloakLogin(staffPage, {
+        username: staffUser,
+        password: staffPassword,
+        done: (u) => u.startsWith(`${WEB}/en/c/${companyId}/journals`),
+      }));
+      if (shots) await staffPage.screenshot({ path: join(shots, 'staff-journals-en.png'), fullPage: true });
+      const nav = staffPage.getByRole('navigation', { name: 'Main navigation' });
+      await nav.getByRole('link', { name: 'Journals' }).waitFor();
+      assert((await nav.getByRole('link', { name: 'Users' }).count()) === 0, 'Users link shown');
+      assert((await nav.getByRole('link', { name: 'Branches' }).count()) === 0, 'Branches link shown');
+      await staffPage.goto(`${base()}/users`);
+      await staffPage.getByText('You do not have permission for this.').waitFor();
+    });
+
+    await check('Profile: give and remove a role; own account cannot be changed', async () => {
+      await page.goto(`${WEB}${staffProfile}`);
+      await page.getByRole('heading', { name: 'Sara Cashier' }).waitFor();
+      const access = page.locator('#access-title').locator('xpath=../..');
+      await access.getByLabel('Role').selectOption({ label: 'Company administrator' });
+      await access.getByRole('button', { name: 'Give a role' }).click();
+      await access.getByText('Company administrator').first().waitFor();
+      const item = access.locator('li', { hasText: 'Company administrator' });
+      await item.getByRole('button', { name: 'Remove' }).click();
+      await item.waitFor({ state: 'detached' });
+      await shot('user-profile-en');
+      await page.goto(`${base()}/users`);
+      await page.getByRole('link', { name: 'E2E Owner' }).click();
+      await page.getByText('To change your own password or authenticator').waitFor();
+    });
+
+    await check(
+      'Deactivate a staff member: access stops at once and the account cannot sign in',
+      async () => {
+        await page.goto(`${WEB}${staffProfile}`);
+        const account = page.locator('#account-title').locator('xpath=../..');
+        await account.getByLabel('Reason').fill('Left the shop');
+        await account.getByRole('button', { name: 'Deactivate' }).click();
+        await page.getByText('Deactivated', { exact: true }).first().waitFor();
+        await staffPage.goto(`${base()}/journals`);
+        await staffPage.getByText('You do not have permission for this.').waitFor();
+        const fresh = await browser.newContext();
+        const p2 = await fresh.newPage();
+        await p2.goto(`${base()}/journals`);
+        await p2.fill('#username', staffUser);
+        // The correct (changed) password: Keycloak refuses because the account is disabled.
+        await p2.fill('#password', staffPassword);
+        await p2.click('#kc-login');
+        await p2
+          .getByText(/disabled/i)
+          .first()
+          .waitFor();
+        assert(!p2.url().startsWith(WEB), 'disabled account was signed in');
+        await fresh.close();
+        await page.goto(`${base()}/audit`);
+        await page.getByText('Left the shop').waitFor();
+      },
+    );
+    await staffContext.close();
 
     await check('Language switch keeps the current page', async () => {
       await page.goto(`${WEB}/ar/c/${companyId}/journals`);

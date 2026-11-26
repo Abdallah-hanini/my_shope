@@ -5,6 +5,7 @@ import {
   type CreateRoleAssignmentInput,
   type CreateRoleInput,
   type CreateUserInput,
+  type UpdateRoleInput,
 } from '@erp/validation';
 import type { CompanyScope, Principal } from '../auth/principal';
 import { AuthzService } from '../authz/authz.service';
@@ -24,7 +25,7 @@ export const toUserDto = (u: User): UserDto => ({
   isPlatformAdmin: u.isPlatformAdmin,
   status: u.status,
 });
-const toRoleDto = (r: Role): RoleDto => ({
+const toRoleDto = (r: Role & { _count?: { assignments: number } }): RoleDto => ({
   id: r.id,
   companyId: r.companyId,
   code: r.code,
@@ -33,6 +34,7 @@ const toRoleDto = (r: Role): RoleDto => ({
   permissions: r.permissions,
   isSystem: r.isSystem,
   version: r.version,
+  memberCount: r._count?.assignments ?? 0,
 });
 const toAssignmentDto = (a: RoleAssignment): RoleAssignmentDto => ({
   id: a.id,
@@ -139,8 +141,91 @@ export class IamService {
     const rows = await this.prisma.role.findMany({
       where: { companyId: scope.companyId },
       orderBy: { code: 'asc' },
+      include: { _count: { select: { assignments: true } } },
     });
     return rows.map(toRoleDto);
+  }
+
+  /**
+   * Changes a role's name and permissions (effective on the next request of every holder).
+   * System roles are fixed. Non-platform administrators must hold, company-wide, every permission
+   * being added or removed, so editing a role can never be used to escalate.
+   */
+  async updateRole(
+    scope: CompanyScope,
+    p: Principal,
+    roleId: string,
+    input: UpdateRoleInput,
+    ctx: AuditContext,
+  ): Promise<RoleDto> {
+    const role = await this.prisma.role.findUnique({
+      where: { companyId_id: { companyId: scope.companyId, id: roleId } },
+    });
+    if (!role) throw notFound('Role');
+    if (role.isSystem) throw forbidden('System roles cannot be changed');
+    const unknown = input.permissions.filter((x) => !isCompanyPermission(x));
+    if (unknown.length) throw unprocessable(`Unknown permissions: ${unknown.join(', ')}`);
+    const permissions = [...new Set(input.permissions)].sort();
+    if (!p.isPlatformAdmin) {
+      const grants = await this.authz.grants(p.userId, scope.companyId);
+      const touched = [...new Set([...permissions, ...role.permissions])];
+      if (!canDelegate(scope.companyId, grants, touched, null)) {
+        throw forbidden('You can only change permissions you hold for the whole company');
+      }
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.role.updateMany({
+        where: { id: role.id, companyId: scope.companyId, version: input.version },
+        data: { name: input.name, nameAr: input.nameAr ?? null, permissions, version: { increment: 1 } },
+      });
+      if (updated.count !== 1) throw conflict(`Role changed (version ${role.version}); reload and retry`);
+      const after = await tx.role.findUniqueOrThrow({
+        where: { id: role.id },
+        include: { _count: { select: { assignments: true } } },
+      });
+      await writeAudit(tx, ctx, {
+        action: 'iam.role.update',
+        entityType: 'role',
+        entityId: role.id,
+        companyId: scope.companyId,
+        before: { name: role.name, nameAr: role.nameAr, permissions: role.permissions },
+        after: { name: after.name, nameAr: after.nameAr, permissions: after.permissions },
+      });
+      await enqueueOutbox(tx, {
+        companyId: scope.companyId,
+        aggregateType: 'role',
+        aggregateId: role.id,
+        eventType: 'iam.role.updated',
+        payload: { roleId: role.id },
+      });
+      return toRoleDto(after);
+    });
+  }
+
+  /** Deletes an unused, non-system role. */
+  async deleteRole(scope: CompanyScope, p: Principal, roleId: string, ctx: AuditContext): Promise<void> {
+    const role = await this.prisma.role.findUnique({
+      where: { companyId_id: { companyId: scope.companyId, id: roleId } },
+      include: { _count: { select: { assignments: true } } },
+    });
+    if (!role) throw notFound('Role');
+    if (role.isSystem) throw forbidden('System roles cannot be deleted');
+    if (role._count.assignments > 0)
+      throw conflict(
+        `Role is assigned to ${role._count.assignments} user(s); remove those assignments first`,
+      );
+    await this.assertCanDelegate(scope.companyId, p, role.permissions, null);
+    await this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.role.deleteMany({ where: { id: role.id, companyId: scope.companyId } });
+      if (deleted.count !== 1) throw notFound('Role');
+      await writeAudit(tx, ctx, {
+        action: 'iam.role.delete',
+        entityType: 'role',
+        entityId: role.id,
+        companyId: scope.companyId,
+        before: { code: role.code, name: role.name, permissions: role.permissions },
+      });
+    });
   }
 
   async assign(
@@ -222,6 +307,9 @@ export class IamService {
     if (!a || (!scope.allBranches && (a.branchId === null || !scope.branchIds.includes(a.branchId)))) {
       throw notFound('Role assignment');
     }
+    // Prevents administrators from locking themselves (and possibly the company) out.
+    if (a.userId === p.userId)
+      throw unprocessable('You cannot remove your own role assignment; ask another administrator');
     await this.assertCanDelegate(scope.companyId, p, a.role.permissions, a.branchId);
     await this.prisma.$transaction(async (tx) => {
       const deleted = await tx.roleAssignment.deleteMany({ where: { id: a.id, companyId: scope.companyId } });
@@ -245,7 +333,7 @@ export class IamService {
   }
 
   /** Platform administrators may delegate in any company (audited break-glass); others may not escalate. */
-  private async assertCanDelegate(companyId: string, p: Principal, perms: string[], branchId: string | null) {
+  async assertCanDelegate(companyId: string, p: Principal, perms: string[], branchId: string | null) {
     if (p.isPlatformAdmin) return;
     const grants = await this.authz.grants(p.userId, companyId);
     if (!canDelegate(companyId, grants, perms, branchId)) {

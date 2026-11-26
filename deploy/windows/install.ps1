@@ -33,6 +33,9 @@ if (-not (Test-Path $BackupDir)) {
 Write-ErpStep 'Building and starting the server (first run takes several minutes)'
 Invoke-ErpCompose up -d --build --wait --wait-timeout 900
 
+Write-ErpStep 'Configuring the sign-in server for staff onboarding'
+Invoke-ErpEnsureKeycloakClients
+
 Write-ErpStep 'Exporting the shop certificate authority'
 & (Join-Path $PSScriptRoot 'export-ca.ps1')
 

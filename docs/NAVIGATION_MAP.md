@@ -13,6 +13,11 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
   Organization
     /branches                               Branches (create)
   Administration
+    /users                                  Users and access: list, add staff (iam.assignment.read; adding needs iam.user.manage)
+      /users/[userId]                       Profile: roles, reset password, deactivate/reactivate
+    /roles                                  Roles: list, create (iam.role.read; editing needs iam.role.manage)
+      /roles/[roleId]                       Edit or delete a role (system roles read-only)
+    /permissions                            Permission matrix (read-only)
     /audit                                  Audit trail
 /session/login | /session/callback | /session/refresh | POST /session/logout   (sign-in plumbing, not localized)
 ```
@@ -23,6 +28,6 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
 - Language switch: keeps the current page.
 - Profile menu: theme and sign out.
 
-**Planned sidebar groups** (docs/SCREEN_CATALOG.md): Workshop, Spare parts, Inventory, Procurement, Sales & POS, HR, CRM, Quality, Reporting, Commerce, plus Administration (users, roles, permission matrix, sessions). Each group appears only when its module and permissions exist.
+**Planned sidebar groups** (docs/SCREEN_CATALOG.md): Workshop, Spare parts, Inventory, Procurement, Sales & POS, HR, CRM, Quality, Reporting, Commerce, plus Administration (sessions). Each group appears only when its module and permissions exist.
 
 **Mobile apps** (spec): customer tabs Home, Garage, Shop, Bookings, Profile (postponed by the owner). Manager tabs Home, Approvals, Reports, Alerts, More (planned, L-06).

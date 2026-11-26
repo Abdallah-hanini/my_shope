@@ -10,4 +10,7 @@ $added = Update-ErpEnvFile
 if ($added.Count -gt 0) { Write-ErpStep "Added new settings to deploy/.env: $($added -join ', '). Back up deploy/.env again." }
 Write-ErpStep 'Rebuilding and restarting (database migrations run automatically)'
 Invoke-ErpCompose up -d --build --wait --wait-timeout 900
+Write-ErpStep 'Configuring the sign-in server for staff onboarding'
+Invoke-ErpEnsureKeycloakClients
+
 Write-Host 'Upgrade finished.' -ForegroundColor Green

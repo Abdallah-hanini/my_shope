@@ -10,6 +10,7 @@ export const COMPANY_PERMISSIONS = [
   'iam.role.manage',
   'iam.assignment.read',
   'iam.assignment.manage',
+  'iam.user.manage',
   'audit.read',
   'accounting.account.read',
   'accounting.account.manage',
@@ -22,6 +23,35 @@ export const COMPANY_PERMISSIONS = [
 ] as const;
 
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];
+
+/** Groups for the permission matrix and role editor (display order). */
+export const PERMISSION_GROUPS: { id: string; permissions: CompanyPermission[] }[] = [
+  { id: 'organization', permissions: ['org.company.read', 'org.branch.read', 'org.branch.manage'] },
+  {
+    id: 'accounting',
+    permissions: [
+      'accounting.account.read',
+      'accounting.account.manage',
+      'accounting.period.read',
+      'accounting.period.manage',
+      'accounting.journal.read',
+      'accounting.journal.post',
+      'accounting.journal.reverse',
+    ],
+  },
+  { id: 'reporting', permissions: ['reports.financial.read'] },
+  {
+    id: 'access',
+    permissions: [
+      'iam.role.read',
+      'iam.role.manage',
+      'iam.assignment.read',
+      'iam.assignment.manage',
+      'iam.user.manage',
+    ],
+  },
+  { id: 'audit', permissions: ['audit.read'] },
+];
 
 export function isCompanyPermission(value: string): value is CompanyPermission {
   return (COMPANY_PERMISSIONS as readonly string[]).includes(value);

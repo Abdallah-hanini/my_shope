@@ -291,9 +291,9 @@ Counts are summarised at the end.
 | WEB-221 | User profile | ADM-001…011, SECURITY_QA | 1 | Partial — profile menu (name, theme, sign out) | header profile menu | e2e sign-out |
 | WEB-222 | Company configuration | ADM-001 | 1 | Partial — create only | /[locale]/companies/new | e2e "Create a company" |
 | WEB-223 | Branch configuration | ADM-001 | 1 | Partial — create/list | /[locale]/c/[id]/branches | e2e "Branches" |
-| WEB-224 | User management | ADM-002 | 1 | Next | — | — |
-| WEB-225 | Role management | ADM-002 | 1 | Next | — | — |
-| WEB-226 | Permission matrix | ADM-002 | 1 | Next | — | — |
+| WEB-224 | User management | ADM-002, SEC-04 | 1 | Implemented — list, add staff (Keycloak account + role, one-time temporary password), profile, give/remove role, reset password, deactivate/reactivate | /[locale]/c/[id]/users, /users/[userId] | e2e "Add a staff member", "new staff member signs in", "Profile", "Deactivate"; staff.int 22 tests |
+| WEB-225 | Role management | ADM-002 | 1 | Implemented — list with member counts, create, edit (optimistic version), delete unused; system roles read-only | /[locale]/c/[id]/roles, /roles/[roleId] | e2e "Create a custom role", "System roles are read-only"; staff.int roles tests |
+| WEB-226 | Permission matrix | ADM-002 | 1 | Implemented — read-only roles × grouped permissions | /[locale]/c/[id]/permissions | e2e "appears in the matrix" |
 | WEB-227 | Approval workflow configuration | ADM-003 (needs D-11) | 1 | Planned | — | — |
 | WEB-228 | Feature management | ADM-004 | 1 | Planned | — | — |
 | WEB-229 | Notification configuration | ADM-008 | 5 | Planned | — | — |
@@ -463,8 +463,8 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 7 |
-| Next | 6 |
+| Implemented | 10 |
+| Next | 3 |
 | Partial | 6 |
 | Planned | 289 |
 | Postponed | 70 |

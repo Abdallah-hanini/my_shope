@@ -100,6 +100,24 @@ export class OrgService {
     return rows.map(toCompanyDto);
   }
 
+  /**
+   * Company header for anyone holding a role in it (every screen needs its name and currency);
+   * 404 for everyone else, as for any foreign company.
+   */
+  async getCompanyForMember(
+    userId: string,
+    isPlatformAdmin: boolean,
+    companyId: string,
+  ): Promise<CompanyDto> {
+    const c = await this.prisma.company.findFirst({
+      where: isPlatformAdmin
+        ? { id: companyId }
+        : { id: companyId, status: 'active', roleAssignments: { some: { userId } } },
+    });
+    if (!c) throw notFound('Company');
+    return toCompanyDto(c);
+  }
+
   async getCompany(companyId: string): Promise<CompanyDto> {
     const c = await this.prisma.company.findUnique({ where: { id: companyId } });
     if (!c) throw notFound('Company');
