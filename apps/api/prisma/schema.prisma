@@ -498,6 +498,7 @@ model JobCard {
   inspectionItems InspectionItem[]
   appointment     Appointment?
   photos          JobPhoto[]
+  timeEntries     TaskTimeEntry[]
 
   @@unique([companyId, id])
   @@unique([companyId, number])
@@ -519,8 +520,10 @@ model JobTask {
   doneAt         DateTime? @map("done_at") @db.Timestamptz(6)
   doneBy         String?   @map("done_by") @db.Uuid
 
-  job JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Cascade)
+  job         JobCard         @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Cascade)
+  timeEntries TaskTimeEntry[]
 
+  @@unique([jobId, id])
   @@unique([jobId, lineNo])
   @@index([companyId, technicianId])
   @@map("job_task")
@@ -646,5 +649,37 @@ model Appointment {
   @@index([branchId, startsAt])
   @@index([vehicleId, startsAt])
   @@map("appointment")
+  @@schema("workshop")
+}
+
+/// Technician time on a job task (WMS-007, WEB-023). Clocked live or, when forgotten, entered by a
+/// manager with a reason. Never edited or deleted once closed: a wrong entry is voided with a
+/// reason. The database allows one open entry per technician and no overlapping entries.
+model TaskTimeEntry {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  branchId     String    @map("branch_id") @db.Uuid
+  jobId        String    @map("job_id") @db.Uuid
+  taskId       String    @map("task_id") @db.Uuid
+  technicianId String    @map("technician_id") @db.Uuid
+  startedAt    DateTime  @map("started_at") @db.Timestamptz(6)
+  endedAt      DateTime? @map("ended_at") @db.Timestamptz(6)
+  /// clock | manual
+  source       String
+  reason       String?
+  createdBy    String    @map("created_by") @db.Uuid
+  endedBy      String?   @map("ended_by") @db.Uuid
+  voidedAt     DateTime? @map("voided_at") @db.Timestamptz(6)
+  voidedBy     String?   @map("voided_by") @db.Uuid
+  voidReason   String?   @map("void_reason")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job  JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+  task JobTask @relation(fields: [jobId, taskId], references: [jobId, id], onDelete: Restrict)
+
+  @@index([jobId])
+  @@index([companyId, technicianId, startedAt])
+  @@index([companyId, branchId, startedAt])
+  @@map("task_time_entry")
   @@schema("workshop")
 }

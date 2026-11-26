@@ -38,6 +38,9 @@ export type Technician = Schemas['TechnicianDto'];
 export type Appointment = Schemas['AppointmentDto'];
 export type AppointmentDay = Schemas['AppointmentDayDto'];
 export type WorkshopSchedule = Schemas['WorkshopScheduleDto'];
+export type LabourReport = Schemas['LabourReportDto'];
+export type CurrentClock = Schemas['CurrentClockDto'];
+export type TimeEntry = Schemas['TimeEntryDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

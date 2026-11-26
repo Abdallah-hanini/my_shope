@@ -320,3 +320,39 @@ export const appointmentDayQuerySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD'),
 });
 export type AppointmentDayQuery = z.infer<typeof appointmentDayQuerySchema>;
+
+// ── labour time (WMS-007, WEB-023) ──────────────────────────────────────────
+
+/** Longest manually entered time entry (a missed clock-on is entered afterwards by a manager). */
+export const MANUAL_ENTRY_MAX_MINUTES = 16 * 60;
+
+/** A manager records time a technician forgot to clock; never for themselves. */
+export const manualTimeEntrySchema = z
+  .object({
+    taskId: uuid,
+    technicianId: uuid,
+    startedAt: instant,
+    endedAt: instant,
+    reason: text(500).pipe(z.string().min(3)),
+  })
+  .superRefine((v, ctx) => {
+    const ms = Date.parse(v.endedAt) - Date.parse(v.startedAt);
+    if (!(ms > 0)) ctx.addIssue({ code: 'custom', path: ['endedAt'], message: 'must be after the start' });
+    else if (ms > MANUAL_ENTRY_MAX_MINUTES * 60_000)
+      ctx.addIssue({ code: 'custom', path: ['endedAt'], message: 'at most 16 hours in one entry' });
+  });
+export type ManualTimeEntryInput = z.infer<typeof manualTimeEntrySchema>;
+
+/** Time entries are never edited or deleted; a wrong one is voided with a reason. */
+export const voidTimeEntrySchema = z.object({ reason: text(500).pipe(z.string().min(3)) });
+export type VoidTimeEntryInput = z.infer<typeof voidTimeEntrySchema>;
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD');
+export const labourReportQuerySchema = z
+  .object({ branchId: uuid.optional(), from: isoDate, to: isoDate })
+  .refine((v) => v.from <= v.to, { message: '"from" must not be after "to"', path: ['to'] })
+  .refine((v) => Date.parse(v.to) - Date.parse(v.from) <= 365 * 86_400_000, {
+    message: 'at most 366 days',
+    path: ['to'],
+  });
+export type LabourReportQuery = z.infer<typeof labourReportQuerySchema>;

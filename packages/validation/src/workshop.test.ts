@@ -1,4 +1,7 @@
 import {
+  labourReportQuerySchema,
+  manualTimeEntrySchema,
+  voidTimeEntrySchema,
   createCustomerSchema,
   createJobSchema,
   createVehicleSchema,
@@ -161,5 +164,38 @@ describe('appointments', () => {
     expect(w.createAppointmentSchema.parse(ok).durationMinutes).toBe(60);
     expect(w.createAppointmentSchema.safeParse({ ...ok, startsAt: '2026-12-01 08:00' }).success).toBe(false);
     expect(w.createAppointmentSchema.safeParse({ ...ok, durationMinutes: 600 }).success).toBe(false);
+  });
+});
+
+describe('labour time', () => {
+  const u = '00000000-0000-4000-8000-000000000001';
+  const entry = (startedAt: string, endedAt: string) =>
+    manualTimeEntrySchema.safeParse({
+      taskId: u,
+      technicianId: u,
+      startedAt,
+      endedAt,
+      reason: 'Forgot to clock',
+    });
+  it('manual entries end after they start, last at most 16 hours and need a reason', () => {
+    expect(entry('2026-11-20T08:00:00+03:00', '2026-11-20T09:30:00+03:00').success).toBe(true);
+    expect(entry('2026-11-20T09:00:00+03:00', '2026-11-20T09:00:00+03:00').success).toBe(false);
+    expect(entry('2026-11-20T08:00:00+03:00', '2026-11-21T00:01:00+03:00').success).toBe(false);
+    expect(
+      manualTimeEntrySchema.safeParse({
+        taskId: u,
+        technicianId: u,
+        startedAt: '2026-11-20T08:00:00Z',
+        endedAt: '2026-11-20T09:00:00Z',
+        reason: ' ',
+      }).success,
+    ).toBe(false);
+    expect(voidTimeEntrySchema.safeParse({ reason: 'no' }).success).toBe(false);
+  });
+  it('report ranges are ordered and at most 366 days', () => {
+    expect(labourReportQuerySchema.safeParse({ from: '2026-11-01', to: '2026-11-30' }).success).toBe(true);
+    expect(labourReportQuerySchema.safeParse({ from: '2026-01-01', to: '2026-12-31' }).success).toBe(true);
+    expect(labourReportQuerySchema.safeParse({ from: '2026-11-30', to: '2026-11-01' }).success).toBe(false);
+    expect(labourReportQuerySchema.safeParse({ from: '2025-01-01', to: '2026-01-02' }).success).toBe(false);
   });
 });

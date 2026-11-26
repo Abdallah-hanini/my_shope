@@ -35,7 +35,7 @@ Counts are summarised at the end.
 | WEB-020 | Job card details | WMS-001…014, BRD-02 | 3 | Partial — details, tasks, steps, timeline, notes; no quotation/parts/invoice (D-05, D-06) | /[locale]/c/[id]/jobs/[jobId] | workshop.int (16); e2e |
 | WEB-021 | Technician assignment | WMS-001…014, BRD-02 | 3 | Implemented — per task, only technicians of the branch | job details | workshop.int; e2e |
 | WEB-022 | Workshop bay allocation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-023 | Labor time tracking | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-023 | Labor time tracking | WMS-001…014, BRD-02 | 3 | Implemented — clock on/off per task, entries with corrections, report per technician | job details; /[locale]/c/[id]/labour-time | labour.int; e2e |
 | WEB-024 | Spare parts reservation and issuance | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-025 | Additional repair requests | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Partial — status, promised time, overdue, notifications | job details, board | workshop.int |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 24 |
+| Implemented | 25 |
 | Next | 0 |
 | Partial | 9 |
-| Planned | 275 |
+| Planned | 274 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

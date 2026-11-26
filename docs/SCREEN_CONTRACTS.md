@@ -74,6 +74,12 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Actions:** check in (opens a prefilled job card and links it), reschedule, cancel with a reason, and no-show after the start time.
 - **Tests:** appointments.int; e2e.
 
+## WEB-023 Labour time tracking
+- **Locations:** the job card (Tasks table: actual hours, Clock on/Clock off, who is clocked on; "Labour time" card with the entries; "Enter missed time" panel), the job board banner "You are clocked on to …" with Clock off, and `/[locale]/c/[id]/labour-time`. **Requirement:** WMS-007.
+- **Rules:** the server decides (T-62/T-63). The web only offers what the job card's flags allow (`canClockOn`, `myOpenEntryId`, `canStop`, `canVoid`, `canRecordTime`).
+- **Report:** per technician, with the figures from KPI_DICTIONARY "Labour time", totals, "clocked on now" and the computed-at time. Needs `workshop.job.manage`.
+- **Tests:** labour.int (7); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

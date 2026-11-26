@@ -21,6 +21,7 @@ import { InspectionCard, PhotosCard } from '@/components/workshop/CheckIn';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobForm } from '@/components/workshop/JobForm';
 import { JobStatus } from '@/components/workshop/JobStatus';
+import { LabourCard, ManualTimeForm, TaskClock } from '@/components/workshop/Labour';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { isoToZonedLocal } from '@/lib/time';
@@ -47,7 +48,7 @@ export default async function JobPage({
   const t = createTranslator(locale);
   const ctx = await loadCompany(companyId);
   if (!ctx.ok) return null;
-  const { api, company } = ctx.data;
+  const { api, company, me } = ctx.data;
   const path = { params: { path: { companyId, jobId } } };
   const res = await attempt(async () =>
     unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}', path)),
@@ -58,12 +59,15 @@ export default async function JobPage({
   }
   const j = res.data;
   const can = (a: string) => j.actions.includes(a);
-  const techs = can('assign')
-    ? await attempt(async () =>
-        unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/technicians', path)),
-      )
-    : null;
+  const techs =
+    can('assign') || j.canRecordTime
+      ? await attempt(async () =>
+          unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/technicians', path)),
+        )
+      : null;
   const tz = company.timezone;
+  // Managers never enter their own time (the server refuses it too), so they are not offered.
+  const otherTechs = techs?.ok ? techs.data.filter((x) => x.id !== me.user.id) : [];
   const step = (
     op: Parameters<typeof jobStepAction>[3],
     extra: { taskId?: string; timeZone?: string } = {},
@@ -149,8 +153,14 @@ export default async function JobPage({
                   <th scope="col" className={th}>
                     {t('job.technician')}
                   </th>
+                  <th scope="col" className={thNum}>
+                    {t('labour.actual')}
+                  </th>
                   <th scope="col" className={th}>
                     {t('common.status')}
+                  </th>
+                  <th scope="col" className={th}>
+                    {t('labour.time')}
                   </th>
                 </tr>
               </thead>
@@ -196,6 +206,9 @@ export default async function JobPage({
                         ))
                       )}
                     </td>
+                    <td className={tdNum}>
+                      <Ltr>{task.actualHours}</Ltr>
+                    </td>
                     <td className={td}>
                       {task.status === 'done' ? (
                         <Badge tone="success">{t('job.done')}</Badge>
@@ -213,6 +226,9 @@ export default async function JobPage({
                         <Badge>{t('job.openTask')}</Badge>
                       )}
                     </td>
+                    <td className={td}>
+                      <TaskClock job={j} task={task} locale={locale} companyId={companyId} timeZone={tz} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -224,11 +240,17 @@ export default async function JobPage({
                   <td className={`${tdNum} font-semibold`}>
                     <Ltr>{j.estimatedHours}</Ltr>
                   </td>
+                  <td className={td} />
+                  <td className={`${tdNum} font-semibold`}>
+                    <Ltr>{j.actualHours}</Ltr>
+                  </td>
                   <td className={td} colSpan={2} />
                 </tr>
               </tfoot>
             </Table>
           </Card>
+
+          <LabourCard job={j} locale={locale} companyId={companyId} timeZone={tz} />
 
           <Card title={t('job.timeline')} id="timeline">
             <ol className="flex flex-col gap-3 border-s border-[var(--color-border)] ps-4">
@@ -383,6 +405,17 @@ export default async function JobPage({
                   defaultValue={isoToZonedLocal(j.promisedAt, tz)}
                 />
               </InlineForm>
+            </Panel>
+          ) : null}
+          {j.canRecordTime && otherTechs.length ? (
+            <Panel title={t('labour.manual')} help={t('labour.manualHelp')}>
+              <ManualTimeForm
+                job={j}
+                technicians={otherTechs}
+                locale={locale}
+                companyId={companyId}
+                timeZone={tz}
+              />
             </Panel>
           ) : null}
           {can('note') ? (

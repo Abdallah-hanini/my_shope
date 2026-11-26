@@ -10,6 +10,50 @@ export class JobTaskDto {
   @ApiProperty({ enum: ['open', 'done'] }) status!: string;
   @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' }) doneAt!: string | null;
   @ApiProperty({ description: 'The caller can mark this task done now' }) canComplete!: boolean;
+  @ApiProperty({ example: '1.25', description: 'Closed, not voided time on the task (hours)' })
+  actualHours!: string;
+  @ApiProperty({ type: () => [ClockedOnDto], description: 'Technicians clocked on to this task now' })
+  clockedOn!: ClockedOnDto[];
+  @ApiProperty({ description: 'The caller can clock on to this task now' }) canClockOn!: boolean;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: "The caller's open entry on this task (to clock off)",
+  })
+  myOpenEntryId!: string | null;
+}
+
+export class ClockedOnDto {
+  @ApiProperty() entryId!: string;
+  @ApiProperty() technicianName!: string;
+  @ApiProperty({ format: 'date-time' }) since!: string;
+}
+
+export class TimeEntryDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() taskId!: string;
+  @ApiProperty() taskLineNo!: number;
+  @ApiProperty() technicianId!: string;
+  @ApiProperty() technicianName!: string;
+  @ApiProperty({ format: 'date-time' }) startedAt!: string;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    format: 'date-time',
+    description: 'null while clocked on',
+  })
+  endedAt!: string | null;
+  @ApiProperty({ description: 'Whole minutes (open entries up to now)' }) minutes!: number;
+  @ApiProperty({ enum: ['clock', 'manual'] }) source!: string;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Why it was entered manually' })
+  reason!: string | null;
+  @ApiProperty() createdByName!: string;
+  @ApiProperty() voided!: boolean;
+  @ApiPropertyOptional({ nullable: true, type: String }) voidReason!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) voidedByName!: string | null;
+  @ApiProperty({ description: 'The caller can void this entry (a manager, not their own time)' })
+  canVoid!: boolean;
+  @ApiProperty({ description: 'The caller can clock this open entry off' }) canStop!: boolean;
 }
 
 export class JobEventDto {
@@ -155,6 +199,12 @@ export class JobCardDto {
   inspection!: InspectionDto | null;
   @ApiProperty({ type: [JobPhotoDto], description: 'Oldest first; images at …/photos/{photoId}' })
   photos!: JobPhotoDto[];
+  @ApiProperty({ example: '2.75', description: 'Closed, not voided time on all tasks (hours)' })
+  actualHours!: string;
+  @ApiProperty({ type: [TimeEntryDto], description: 'Labour time, oldest first, voided included' })
+  timeEntries!: TimeEntryDto[];
+  @ApiProperty({ description: 'The caller can enter missed time for a technician' })
+  canRecordTime!: boolean;
 }
 
 export class TechnicianDto {
@@ -221,4 +271,76 @@ export class CancelJobDto {
 }
 export class JobNoteDto {
   @ApiProperty() note!: string;
+}
+export class ManualTimeEntryDto {
+  @ApiProperty() taskId!: string;
+  @ApiProperty() technicianId!: string;
+  @ApiProperty({ format: 'date-time' }) startedAt!: string;
+  @ApiProperty({ format: 'date-time' }) endedAt!: string;
+  @ApiProperty({ description: 'Why the time was not clocked' }) reason!: string;
+}
+export class VoidTimeEntryDto {
+  @ApiProperty() reason!: string;
+}
+
+export class CurrentClockEntryDto {
+  @ApiProperty() entryId!: string;
+  @ApiProperty() jobId!: string;
+  @ApiProperty() jobNumber!: string;
+  @ApiProperty() plate!: string;
+  @ApiProperty() taskId!: string;
+  @ApiProperty() taskLineNo!: number;
+  @ApiProperty() taskDescription!: string;
+  @ApiProperty({ format: 'date-time' }) since!: string;
+}
+export class CurrentClockDto {
+  @ApiPropertyOptional({
+    nullable: true,
+    type: CurrentClockEntryDto,
+    description: 'The task the caller is clocked on to; null when clocked off',
+  })
+  entry!: CurrentClockEntryDto | null;
+}
+
+export class LabourFiguresDto {
+  @ApiProperty({ example: '7.50', description: 'Closed entries started in the range (hours)' })
+  clockedHours!: string;
+  @ApiProperty() entries!: number;
+  @ApiProperty() jobs!: number;
+  @ApiProperty({ description: 'Tasks completed in the range' }) tasksDone!: number;
+  @ApiProperty({ description: 'Completed tasks with no time from their technician (not in efficiency)' })
+  tasksWithoutTime!: number;
+  @ApiProperty({ example: '6.00', description: 'Estimate of completed tasks that have time' })
+  estimatedHours!: string;
+  @ApiProperty({ example: '5.50', description: "The technician's time on those tasks (any date)" })
+  actualHours!: string;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    example: '109.1',
+    description: 'estimated ÷ actual × 100; null without time',
+  })
+  efficiencyPct!: string | null;
+}
+export class LabourRowDto extends LabourFiguresDto {
+  @ApiProperty() technicianId!: string;
+  @ApiProperty() technicianName!: string;
+}
+export class ClockedOnNowDto {
+  @ApiProperty() technicianName!: string;
+  @ApiProperty() jobId!: string;
+  @ApiProperty() jobNumber!: string;
+  @ApiProperty() taskDescription!: string;
+  @ApiProperty({ format: 'date-time' }) since!: string;
+}
+export class LabourReportDto {
+  @ApiProperty({ example: '2026-11-01' }) from!: string;
+  @ApiProperty({ example: '2026-11-30' }) to!: string;
+  @ApiProperty() timeZone!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) branchId!: string | null;
+  @ApiProperty({ format: 'date-time', description: 'Computed live at this moment' }) asOf!: string;
+  @ApiProperty({ type: [LabourRowDto] }) rows!: LabourRowDto[];
+  @ApiProperty({ type: LabourFiguresDto }) totals!: LabourFiguresDto;
+  @ApiProperty({ type: [ClockedOnNowDto], description: 'Open entries (not in the figures)' })
+  clockedOnNow!: ClockedOnNowDto[];
 }

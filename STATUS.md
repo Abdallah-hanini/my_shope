@@ -11,6 +11,45 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-28: Technician time tracking (WMS-007, WEB-023)
+
+### Changes
+
+- **Clocking (T-62):**
+  - The technician assigned to a task clocks on and off from the job card while the job is in progress, one task at a time.
+  - The database refuses overlapping entries and a second open one, so this also holds under concurrency.
+  - Finishing a task, reassigning it, or cancelling the job clocks its timers off.
+- **Job card:**
+  - The tasks table shows actual hours next to the estimate, who is clocked on and since when, and the Clock on and Clock off buttons.
+  - A new "Labour time" card lists every entry: clocked or entered, voided entries kept with the reason.
+  - The jobs board shows "You are clocked on to …" with Clock off.
+- **Corrections (T-63), by a manager and never for their own time:**
+  - clock off a forgotten timer;
+  - enter missed time with a reason (at most 16 hours, not in the future, not before the job was opened);
+  - void a wrong entry with a reason.
+  - Entries are never edited or deleted (a database trigger enforces this). The missed-time form does not offer the manager's own name.
+- **Report (T-64, KPI_DICTIONARY "Labour time"):** Workshop → Labour time, for managers. Per technician it shows clocked hours, jobs, tasks done, tasks done without time, estimated against actual, and efficiency %, plus totals, who is clocked on now and when it was computed. It respects branch scope; ranges up to a year.
+- **Not included:** labour **cost**. It needs pay rates from payroll, a later phase.
+- **Migration `labour_time`:** `workshop.task_time_entry` with checks, the overlap exclusion, a one-open-entry index, a branch-consistency trigger and an immutability trigger.
+- **Test fix:** the e2e wait for the notification bell is now about 20 seconds (it was about 10), because under load the bell had updated just as the shorter wait ran out.
+
+### Evidence (2026-11-28, Linux Docker)
+
+- Unit tests: labour arithmetic 3 (seconds rounding, efficiency half-up and null, per-technician summary including time by others and tasks without time). Validation 80.
+- Integration (labour.int, 7), including:
+  - clocking rules by status, task and role; one task at a time; two simultaneous clock-ons produce exactly one;
+  - manager clock-off; timers stopped by finishing, reassigning and cancelling;
+  - missed-time rules including self-entry refused and overlap refused; voids (own refused, open refused, voided time not counted);
+  - database immutability, overlap and branch checks;
+  - report figures (1.75 h clocked, 2.00 estimated against 1.75 actual = 114.3 %, task done without time, clocked on now) and branch scope.
+- Browser end-to-end 40/40. The new steps: clock on task 1, the board banner, clock off there, the entry listed, the manager not offered their own name, and the report row.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 175/175 across 11 suites on a fresh database; browser end-to-end 40/40.
+
+### Not done / open
+
+- Labour cost (pay rates: payroll; D-06 for costing work in progress).
+- An approval step for corrections, if D-11 asks for one.
+
 ## 2026-11-27: Appointment booking (WMS-002, WEB-010/011)
 
 ### Changes

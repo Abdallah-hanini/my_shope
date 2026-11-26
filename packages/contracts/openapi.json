@@ -3868,6 +3868,310 @@
           "workshop"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/clock-on": {
+      "post": {
+        "operationId": "clockOnTask",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The assigned technician starts timing a task",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/time-entries/{entryId}/clock-off": {
+      "post": {
+        "operationId": "clockOffTimeEntry",
+        "parameters": [
+          {
+            "name": "entryId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop an open entry (the technician, or a manager for a forgotten timer)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/time-entries": {
+      "post": {
+        "operationId": "addManualTimeEntry",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualTimeEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A manager enters time a technician did not clock (with a reason; not their own)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/time-entries/{entryId}/void": {
+      "post": {
+        "operationId": "voidTimeEntry",
+        "parameters": [
+          {
+            "name": "entryId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidTimeEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A manager voids a wrong entry with a reason",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/time-entries/current": {
+      "get": {
+        "operationId": "getMyClock",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentClockDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The task the caller is clocked on to",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/labour-time": {
+      "get": {
+        "operationId": "getLabourReport",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "2026-11-30"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "Local date (company time zone)",
+            "schema": {
+              "example": "2026-11-01"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabourReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clocked hours, estimate against actual and efficiency per technician",
+        "tags": [
+          "workshop"
+        ]
+      }
     }
   },
   "info": {
@@ -6422,6 +6726,26 @@
           "model"
         ]
       },
+      "ClockedOnDto": {
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string"
+          },
+          "technicianName": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "entryId",
+          "technicianName",
+          "since"
+        ]
+      },
       "JobTaskDto": {
         "type": "object",
         "properties": {
@@ -6461,6 +6785,27 @@
           "canComplete": {
             "type": "boolean",
             "description": "The caller can mark this task done now"
+          },
+          "actualHours": {
+            "type": "string",
+            "example": "1.25",
+            "description": "Closed, not voided time on the task (hours)"
+          },
+          "clockedOn": {
+            "description": "Technicians clocked on to this task now",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClockedOnDto"
+            }
+          },
+          "canClockOn": {
+            "type": "boolean",
+            "description": "The caller can clock on to this task now"
+          },
+          "myOpenEntryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The caller's open entry on this task (to clock off)"
           }
         },
         "required": [
@@ -6469,7 +6814,10 @@
           "description",
           "estimatedHours",
           "status",
-          "canComplete"
+          "canComplete",
+          "actualHours",
+          "clockedOn",
+          "canClockOn"
         ]
       },
       "JobEventDto": {
@@ -6615,6 +6963,88 @@
           "sizeBytes",
           "uploadedByName",
           "createdAt"
+        ]
+      },
+      "TimeEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "taskLineNo": {
+            "type": "number"
+          },
+          "technicianId": {
+            "type": "string"
+          },
+          "technicianName": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "null while clocked on"
+          },
+          "minutes": {
+            "type": "number",
+            "description": "Whole minutes (open entries up to now)"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "clock",
+              "manual"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it was entered manually"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "voided": {
+            "type": "boolean"
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "voidedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "canVoid": {
+            "type": "boolean",
+            "description": "The caller can void this entry (a manager, not their own time)"
+          },
+          "canStop": {
+            "type": "boolean",
+            "description": "The caller can clock this open entry off"
+          }
+        },
+        "required": [
+          "id",
+          "taskId",
+          "taskLineNo",
+          "technicianId",
+          "technicianName",
+          "startedAt",
+          "minutes",
+          "source",
+          "createdByName",
+          "voided",
+          "canVoid",
+          "canStop"
         ]
       },
       "JobCardDto": {
@@ -6764,6 +7194,22 @@
             "items": {
               "$ref": "#/components/schemas/JobPhotoDto"
             }
+          },
+          "actualHours": {
+            "type": "string",
+            "example": "2.75",
+            "description": "Closed, not voided time on all tasks (hours)"
+          },
+          "timeEntries": {
+            "description": "Labour time, oldest first, voided included",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimeEntryDto"
+            }
+          },
+          "canRecordTime": {
+            "type": "boolean",
+            "description": "The caller can enter missed time for a technician"
           }
         },
         "required": [
@@ -6786,7 +7232,10 @@
           "tasks",
           "events",
           "actions",
-          "photos"
+          "photos",
+          "actualHours",
+          "timeEntries",
+          "canRecordTime"
         ]
       },
       "TechnicianDto": {
@@ -7301,6 +7750,286 @@
           "version",
           "startsAt",
           "durationMinutes"
+        ]
+      },
+      "ManualTimeEntryDto": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "technicianId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the time was not clocked"
+          }
+        },
+        "required": [
+          "taskId",
+          "technicianId",
+          "startedAt",
+          "endedAt",
+          "reason"
+        ]
+      },
+      "VoidTimeEntryDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CurrentClockEntryDto": {
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "jobNumber": {
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "taskLineNo": {
+            "type": "number"
+          },
+          "taskDescription": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "entryId",
+          "jobId",
+          "jobNumber",
+          "plate",
+          "taskId",
+          "taskLineNo",
+          "taskDescription",
+          "since"
+        ]
+      },
+      "CurrentClockDto": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "nullable": true,
+            "description": "The task the caller is clocked on to; null when clocked off",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CurrentClockEntryDto"
+              }
+            ]
+          }
+        }
+      },
+      "LabourRowDto": {
+        "type": "object",
+        "properties": {
+          "clockedHours": {
+            "type": "string",
+            "example": "7.50",
+            "description": "Closed entries started in the range (hours)"
+          },
+          "entries": {
+            "type": "number"
+          },
+          "jobs": {
+            "type": "number"
+          },
+          "tasksDone": {
+            "type": "number",
+            "description": "Tasks completed in the range"
+          },
+          "tasksWithoutTime": {
+            "type": "number",
+            "description": "Completed tasks with no time from their technician (not in efficiency)"
+          },
+          "estimatedHours": {
+            "type": "string",
+            "example": "6.00",
+            "description": "Estimate of completed tasks that have time"
+          },
+          "actualHours": {
+            "type": "string",
+            "example": "5.50",
+            "description": "The technician's time on those tasks (any date)"
+          },
+          "efficiencyPct": {
+            "type": "string",
+            "nullable": true,
+            "example": "109.1",
+            "description": "estimated ÷ actual × 100; null without time"
+          },
+          "technicianId": {
+            "type": "string"
+          },
+          "technicianName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "clockedHours",
+          "entries",
+          "jobs",
+          "tasksDone",
+          "tasksWithoutTime",
+          "estimatedHours",
+          "actualHours",
+          "technicianId",
+          "technicianName"
+        ]
+      },
+      "LabourFiguresDto": {
+        "type": "object",
+        "properties": {
+          "clockedHours": {
+            "type": "string",
+            "example": "7.50",
+            "description": "Closed entries started in the range (hours)"
+          },
+          "entries": {
+            "type": "number"
+          },
+          "jobs": {
+            "type": "number"
+          },
+          "tasksDone": {
+            "type": "number",
+            "description": "Tasks completed in the range"
+          },
+          "tasksWithoutTime": {
+            "type": "number",
+            "description": "Completed tasks with no time from their technician (not in efficiency)"
+          },
+          "estimatedHours": {
+            "type": "string",
+            "example": "6.00",
+            "description": "Estimate of completed tasks that have time"
+          },
+          "actualHours": {
+            "type": "string",
+            "example": "5.50",
+            "description": "The technician's time on those tasks (any date)"
+          },
+          "efficiencyPct": {
+            "type": "string",
+            "nullable": true,
+            "example": "109.1",
+            "description": "estimated ÷ actual × 100; null without time"
+          }
+        },
+        "required": [
+          "clockedHours",
+          "entries",
+          "jobs",
+          "tasksDone",
+          "tasksWithoutTime",
+          "estimatedHours",
+          "actualHours"
+        ]
+      },
+      "ClockedOnNowDto": {
+        "type": "object",
+        "properties": {
+          "technicianName": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "jobNumber": {
+            "type": "string"
+          },
+          "taskDescription": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "technicianName",
+          "jobId",
+          "jobNumber",
+          "taskDescription",
+          "since"
+        ]
+      },
+      "LabourReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-11-01"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-11-30"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Computed live at this moment"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabourRowDto"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/LabourFiguresDto"
+          },
+          "clockedOnNow": {
+            "description": "Open entries (not in the figures)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClockedOnNowDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "timeZone",
+          "asOf",
+          "rows",
+          "totals",
+          "clockedOnNow"
         ]
       },
       "ProblemDetailsDto": {

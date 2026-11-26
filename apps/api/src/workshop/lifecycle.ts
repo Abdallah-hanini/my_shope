@@ -41,6 +41,17 @@ export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
 
 export const OPEN_STATUSES: readonly JobStatus[] = OPEN_JOB_STATUSES;
 
+/** Technicians clock time while work is under way (the same statuses as completing a task). */
+export const CLOCK_STATUSES: readonly JobStatus[] = ['in_progress', 'rework'];
+/** A manager may enter missed time once work has started, including after delivery. */
+export const TIME_ENTRY_STATUSES: readonly JobStatus[] = [
+  'in_progress',
+  'rework',
+  'qc',
+  'ready',
+  'delivered',
+];
+
 export function allowedInStatus(action: JobAction, status: JobStatus): boolean {
   return ACTION_STATUSES[action].includes(status);
 }

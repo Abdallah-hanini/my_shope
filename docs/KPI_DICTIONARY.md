@@ -60,3 +60,25 @@ Reconciliation, enforced by `apps/api/test/reporting.int.test.ts`:
 - General ledger pages chain: page 2's brought-forward equals page 1's last balance.
 
 The other REPORTING.md KPIs (stock turnover, utilisation, first-time fix, AR ageing) are defined here when their modules exist.
+
+## Labour time (WEB-023, WMS-007)
+
+Code: `apps/api/src/workshop/labour.ts` (pure, unit-tested) and `labour.service.ts`. Source: `workshop.task_time_entry` and `workshop.job_task`.
+
+- **Range:** local dates `from`–`to` in the company time zone, at most 366 days.
+- **Scope:** the branches where the caller has `workshop.job.manage`; optional branch filter.
+- **Freshness:** computed live from one REPEATABLE READ snapshot (`asOf`).
+- **Counted entries:** closed and not voided. Open entries are listed as "clocked on now" and are not in the figures.
+- **Seconds:** each entry's length is rounded half up to whole seconds; hours are shown with 2 decimals, half up.
+
+| Figure | Definition |
+|---|---|
+| Clocked hours | Σ length of counted entries that **started** in the range |
+| Entries / Jobs | Count of those entries / of distinct jobs among them |
+| Tasks done | Tasks with status done, `done_at` in the range, by their assigned technician |
+| Done without time | Tasks done that have no counted time from their technician (left out of efficiency) |
+| Estimated | Σ estimated hours of the tasks done that have time |
+| Actual on done tasks | Σ the technician's own counted time on those tasks, **any date** (time by others is not theirs) |
+| Efficiency % | Estimated ÷ Actual × 100, 1 decimal, half up; **null without time**, shown as "No time" |
+
+Totals add the technicians' figures; total efficiency is total estimated ÷ total actual. Labour cost is not computed (T-64).

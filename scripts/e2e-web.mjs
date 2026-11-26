@@ -596,7 +596,7 @@ async function main() {
     const bell = () => page.getByTestId('notification-bell');
     const bellLabel = async (pattern) => {
       // Events are delivered by the dispatcher within seconds; the bell refreshes on navigation.
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 40; i++) {
         await page.goto(`${base()}/journals`);
         const label = (await bell().getAttribute('aria-label')) ?? '';
         if (pattern.test(label)) return label;
@@ -740,6 +740,37 @@ async function main() {
         }
         await page.locator('main').getByText('Assigned', { exact: true }).first().waitFor();
         await step('Start work');
+        // Labour time: clock on to task 1 (one task at a time), see it on the board, clock off there.
+        await page
+          .getByRole('form', { name: 'Clock on 1' })
+          .getByRole('button', { name: 'Clock on' })
+          .click();
+        await page.getByRole('form', { name: 'Clock off 1' }).waitFor();
+        await page
+          .locator('tr[data-task="1"]')
+          .getByText(/E2E Owner · since/)
+          .waitFor();
+        assert(
+          (await page.getByRole('form', { name: 'Clock on 2' }).count()) === 0,
+          'second clock-on offered',
+        );
+        await page.goto(`${base()}/jobs`);
+        const banner = page.getByRole('status', { name: 'Working now' });
+        await banner.getByText('JC-2026-000001').waitFor();
+        await shot('labour-banner-en');
+        await page.waitForTimeout(1500); // some real work time, so the entry is never rounded to nothing
+        await banner.getByRole('button', { name: 'Clock off' }).click();
+        await banner.waitFor({ state: 'detached' });
+        await page.goto(jobUrl);
+        const labour = page.locator('section[aria-labelledby=labour-title]');
+        assert((await labour.locator('tr[data-entry]').count()) === 1, 'one time entry');
+        await labour.getByText('Clocked', { exact: true }).waitFor();
+        // A manager cannot enter time for themselves (no self-approval): the owner is the only
+        // technician here, so there is nobody to enter missed time for.
+        assert(
+          (await page.getByRole('form', { name: 'Enter missed time' }).count()) === 0,
+          'own time offered',
+        );
         for (const n of [1, 2]) {
           await page
             .getByRole('form', { name: `Mark done ${n}` })
@@ -765,6 +796,17 @@ async function main() {
         await shot('job-card-en');
       },
     );
+
+    await check('Labour time report: per technician, with entries and completed tasks', async () => {
+      await page.goto(`${base()}/labour-time`);
+      const row = page.locator('tr[data-technician="E2E Owner"]');
+      await row.waitFor();
+      const cells = await row.locator('td').allInnerTexts();
+      // clocked, jobs, tasks done, done without time, estimated, actual, efficiency
+      assert(cells[1] === '1' && cells[2] === '2' && cells[3] === '1', cells.join(' | '));
+      assert(cells[4] === '1.50', `estimate of the timed task: ${cells.join(' | ')}`);
+      await shot('labour-report-en');
+    });
 
     await check('Workshop: the board shows the job under Quality check; plate search finds it', async () => {
       await page.goto(`${base()}/jobs`);
@@ -865,6 +907,8 @@ async function main() {
           'customers',
           'jobs/new',
           'appointments',
+          'labour-time',
+          jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);

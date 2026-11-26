@@ -15,6 +15,7 @@ import {
   td,
   th,
 } from '@/components/ui';
+import { MyClockBanner } from '@/components/workshop/Labour';
 import { JobStatus } from '@/components/workshop/JobStatus';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -41,6 +42,15 @@ export default async function JobsPage({
       }),
     ),
   );
+  const myClock = can('workshop.job.work')
+    ? await attempt(async () =>
+        unwrap(
+          await api.GET('/api/v1/companies/{companyId}/time-entries/current', {
+            params: { path: { companyId } },
+          }),
+        ),
+      )
+    : null;
   const base = `/${locale}/c/${companyId}/jobs`;
   const tab = (active: boolean) =>
     `${buttonGhost} ${active ? 'bg-[var(--color-surface-muted)] text-[var(--color-primary)]' : ''}`;
@@ -58,6 +68,14 @@ export default async function JobsPage({
       >
         {t('job.notIncluded')}
       </PageHeader>
+      {myClock?.ok && myClock.data.entry ? (
+        <MyClockBanner
+          entry={myClock.data.entry}
+          locale={locale}
+          companyId={companyId}
+          timeZone={company.timezone}
+        />
+      ) : null}
       <nav aria-label={t('job.title')} className="mb-4 flex gap-2">
         <Link href={base} aria-current={!list ? 'page' : undefined} className={tab(!list)}>
           {t('job.board')}

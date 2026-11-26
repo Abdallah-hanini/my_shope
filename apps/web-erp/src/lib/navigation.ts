@@ -28,6 +28,9 @@ export function companyNavigation(
               { href: `${base}/appointments`, label: t('nav.appointments'), icon: 'CalendarClock' as const },
             ]
           : []),
+        ...(can('workshop.job.manage')
+          ? [{ href: `${base}/labour-time`, label: t('nav.labour'), icon: 'Timer' as const }]
+          : []),
         ...(can('crm.customer.read')
           ? [
               { href: `${base}/vehicles`, label: t('nav.vehicles'), icon: 'Car' as const },

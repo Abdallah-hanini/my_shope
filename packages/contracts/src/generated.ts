@@ -1015,6 +1015,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/clock-on": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The assigned technician starts timing a task */
+        post: operations["clockOnTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/time-entries/{entryId}/clock-off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop an open entry (the technician, or a manager for a forgotten timer) */
+        post: operations["clockOffTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A manager enters time a technician did not clock (with a reason; not their own) */
+        post: operations["addManualTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/time-entries/{entryId}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A manager voids a wrong entry with a reason */
+        post: operations["voidTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/time-entries/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The task the caller is clocked on to */
+        get: operations["getMyClock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/labour-time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clocked hours, estimate against actual and efficiency per technician */
+        get: operations["getLabourReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1772,6 +1874,12 @@ export interface components {
             model: string;
             year?: number | null;
         };
+        ClockedOnDto: {
+            entryId: string;
+            technicianName: string;
+            /** Format: date-time */
+            since: string;
+        };
         JobTaskDto: {
             id: string;
             lineNo: number;
@@ -1786,6 +1894,17 @@ export interface components {
             doneAt?: string | null;
             /** @description The caller can mark this task done now */
             canComplete: boolean;
+            /**
+             * @description Closed, not voided time on the task (hours)
+             * @example 1.25
+             */
+            actualHours: string;
+            /** @description Technicians clocked on to this task now */
+            clockedOn: components["schemas"]["ClockedOnDto"][];
+            /** @description The caller can clock on to this task now */
+            canClockOn: boolean;
+            /** @description The caller's open entry on this task (to clock off) */
+            myOpenEntryId?: string | null;
         };
         JobEventDto: {
             id: string;
@@ -1822,6 +1941,34 @@ export interface components {
             uploadedByName: string;
             /** Format: date-time */
             createdAt: string;
+        };
+        TimeEntryDto: {
+            id: string;
+            taskId: string;
+            taskLineNo: number;
+            technicianId: string;
+            technicianName: string;
+            /** Format: date-time */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description null while clocked on
+             */
+            endedAt?: string | null;
+            /** @description Whole minutes (open entries up to now) */
+            minutes: number;
+            /** @enum {string} */
+            source: "clock" | "manual";
+            /** @description Why it was entered manually */
+            reason?: string | null;
+            createdByName: string;
+            voided: boolean;
+            voidReason?: string | null;
+            voidedByName?: string | null;
+            /** @description The caller can void this entry (a manager, not their own time) */
+            canVoid: boolean;
+            /** @description The caller can clock this open entry off */
+            canStop: boolean;
         };
         JobCardDto: {
             id: string;
@@ -1865,6 +2012,15 @@ export interface components {
             inspection?: components["schemas"]["InspectionDto"] | null;
             /** @description Oldest first; images at …/photos/{photoId} */
             photos: components["schemas"]["JobPhotoDto"][];
+            /**
+             * @description Closed, not voided time on all tasks (hours)
+             * @example 2.75
+             */
+            actualHours: string;
+            /** @description Labour time, oldest first, voided included */
+            timeEntries: components["schemas"]["TimeEntryDto"][];
+            /** @description The caller can enter missed time for a technician */
+            canRecordTime: boolean;
         };
         TechnicianDto: {
             id: string;
@@ -2011,6 +2167,117 @@ export interface components {
             /** Format: date-time */
             startsAt: string;
             durationMinutes: number;
+        };
+        ManualTimeEntryDto: {
+            taskId: string;
+            technicianId: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            endedAt: string;
+            /** @description Why the time was not clocked */
+            reason: string;
+        };
+        VoidTimeEntryDto: {
+            reason: string;
+        };
+        CurrentClockEntryDto: {
+            entryId: string;
+            jobId: string;
+            jobNumber: string;
+            plate: string;
+            taskId: string;
+            taskLineNo: number;
+            taskDescription: string;
+            /** Format: date-time */
+            since: string;
+        };
+        CurrentClockDto: {
+            /** @description The task the caller is clocked on to; null when clocked off */
+            entry?: components["schemas"]["CurrentClockEntryDto"] | null;
+        };
+        LabourRowDto: {
+            /**
+             * @description Closed entries started in the range (hours)
+             * @example 7.50
+             */
+            clockedHours: string;
+            entries: number;
+            jobs: number;
+            /** @description Tasks completed in the range */
+            tasksDone: number;
+            /** @description Completed tasks with no time from their technician (not in efficiency) */
+            tasksWithoutTime: number;
+            /**
+             * @description Estimate of completed tasks that have time
+             * @example 6.00
+             */
+            estimatedHours: string;
+            /**
+             * @description The technician's time on those tasks (any date)
+             * @example 5.50
+             */
+            actualHours: string;
+            /**
+             * @description estimated ÷ actual × 100; null without time
+             * @example 109.1
+             */
+            efficiencyPct?: string | null;
+            technicianId: string;
+            technicianName: string;
+        };
+        LabourFiguresDto: {
+            /**
+             * @description Closed entries started in the range (hours)
+             * @example 7.50
+             */
+            clockedHours: string;
+            entries: number;
+            jobs: number;
+            /** @description Tasks completed in the range */
+            tasksDone: number;
+            /** @description Completed tasks with no time from their technician (not in efficiency) */
+            tasksWithoutTime: number;
+            /**
+             * @description Estimate of completed tasks that have time
+             * @example 6.00
+             */
+            estimatedHours: string;
+            /**
+             * @description The technician's time on those tasks (any date)
+             * @example 5.50
+             */
+            actualHours: string;
+            /**
+             * @description estimated ÷ actual × 100; null without time
+             * @example 109.1
+             */
+            efficiencyPct?: string | null;
+        };
+        ClockedOnNowDto: {
+            technicianName: string;
+            jobId: string;
+            jobNumber: string;
+            taskDescription: string;
+            /** Format: date-time */
+            since: string;
+        };
+        LabourReportDto: {
+            /** @example 2026-11-01 */
+            from: string;
+            /** @example 2026-11-30 */
+            to: string;
+            timeZone: string;
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description Computed live at this moment
+             */
+            asOf: string;
+            rows: components["schemas"]["LabourRowDto"][];
+            totals: components["schemas"]["LabourFiguresDto"];
+            /** @description Open entries (not in the figures) */
+            clockedOnNow: components["schemas"]["ClockedOnNowDto"][];
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -3962,6 +4229,150 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+        };
+    };
+    clockOnTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                taskId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    clockOffTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    addManualTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualTimeEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    voidTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidTimeEntryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    getMyClock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentClockDto"];
+                };
+            };
+        };
+    };
+    getLabourReport: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                /** @description Local date (company time zone) */
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabourReportDto"];
                 };
             };
         };

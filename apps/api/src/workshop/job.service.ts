@@ -26,6 +26,7 @@ import { writeAudit, type AuditContext } from '../platform/audit';
 import { enqueueOutbox } from '../platform/outbox';
 import { formatDocumentNumber, nextDocumentNumber } from '../platform/sequence';
 import type { JobCardDto, JobListItemDto, TechnicianDto } from './job.dto';
+import { spanSeconds, toHours, toMinutes } from './labour';
 import { processPhoto, type ProcessedPhoto } from './photo-processing';
 import {
   allowedInStatus,
@@ -34,10 +35,19 @@ import {
   permits,
   statusAfterAssignment,
   type Actor,
+  TIME_ENTRY_STATUSES,
   type JobAction,
 } from './lifecycle';
 
 type Tx = Prisma.TransactionClient;
+
+/** Clocks off every open time entry matching `where` (task done, reassigned or job cancelled). */
+export function closeOpenEntries(tx: Tx, where: { taskId?: string; jobId?: string }, by: string) {
+  return tx.taskTimeEntry.updateMany({
+    where: { ...where, endedAt: null },
+    data: { endedAt: new Date(), endedBy: by },
+  });
+}
 const jobInclude = {
   branch: { select: { code: true } },
   customer: { select: { id: true, name: true, nameAr: true, phone: true } },
@@ -293,6 +303,7 @@ export class JobService {
           throw unprocessable('This person cannot work on jobs at this branch');
         }
       }
+      if (task.technicianId !== input.technicianId) await closeOpenEntries(tx, { taskId }, p.userId); // the previous technician stops on this task
       await tx.jobTask.update({ where: { id: taskId }, data: { technicianId: input.technicianId } });
       const all = job.tasks.every((t) => (t.id === taskId ? !!input.technicianId : !!t.technicianId));
       const next = statusAfterAssignment(job.status as JobStatus, all);
@@ -340,6 +351,7 @@ export class JobService {
         const task = job.tasks.find((t) => t.id === taskId);
         if (!task) throw notFound('Task');
         if (task.status === 'done') throw conflict('This task is already done');
+        await closeOpenEntries(tx, { taskId }, p.userId);
         await tx.jobTask.update({
           where: { id: taskId },
           data: { status: 'done', doneAt: new Date(), doneBy: p.userId },
@@ -428,6 +440,7 @@ export class JobService {
   async cancel(scope: CompanyScope, p: Principal, id: string, input: CancelJobInput, ctx: AuditContext) {
     return this.act(scope, p, id, 'cancel', input.version, ctx, async (tx) => {
       // No parts or deposits exist yet (inventory and invoicing come later), so nothing to return.
+      await closeOpenEntries(tx, { jobId: id }, p.userId);
       await tx.jobCard.update({
         where: { id },
         data: { status: 'cancelled', cancelledReason: input.reason },
@@ -734,7 +747,7 @@ export class JobService {
   }
 
   /** Active people whose roles allow workshop work at the job's branch. */
-  private async eligibleTechnicians(
+  async eligibleTechnicians(
     db: Tx | PrismaService,
     companyId: string,
     branchId: string,
@@ -826,7 +839,12 @@ export class JobService {
         },
       }),
     ]);
+    const entries = await this.prisma.taskTimeEntry.findMany({
+      where: { jobId: job.id },
+      orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
+    });
     const names = await this.userNames([
+      ...entries.flatMap((e) => [e.technicianId, e.createdBy, e.voidedBy]),
       job.inspectedBy,
       ...photos.map((ph) => ph.uploadedBy),
       job.createdBy,
@@ -835,6 +853,13 @@ export class JobService {
     ]);
     const status = job.status as JobStatus;
     const hours = job.tasks.reduce((s, t) => s.plus(t.estimatedHours), new Prisma.Decimal(0));
+    const now = new Date();
+    const counted = entries.filter((e) => e.endedAt && !e.voidedAt);
+    const secondsOn = (taskId?: string) =>
+      counted.filter((e) => !taskId || e.taskId === taskId).reduce((n, e) => n + spanSeconds(e, now), 0);
+    const open = entries.filter((e) => !e.endedAt);
+    const workable = allowedInStatus('completeTask', status);
+    const lineOf = new Map(job.tasks.map((t) => [t.id, t.lineNo]));
     return {
       id: job.id,
       number: job.number,
@@ -873,6 +898,21 @@ export class JobService {
           t.status === 'open' &&
           allowedInStatus('completeTask', status) &&
           permits('completeTask', { ...actor, onTask: t.technicianId === userId }),
+        actualHours: toHours(secondsOn(t.id)),
+        clockedOn: open
+          .filter((e) => e.taskId === t.id)
+          .map((e) => ({
+            entryId: e.id,
+            technicianName: names.get(e.technicianId) ?? '—',
+            since: e.startedAt.toISOString(),
+          })),
+        canClockOn:
+          workable &&
+          t.status === 'open' &&
+          actor.work &&
+          t.technicianId === userId &&
+          !open.some((e) => e.technicianId === userId),
+        myOpenEntryId: open.find((e) => e.taskId === t.id && e.technicianId === userId)?.id ?? null,
       })),
       events: events.map((e) => ({
         id: e.id,
@@ -905,6 +945,26 @@ export class JobService {
         uploadedByName: names.get(ph.uploadedBy) ?? '—',
         createdAt: ph.createdAt.toISOString(),
       })),
+      actualHours: toHours(secondsOn()),
+      timeEntries: entries.map((e) => ({
+        id: e.id,
+        taskId: e.taskId,
+        taskLineNo: lineOf.get(e.taskId) ?? 0,
+        technicianId: e.technicianId,
+        technicianName: names.get(e.technicianId) ?? '—',
+        startedAt: e.startedAt.toISOString(),
+        endedAt: e.endedAt?.toISOString() ?? null,
+        minutes: toMinutes(spanSeconds(e, now)),
+        source: e.source,
+        reason: e.reason,
+        createdByName: names.get(e.createdBy) ?? '—',
+        voided: !!e.voidedAt,
+        voidReason: e.voidReason,
+        voidedByName: e.voidedBy ? (names.get(e.voidedBy) ?? '—') : null,
+        canVoid: actor.manage && !!e.endedAt && !e.voidedAt && e.technicianId !== userId,
+        canStop: !e.endedAt && (actor.manage || e.technicianId === userId),
+      })),
+      canRecordTime: actor.manage && (TIME_ENTRY_STATUSES as readonly string[]).includes(status),
     };
   }
 }
