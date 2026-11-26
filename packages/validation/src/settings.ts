@@ -164,6 +164,8 @@ export const postingSettingsSchema = z.object({
   payablesAccountId: z.string().uuid().nullable().optional(),
   inputTaxAccountId: z.string().uuid().nullable().optional(),
   priceVarianceAccountId: z.string().uuid().nullable().optional(),
+  /** Stock transfers (T-78): stock in transit between branches. */
+  transitAccountId: z.string().uuid().nullable().optional(),
 });
 export type PostingSettingsInput = z.infer<typeof postingSettingsSchema>;
 

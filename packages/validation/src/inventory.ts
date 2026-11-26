@@ -128,3 +128,29 @@ export const specialOrderListQuerySchema = z.object({
   branchId: z.string().uuid().optional(),
 });
 export type SpecialOrderListQuery = z.infer<typeof specialOrderListQuerySchema>;
+
+// ── stock transfers between branches (T-78) ─────────────────────────────────
+
+export const createTransferSchema = z
+  .object({
+    fromBranchId: z.string().uuid(),
+    toBranchId: z.string().uuid(),
+    lines: z
+      .array(z.object({ partId: z.string().uuid(), quantity: quantitySchema }))
+      .min(1, 'add at least one part')
+      .max(50)
+      .refine((l) => new Set(l.map((x) => x.partId)).size === l.length, 'a part is listed twice'),
+    note: optionalText(300),
+    idempotencyKey: z.string().uuid(),
+  })
+  .refine((v) => v.fromBranchId !== v.toBranchId, {
+    message: 'choose another branch to send to',
+    path: ['toBranchId'],
+  });
+export type CreateTransferInput = z.infer<typeof createTransferSchema>;
+
+export const cancelTransferSchema = z.object({ reason: z.string().trim().min(3).max(300) });
+export type CancelTransferInput = z.infer<typeof cancelTransferSchema>;
+
+export const transferListQuerySchema = z.object({ status: z.enum(['open', 'all']).optional() });
+export type TransferListQuery = z.infer<typeof transferListQuerySchema>;

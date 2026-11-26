@@ -113,6 +113,7 @@ export async function postingSettingsAction(
     payablesAccountId: id('payablesAccountId'),
     inputTaxAccountId: id('inputTaxAccountId'),
     priceVarianceAccountId: id('priceVarianceAccountId'),
+    transitAccountId: id('transitAccountId'),
   });
   if (!v.ok) return { fieldErrors: v.fieldErrors, values };
   const failed = await mutate(locale, values, async (api) => {

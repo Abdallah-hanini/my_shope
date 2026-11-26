@@ -9,8 +9,48 @@
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts on jobs, quotes and invoices done (D-06). |
-| 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments. Not yet: purchase orders, returns, transfers. |
+| 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
+
+## 2026-12-01: Stock transfers between branches (T-78)
+
+### Changes
+
+- **Send stock** (`/transfers`, Inventory menu): a stock manager (`inventory.manage`) of the sending branch chooses the receiving branch and up to five parts with quantities, plus an optional note. Number ST-yyyy-nnnnnn.
+- **Sending:**
+  - each part leaves at the branch's weighted average into a stock in transit account (Dr stock in transit / Cr inventory, posted at the sending branch);
+  - stock reserved for jobs cannot be sent (checked with the stock row locked);
+  - the same form submitted twice records one transfer.
+- **Confirm arrival:** a stock manager of the receiving branch confirms. Every part goes in at exactly the value sent (Dr inventory / Cr stock in transit, posted at the receiving branch), and waiting special orders there are reserved first (T-77).
+- **Cancel transfer:** the sender cancels it with a reason while it is in transit; the stock goes back at the same value.
+- **Transfer page:** parts, values and the movement numbers out, in or back. The list shows transfers in transit or all, for transfers either branch of which the person can see.
+- **Posting account:** stock in transit (asset), chosen by the accountant.
+- **Part page:** movement labels for issues, returns and transfers (issue and return labels were missing before), and outgoing quantities shown with a minus sign.
+- **Migration `stock_transfers`:**
+  - transfer and line tables, three movement kinds, and the movement's transfer;
+  - checks: two different branches, status shapes, positive values, a line either arrives or goes back;
+  - guards: a transfer moves forward only once, and lines change only to record their arrival or return;
+  - at commit, every line matches the transfer's status;
+  - the transit account.
+- **Assumptions (recorded, change on request):**
+  - a transfer is received in full; a shortage or damage is recorded afterwards as a counted adjustment with a reason;
+  - stock in transit is posted against the sending branch when sent and the receiving branch when received, so its balance is zero only for the company as a whole, not per branch;
+  - no approval step (D-11: none for now).
+- **Not yet:** partial receipt, requests from one branch to another, transfer printouts.
+
+### Evidence (2026-12-01, Linux Docker)
+
+- Integration (transfers.int, 7):
+  - nothing is sent without the transit account; refused for another branch's or a read-only person, the same branch twice, or a part listed twice; branch choices offered;
+  - 10 litres of oil at an average of 8.50 plus a pad at 40.00 = 125.00 in transit; more than is free refused ("Only 30.000 litre …"); the same form twice records once; ledger: transit 125.00, DOH inventory 250.00;
+  - stock reserved for a job cannot be sent;
+  - only the receiving branch receives: WAK oil 10 at 85.00 and pad 1 at 40.00; the WAK job's waiting pad order is reserved; transit back to 0.00; a second receive or a cancel refused;
+  - the sender cancels another transfer (another branch refused, empty reason refused): stock back to 20 at 170.00, transit 0.00;
+  - each branch's stock value matches its ledger; the in-transit and all lists;
+  - database refusals: a transfer moved back, a changed line, a deleted transfer; movements carry their transfer.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; browser end-to-end 49/49.
+- Integration on a fresh database: 247 of 248 passed. The one failure is the time-of-day issue in `settings.int` described in T-76; it is unrelated to this change.
+- Browser check (new): branch WAK added; transit account chosen; 2 litres of oil sent from DOH (In transit); arrival confirmed (Received); WAK shows 2.000 litre; stock value "Matches the ledger"; the transfers page in Arabic on a phone without horizontal scroll.
 
 ## 2026-12-01: Special orders (T-77)
 

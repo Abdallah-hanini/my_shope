@@ -84,6 +84,8 @@ model Branch {
   stock            Stock[]
   stockMovements   StockMovement[]
   supplierBills    SupplierBill[]
+  transfersOut     StockTransfer[]   @relation("transferFrom")
+  transfersIn      StockTransfer[]   @relation("transferTo")
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -973,6 +975,8 @@ model PostingSettings {
   payablesAccountId        String? @map("payables_account_id") @db.Uuid
   inputTaxAccountId        String? @map("input_tax_account_id") @db.Uuid
   priceVarianceAccountId   String? @map("price_variance_account_id") @db.Uuid
+  /// Stock transfers (T-78): stock dispatched to another branch, not yet received.
+  transitAccountId         String? @map("transit_account_id") @db.Uuid
   version                  Int     @default(1)
 
   @@map("posting_settings")
@@ -1081,9 +1085,10 @@ model Part {
   version   Int      @default(1)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  stock     Stock[]
-  movements StockMovement[]
-  jobParts  JobPart[]
+  stock         Stock[]
+  movements     StockMovement[]
+  jobParts      JobPart[]
+  transferLines StockTransferLine[]
 
   @@unique([companyId, sku])
   @@unique([companyId, id])
@@ -1122,6 +1127,8 @@ model StockMovement {
   jobId          String?  @map("job_id") @db.Uuid
   /// Receipt: the supplier who delivered (T-76; older receipts have none).
   supplierId     String?  @map("supplier_id") @db.Uuid
+  /// Transfer out, in or back (T-78).
+  transferId     String?  @map("transfer_id") @db.Uuid
   quantity       Decimal  @db.Decimal(14, 3)
   unitCost       Decimal  @map("unit_cost") @db.Decimal(14, 4)
   value          Decimal  @db.Decimal(16, 2)
@@ -1299,4 +1306,56 @@ model SupplierPayment {
   @@index([billId])
   @@map("supplier_payment")
   @@schema("purchasing")
+}
+
+/// Stock sent from one branch to another (T-78): out at the source's weighted average into stock
+/// in transit, in at exactly that value when the receiving branch confirms, or back if cancelled.
+model StockTransfer {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  number         String
+  fromBranchId   String    @map("from_branch_id") @db.Uuid
+  toBranchId     String    @map("to_branch_id") @db.Uuid
+  /// in_transit | received | cancelled
+  status         String    @default("in_transit")
+  note           String?
+  idempotencyKey String    @map("idempotency_key")
+  dispatchedBy   String    @map("dispatched_by") @db.Uuid
+  dispatchedAt   DateTime  @default(now()) @map("dispatched_at") @db.Timestamptz(6)
+  receivedBy     String?   @map("received_by") @db.Uuid
+  receivedAt     DateTime? @map("received_at") @db.Timestamptz(6)
+  cancelledBy    String?   @map("cancelled_by") @db.Uuid
+  cancelledAt    DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason   String?   @map("cancel_reason")
+
+  fromBranch Branch              @relation("transferFrom", fields: [companyId, fromBranchId], references: [companyId, id], onDelete: Restrict)
+  toBranch   Branch              @relation("transferTo", fields: [companyId, toBranchId], references: [companyId, id], onDelete: Restrict)
+  lines      StockTransferLine[]
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([fromBranchId, status])
+  @@index([toBranchId, status])
+  @@map("stock_transfer")
+  @@schema("inventory")
+}
+
+model StockTransferLine {
+  transferId     String  @map("transfer_id") @db.Uuid
+  lineNo         Int     @map("line_no")
+  companyId      String  @map("company_id") @db.Uuid
+  partId         String  @map("part_id") @db.Uuid
+  quantity       Decimal @db.Decimal(14, 3)
+  /// Stock value sent (weighted average at the source when dispatched).
+  value          Decimal @db.Decimal(16, 2)
+  outMovementId  String  @unique @map("out_movement_id") @db.Uuid
+  inMovementId   String? @unique @map("in_movement_id") @db.Uuid
+  backMovementId String? @unique @map("back_movement_id") @db.Uuid
+
+  transfer StockTransfer @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  part     Part          @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([transferId, lineNo])
+  @@map("stock_transfer_line")
+  @@schema("inventory")
 }

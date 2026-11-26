@@ -22,6 +22,7 @@ const FIELDS = [
   { key: 'payables', type: 'liability' },
   { key: 'inputTax', type: 'asset' },
   { key: 'priceVariance', type: 'expense' },
+  { key: 'transit', type: 'asset' },
 ] as const;
 
 /** The accountant's posting accounts for invoices and payments (T-72). */

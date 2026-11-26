@@ -47,6 +47,7 @@ export function companyNavigation(
             { href: `${base}/parts`, label: t('nav.parts'), icon: 'Package' as const },
             { href: `${base}/stock`, label: t('nav.stockValue'), icon: 'Boxes' as const },
             { href: `${base}/special-orders`, label: t('nav.specialOrders'), icon: 'PackageSearch' as const },
+            { href: `${base}/transfers`, label: t('nav.transfers'), icon: 'ArrowLeftRight' as const },
           ]
         : [],
     },

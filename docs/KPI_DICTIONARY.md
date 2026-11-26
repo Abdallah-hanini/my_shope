@@ -142,3 +142,13 @@ Available to reserve = on hand − Σ reserved quantities at the branch.
 |---|---|
 | Days waiting | Whole days from ordering to arrival, or to now while waiting (24-hour periods, rounded down) |
 | Arrival order | Waiting orders of a part at a branch take a delivery by order time; the first that does not fit in what is available (on hand − reserved) stops the round |
+
+## Stock transfers (T-78)
+
+| Movement | Debit | Credit | Value |
+|---|---|---|---|
+| Sent (sending branch) | Stock in transit | Inventory | Quantity × average cost, half up (the last units take the remaining value) |
+| Received (receiving branch) | Inventory | Stock in transit | Exactly the value sent |
+| Cancelled (sending branch) | Inventory | Stock in transit | Exactly the value sent |
+
+Free to send = on hand − Σ reserved at the sending branch. Stock in transit (company) = Σ value of transfers in transit.

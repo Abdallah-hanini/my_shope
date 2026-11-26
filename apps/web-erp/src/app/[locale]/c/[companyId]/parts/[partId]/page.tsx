@@ -177,7 +177,11 @@ export default async function PartPage({
                 <td className={td}>{m.branchCode}</td>
                 <td className={td}>{t(`inv.kind.${m.kind}` as MessageKey)}</td>
                 <td className={tdNum}>
-                  <Ltr>{m.kind === 'adjustment_out' ? `−${m.quantity}` : m.quantity}</Ltr>
+                  <Ltr>
+                    {['adjustment_out', 'issue', 'transfer_out'].includes(m.kind)
+                      ? `−${m.quantity}`
+                      : m.quantity}
+                  </Ltr>
                 </td>
                 <td className={tdNum}>
                   <Ltr>{m.value}</Ltr>

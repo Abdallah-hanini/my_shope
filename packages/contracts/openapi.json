@@ -6863,6 +6863,243 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/transfers": {
+      "get": {
+        "operationId": "listTransfers",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "open",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transfers in transit (or all), newest first",
+        "tags": [
+          "inventory"
+        ]
+      },
+      "post": {
+        "operationId": "sendTransfer",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send stock to another branch (out at average cost into stock in transit)",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/transfers/{transferId}": {
+      "get": {
+        "operationId": "getTransfer",
+        "parameters": [
+          {
+            "name": "transferId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/transfers/{transferId}/receive": {
+      "post": {
+        "operationId": "receiveTransfer",
+        "parameters": [
+          {
+            "name": "transferId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm arrival: in at the value sent",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/transfers/{transferId}/cancel": {
+      "post": {
+        "operationId": "cancelTransfer",
+        "parameters": [
+          {
+            "name": "transferId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelTransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel while in transit: stock back at the source",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/suppliers": {
       "get": {
         "operationId": "listSuppliers",
@@ -12824,6 +13061,16 @@
               }
             ]
           },
+          "transitAccount": {
+            "nullable": true,
+            "description": "Stock in transit",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
           "version": {
             "type": "number",
             "description": "0 until first saved"
@@ -12892,6 +13139,10 @@
             "nullable": true
           },
           "priceVarianceAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "transitAccountId": {
             "type": "string",
             "nullable": true
           }
@@ -13467,7 +13718,10 @@
               "adjustment_in",
               "adjustment_out",
               "issue",
-              "return"
+              "return",
+              "transfer_out",
+              "transfer_in",
+              "transfer_back"
             ]
           },
           "quantity": {
@@ -13814,6 +14068,307 @@
           "rows",
           "totalValue",
           "reconciled"
+        ]
+      },
+      "TransferSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "ST-2026-000001"
+          },
+          "fromBranchCode": {
+            "type": "string"
+          },
+          "toBranchCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_transit",
+              "received",
+              "cancelled"
+            ]
+          },
+          "lineCount": {
+            "type": "number"
+          },
+          "value": {
+            "type": "string"
+          },
+          "dispatchedByName": {
+            "type": "string"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "fromBranchCode",
+          "toBranchCode",
+          "status",
+          "lineCount",
+          "value",
+          "dispatchedByName",
+          "dispatchedAt"
+        ]
+      },
+      "BranchChoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code"
+        ]
+      },
+      "TransferListDto": {
+        "type": "object",
+        "properties": {
+          "transfers": {
+            "description": "Newest first (up to 500)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferSummaryDto"
+            }
+          },
+          "fromBranches": {
+            "description": "Branches the caller may send stock from",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchChoiceDto"
+            }
+          },
+          "toBranches": {
+            "description": "Active branches of the company",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchChoiceDto"
+            }
+          }
+        },
+        "required": [
+          "transfers",
+          "fromBranches",
+          "toBranches"
+        ]
+      },
+      "TransferLineInputDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "2"
+          }
+        },
+        "required": [
+          "partId",
+          "quantity"
+        ]
+      },
+      "CreateTransferDto": {
+        "type": "object",
+        "properties": {
+          "fromBranchId": {
+            "type": "string"
+          },
+          "toBranchId": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferLineInputDto"
+            }
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromBranchId",
+          "toBranchId",
+          "lines",
+          "idempotencyKey"
+        ]
+      },
+      "TransferLineDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "partName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string",
+            "description": "Stock value sent (weighted average at the source)"
+          },
+          "outNumber": {
+            "type": "string"
+          },
+          "inNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "backNumber": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "lineNo",
+          "partId",
+          "sku",
+          "partName",
+          "unit",
+          "quantity",
+          "value",
+          "outNumber"
+        ]
+      },
+      "TransferDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "ST-2026-000001"
+          },
+          "fromBranchCode": {
+            "type": "string"
+          },
+          "toBranchCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_transit",
+              "received",
+              "cancelled"
+            ]
+          },
+          "lineCount": {
+            "type": "number"
+          },
+          "value": {
+            "type": "string"
+          },
+          "dispatchedByName": {
+            "type": "string"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransferLineDto"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "description": "What the caller may do now",
+            "items": {
+              "type": "string",
+              "enum": [
+                "receive",
+                "cancel"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "fromBranchCode",
+          "toBranchCode",
+          "status",
+          "lineCount",
+          "value",
+          "dispatchedByName",
+          "dispatchedAt",
+          "lines",
+          "actions"
+        ]
+      },
+      "CancelTransferDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "SupplierDto": {

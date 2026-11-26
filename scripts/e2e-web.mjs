@@ -1179,6 +1179,7 @@ async function main() {
           'suppliers',
           'supplier-bills',
           'special-orders',
+          'transfers',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1710,6 +1711,58 @@ async function main() {
           .waitFor();
         await page.goto(`${base()}/special-orders`);
         await page.getByText('No parts are on order.').waitFor();
+      },
+    );
+
+    await check(
+      'Stock transfer: a second branch, the transit account, send oil from DOH, confirm arrival; stock value matches the ledger',
+      async () => {
+        await page.goto(`${base()}/branches`);
+        await page.getByLabel('Code').fill('WAK');
+        await page.getByLabel('Name', { exact: true }).fill('Wakra workshop');
+        await Promise.all([
+          page.waitForLoadState('networkidle'),
+          page.getByRole('button', { name: 'Create' }).click(),
+        ]);
+        await page.getByRole('cell', { name: 'Wakra workshop' }).waitFor();
+        await page.goto(`${base()}/accounts`);
+        await addAccount('1410', 'Stock in transit', 'asset', 'posting');
+        await page.getByRole('cell', { name: 'Stock in transit', exact: true }).waitFor();
+        await page.goto(`${base()}/settings/posting`);
+        const ps = page.getByRole('form', { name: 'Posting accounts' });
+        await ps.locator('select[name=transitAccountId]').selectOption({ label: '1410 — Stock in transit' });
+        await ps.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        assert((await page.locator('select[name=transitAccountId]').inputValue()) !== '', 'transit saved');
+
+        await page.goto(`${base()}/transfers`);
+        const send = page.getByRole('form', { name: 'Send stock' });
+        await send.getByLabel('To branch').selectOption({ label: 'WAK' });
+        const oil = await send
+          .locator('select[name=part0] option', { hasText: 'OIL-5W30' })
+          .getAttribute('value');
+        await send.getByLabel('SKU 1').selectOption(oil);
+        await send.getByLabel('Quantity 1').fill('2');
+        await Promise.all([
+          page.waitForURL(/\/transfers\/[0-9a-f-]{36}$/),
+          send.getByRole('button', { name: 'Send stock' }).click(),
+        ]);
+        await page.locator('[data-transfer-status=in_transit]').waitFor();
+        await page.locator('tr[data-transfer-line="OIL-5W30"]').waitFor();
+        await shot('transfer-en');
+        await page
+          .getByRole('form', { name: 'Confirm arrival' })
+          .getByRole('button', { name: 'Confirm arrival' })
+          .click();
+        await page.locator('[data-transfer-status=received]').waitFor();
+        await page.goto(`${base()}/parts?q=oil`);
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'OIL-5W30' }).click(),
+        ]);
+        await page.locator('[data-branch-stock=WAK]').getByText('2.000 litre').waitFor();
+        await page.goto(`${base()}/stock`);
+        await page.locator('[data-reconciliation]').getByText('Matches the ledger').waitFor();
       },
     );
 

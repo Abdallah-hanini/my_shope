@@ -1879,6 +1879,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transfers in transit (or all), newest first */
+        get: operations["listTransfers"];
+        put?: never;
+        /** Send stock to another branch (out at average cost into stock in transit) */
+        post: operations["sendTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/transfers/{transferId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTransfer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/transfers/{transferId}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm arrival: in at the value sent */
+        post: operations["receiveTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/transfers/{transferId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel while in transit: stock back at the source */
+        post: operations["cancelTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/suppliers": {
         parameters: {
             query?: never;
@@ -3614,6 +3682,8 @@ export interface components {
             payablesAccount?: components["schemas"]["AccountRefDto"] | null;
             inputTaxAccount?: components["schemas"]["AccountRefDto"] | null;
             priceVarianceAccount?: components["schemas"]["AccountRefDto"] | null;
+            /** @description Stock in transit */
+            transitAccount?: components["schemas"]["AccountRefDto"] | null;
             /** @description 0 until first saved */
             version: number;
             canManage: boolean;
@@ -3633,6 +3703,7 @@ export interface components {
             payablesAccountId?: string | null;
             inputTaxAccountId?: string | null;
             priceVarianceAccountId?: string | null;
+            transitAccountId?: string | null;
         };
         InvoiceLineDto: {
             lineNo: number;
@@ -3799,7 +3870,7 @@ export interface components {
             number: string;
             branchCode: string;
             /** @enum {string} */
-            kind: "receipt" | "adjustment_in" | "adjustment_out" | "issue" | "return";
+            kind: "receipt" | "adjustment_in" | "adjustment_out" | "issue" | "return" | "transfer_out" | "transfer_in" | "transfer_back";
             quantity: string;
             unitCost: string;
             value: string;
@@ -3903,6 +3974,87 @@ export interface components {
             ledgerBalance?: string | null;
             /** @description Stock value equals the inventory account balance */
             reconciled: boolean;
+        };
+        TransferSummaryDto: {
+            id: string;
+            /** @example ST-2026-000001 */
+            number: string;
+            fromBranchCode: string;
+            toBranchCode: string;
+            /** @enum {string} */
+            status: "in_transit" | "received" | "cancelled";
+            lineCount: number;
+            value: string;
+            dispatchedByName: string;
+            /** Format: date-time */
+            dispatchedAt: string;
+            /** Format: date-time */
+            receivedAt?: string | null;
+        };
+        BranchChoiceDto: {
+            id: string;
+            code: string;
+        };
+        TransferListDto: {
+            /** @description Newest first (up to 500) */
+            transfers: components["schemas"]["TransferSummaryDto"][];
+            /** @description Branches the caller may send stock from */
+            fromBranches: components["schemas"]["BranchChoiceDto"][];
+            /** @description Active branches of the company */
+            toBranches: components["schemas"]["BranchChoiceDto"][];
+        };
+        TransferLineInputDto: {
+            partId: string;
+            /** @example 2 */
+            quantity: string;
+        };
+        CreateTransferDto: {
+            fromBranchId: string;
+            toBranchId: string;
+            lines: components["schemas"]["TransferLineInputDto"][];
+            note?: string | null;
+            idempotencyKey: string;
+        };
+        TransferLineDto: {
+            lineNo: number;
+            partId: string;
+            sku: string;
+            partName: string;
+            unit: string;
+            quantity: string;
+            /** @description Stock value sent (weighted average at the source) */
+            value: string;
+            outNumber: string;
+            inNumber?: string | null;
+            backNumber?: string | null;
+        };
+        TransferDto: {
+            id: string;
+            /** @example ST-2026-000001 */
+            number: string;
+            fromBranchCode: string;
+            toBranchCode: string;
+            /** @enum {string} */
+            status: "in_transit" | "received" | "cancelled";
+            lineCount: number;
+            value: string;
+            dispatchedByName: string;
+            /** Format: date-time */
+            dispatchedAt: string;
+            /** Format: date-time */
+            receivedAt?: string | null;
+            note?: string | null;
+            receivedByName?: string | null;
+            cancelledByName?: string | null;
+            /** Format: date-time */
+            cancelledAt?: string | null;
+            cancelReason?: string | null;
+            lines: components["schemas"]["TransferLineDto"][];
+            /** @description What the caller may do now */
+            actions: ("receive" | "cancel")[];
+        };
+        CancelTransferDto: {
+            reason: string;
         };
         SupplierDto: {
             id: string;
@@ -7559,6 +7711,124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValuationDto"];
+                };
+            };
+        };
+    };
+    listTransfers: {
+        parameters: {
+            query?: {
+                status?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferListDto"];
+                };
+            };
+        };
+    };
+    sendTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTransferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferDto"];
+                };
+            };
+        };
+    };
+    getTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferDto"];
+                };
+            };
+        };
+    };
+    receiveTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferDto"];
+                };
+            };
+        };
+    };
+    cancelTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelTransferDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferDto"];
                 };
             };
         };

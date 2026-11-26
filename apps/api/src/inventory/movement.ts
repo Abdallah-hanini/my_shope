@@ -9,7 +9,15 @@ import type { StockLevel } from './stock-math';
 type Tx = Prisma.TransactionClient;
 const D = Prisma.Decimal;
 
-export type MovementKind = 'receipt' | 'adjustment_in' | 'adjustment_out' | 'issue' | 'return';
+export type MovementKind =
+  | 'receipt'
+  | 'adjustment_in'
+  | 'adjustment_out'
+  | 'issue'
+  | 'return'
+  | 'transfer_out'
+  | 'transfer_in'
+  | 'transfer_back';
 export interface MovementPlan {
   kind: MovementKind;
   quantity: Prisma.Decimal;
@@ -26,6 +34,7 @@ export interface PostingAccounts {
   goodsReceived: string | null;
   adjustment: string | null;
   cogs: string | null;
+  transit: string | null;
 }
 
 /**
@@ -44,6 +53,7 @@ export async function applyMovement(
     idempotencyKey: string;
     jobId?: string | null;
     supplierId?: string | null;
+    transferId?: string | null;
   },
   plan: (level: StockLevel, acc: PostingAccounts) => MovementPlan,
 ): Promise<{ id: string; number: string; value: Prisma.Decimal }> {
@@ -64,6 +74,7 @@ export async function applyMovement(
       goodsReceived: settings.goodsReceivedAccountId,
       adjustment: settings.stockAdjustmentAccountId,
       cogs: settings.cogsAccountId,
+      transit: settings.transitAccountId,
     },
   );
   if (p.value.isZero())
@@ -77,7 +88,7 @@ export async function applyMovement(
     await nextDocumentNumber(tx, m.companyId, 'stock_movement', year),
   );
   const id = (await tx.$queryRaw<{ id: string }[]>`SELECT gen_random_uuid()::text AS id`)[0]!.id;
-  const label = `${number} · ${part.sku} · ${p.kind.replace('_', ' ')} ${p.quantity.toFixed(3)}`;
+  const label = `${number} · ${part.sku} · ${p.kind.replace(/_/g, ' ')} ${p.quantity.toFixed(3)}`;
   const journal = await postSystemJournal(tx, ctx, {
     companyId: m.companyId,
     branchId: m.branchId,
@@ -101,6 +112,7 @@ export async function applyMovement(
       kind: p.kind,
       jobId: m.jobId ?? null,
       supplierId: m.supplierId ?? null,
+      transferId: m.transferId ?? null,
       quantity: p.quantity,
       unitCost: p.unitCost,
       value: p.value,

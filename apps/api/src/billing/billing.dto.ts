@@ -107,6 +107,8 @@ export class PostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) payablesAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) inputTaxAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) priceVarianceAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto, description: 'Stock in transit' })
+  transitAccount!: AccountRefDto | null;
   @ApiProperty({ description: '0 until first saved' }) version!: number;
   @ApiProperty() canManage!: boolean;
 }
@@ -127,6 +129,7 @@ export class SetPostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: String }) payablesAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) inputTaxAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) priceVarianceAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) transitAccountId?: string | null;
 }
 export class CreateInvoiceDto {
   @ApiProperty({ description: 'The approved quote to invoice' }) quoteId!: string;

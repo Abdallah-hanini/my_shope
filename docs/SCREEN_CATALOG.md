@@ -76,8 +76,8 @@ Counts are summarised at the end.
 | WEB-051 | Goods receipt | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-052 | Stock issuance | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-053 | Stock reservation | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-054 | Warehouse transfer | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-055 | Transfer tracking | INV-005…013, BRD-03 | 2 | Planned | — | — |
+| WEB-054 | Warehouse transfer | INV-005…013, BRD-03 | 2 | Implemented — send stock to another branch (up to 5 parts), confirm arrival, cancel in transit | /transfers, /transfers/[id] | transfers.int; e2e |
+| WEB-055 | Transfer tracking | INV-005…013, BRD-03 | 2 | Implemented — in transit or all, with movements out, in or back | /transfers | transfers.int; e2e |
 | WEB-056 | Stock adjustments | INV-005…013, BRD-03 | 2 | Implemented — counted differences with a reason, out at average, in at a given cost | /parts/[id] | inventory.int; e2e |
 | WEB-057 | Physical stock counting | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-058 | Inventory discrepancies | INV-005…013, BRD-03 | 2 | Planned | — | — |

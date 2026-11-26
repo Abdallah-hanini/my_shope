@@ -39,7 +39,19 @@ export class StockMovementDto {
   @ApiProperty() id!: string;
   @ApiProperty({ example: 'SM-2026-000001' }) number!: string;
   @ApiProperty() branchCode!: string;
-  @ApiProperty({ enum: ['receipt', 'adjustment_in', 'adjustment_out', 'issue', 'return'] }) kind!: string;
+  @ApiProperty({
+    enum: [
+      'receipt',
+      'adjustment_in',
+      'adjustment_out',
+      'issue',
+      'return',
+      'transfer_out',
+      'transfer_in',
+      'transfer_back',
+    ],
+  })
+  kind!: string;
   @ApiProperty() quantity!: string;
   @ApiProperty() unitCost!: string;
   @ApiProperty() value!: string;

@@ -6,6 +6,8 @@ import {
   addJobPartSchema,
   adjustStockSchema,
   cancelOrderSchema,
+  cancelTransferSchema,
+  createTransferSchema,
   createPartSchema,
   jobPartStepSchema,
   orderJobPartSchema,
@@ -211,4 +213,69 @@ export async function jobPartAction(
   })();
   if (failed) return failed;
   redirect(`/${locale}/c/${companyId}/jobs/${jobId}#parts-title`);
+}
+
+/** Send stock to another branch (T-78): up to 5 rows of part and quantity; empty rows are skipped. */
+export async function sendTransferAction(
+  localeRaw: string,
+  companyId: string,
+  fromBranchId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const lines = [0, 1, 2, 3, 4]
+    .map((i) => ({ partId: values[`part${i}`] ?? '', quantity: values[`quantity${i}`]?.trim() ?? '' }))
+    .filter((l) => l.partId && l.quantity);
+  const v = validate(createTransferSchema, {
+    fromBranchId,
+    toBranchId: values.toBranchId,
+    lines,
+    note: values.note,
+    idempotencyKey: values.idempotencyKey,
+  });
+  if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+  let id = '';
+  const failed = await mutate(locale, values, async (api) => {
+    id = unwrap(
+      await api.POST('/api/v1/companies/{companyId}/transfers', {
+        params: { path: { companyId } },
+        body: v.data,
+      }),
+    ).id;
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/transfers/${id}`);
+}
+
+export async function transferAction(
+  localeRaw: string,
+  companyId: string,
+  transferId: string,
+  op: 'receive' | 'cancel',
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const path = { params: { path: { companyId, transferId } } };
+  const failed = await (async () => {
+    if (op === 'receive')
+      return mutate(locale, values, async (api) => {
+        unwrap(await api.POST('/api/v1/companies/{companyId}/transfers/{transferId}/receive', path));
+      });
+    const v = validate(cancelTransferSchema, { reason: values.reason ?? '' });
+    if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+    return mutate(locale, values, async (api) => {
+      unwrap(
+        await api.POST('/api/v1/companies/{companyId}/transfers/{transferId}/cancel', {
+          ...path,
+          body: v.data,
+        }),
+      );
+    });
+  })();
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/transfers/${transferId}`);
 }

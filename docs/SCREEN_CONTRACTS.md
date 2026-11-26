@@ -156,6 +156,11 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Quote:** part lines (quantity × selling price) are marked "part". **Invoice:** parts revenue is posted separately.
 - **Tests:** job-parts.int (6); e2e.
 
+## Stock transfers (WEB-054/055, T-78)
+- **Routes:** `/[locale]/c/[id]/transfers` ("Send stock" from a branch you manage: receiving branch, up to five parts with quantities, note; list in transit or all), `/transfers/[id]` (parts, values, movements; "Confirm arrival" for the receiving branch; "Cancel transfer" with a reason for the sender).
+- **Permissions:** `inventory.read` (either branch); `inventory.manage` at the sending branch (send, cancel) or receiving branch (confirm). Posting account: stock in transit.
+- **Tests:** transfers.int (7); e2e.
+
 ## Special orders (WEB-024 extension, T-77)
 - **Job card, Parts card:** "Order part" (after authorisation; part with what is available now, quantity, optional supplier and order reference); ordered lines show when, from whom and the reference, with "Reserve from stock" (when there is enough) and "Cancel order" (reason). Arrived lines show when they arrived.
 - **Route:** `/[locale]/c/[id]/special-orders` (waiting or all, oldest first; job, plate, customer, supplier, days). Permission `inventory.read`.
