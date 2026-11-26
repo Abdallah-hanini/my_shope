@@ -12,6 +12,9 @@ const config: NextConfig = {
   reactStrictMode: true,
   // Linting runs as its own turbo task (pnpm lint) with the shared flat config.
   eslint: { ignoreDuringBuilds: true },
+  // Check-in photo uploads go through a server action: up to 5 files of 12 MB (PHOTO_LIMITS).
+  // The API re-checks the limits and re-encodes every image.
+  experimental: { serverActions: { bodySizeLimit: '64mb' } },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

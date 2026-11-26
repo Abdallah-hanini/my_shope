@@ -476,16 +476,21 @@ model JobCard {
   odometerOut             Int?      @map("odometer_out")
   cancelledReason         String?   @map("cancelled_reason")
   createdBy               String    @map("created_by") @db.Uuid
+  /// Check-in inspection: when and by whom the checklist was recorded (required before authorisation).
+  inspectedAt             DateTime? @map("inspected_at") @db.Timestamptz(6)
+  inspectedBy             String?   @map("inspected_by") @db.Uuid
   version                 Int       @default(1)
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company  Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  branch   Branch     @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
-  customer Customer   @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
-  vehicle  Vehicle    @relation(fields: [companyId, vehicleId], references: [companyId, id], onDelete: Restrict)
-  tasks    JobTask[]
-  events   JobEvent[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch          Branch           @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  customer        Customer         @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  vehicle         Vehicle          @relation(fields: [companyId, vehicleId], references: [companyId, id], onDelete: Restrict)
+  tasks           JobTask[]
+  events          JobEvent[]
+  inspectionItems InspectionItem[]
+  photos          JobPhoto[]
 
   @@unique([companyId, id])
   @@unique([companyId, number])
@@ -532,5 +537,43 @@ model JobEvent {
 
   @@index([jobId, occurredAt])
   @@map("job_event")
+  @@schema("workshop")
+}
+
+/// One answer of the check-in checklist (keys from INSPECTION_ITEMS in @erp/validation).
+model InspectionItem {
+  companyId String  @map("company_id") @db.Uuid
+  jobId     String  @map("job_id") @db.Uuid
+  itemKey   String  @map("item_key")
+  status    String
+  note      String?
+
+  job JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([jobId, itemKey])
+  @@map("inspection_item")
+  @@schema("workshop")
+}
+
+/// A photo of the vehicle, re-encoded by the server (metadata such as GPS removed) with a thumbnail.
+model JobPhoto {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  jobId      String   @map("job_id") @db.Uuid
+  area       String
+  caption    String?
+  content    Bytes
+  thumbnail  Bytes
+  width      Int
+  height     Int
+  sizeBytes  Int      @map("size_bytes")
+  sha256     String
+  uploadedBy String   @map("uploaded_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+
+  @@index([jobId, createdAt])
+  @@map("job_photo")
   @@schema("workshop")
 }

@@ -83,3 +83,38 @@ describe('workshop schemas', () => {
     ).toBe(false);
   });
 });
+
+describe('check-in inspection', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const w = require('./workshop') as typeof import('./workshop');
+  const all = (status: 'ok' | 'attention' | 'not_checked' = 'ok') =>
+    w.INSPECTION_ITEMS.map((i) => ({ key: i.key, status }));
+
+  it('needs every item exactly once', () => {
+    expect(w.recordInspectionSchema.safeParse({ version: 1, items: all() }).success).toBe(true);
+    expect(w.recordInspectionSchema.safeParse({ version: 1, items: all().slice(1) }).success).toBe(false);
+    expect(
+      w.recordInspectionSchema.safeParse({ version: 1, items: [...all().slice(1), all()[1]] }).success,
+    ).toBe(false);
+  });
+
+  it('"needs attention" must say what', () => {
+    const items = all();
+    items[0] = { key: 'body', status: 'attention' };
+    expect(w.recordInspectionSchema.safeParse({ version: 1, items }).success).toBe(false);
+    expect(
+      w.recordInspectionSchema.safeParse({
+        version: 1,
+        items: [{ ...items[0], note: 'Scratch on rear door' }, ...items.slice(1)],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('photo areas are a closed list', () => {
+    expect(w.photoMetaSchema.parse({ area: 'damage', caption: '' })).toEqual({
+      area: 'damage',
+      caption: null,
+    });
+    expect(w.photoMetaSchema.safeParse({ area: 'roof' }).success).toBe(false);
+  });
+});

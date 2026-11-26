@@ -13,6 +13,7 @@ describe('job lifecycle', () => {
     expect(allowedInStatus('deliver', 'qc')).toBe(false);
     for (const s of ['delivered', 'cancelled'] as const) {
       expect(availableActions(s, manager)).toEqual(['note']);
+      expect(allowedInStatus('removePhoto', s)).toBe(false);
     }
   });
 
@@ -41,12 +42,23 @@ describe('job lifecycle', () => {
   it('offers a manager every management action for the status', () => {
     expect(availableActions('draft', manager)).toEqual([
       'edit',
+      'inspect',
       'authorize',
       'assign',
       'cancel',
       'promise',
       'note',
+      'addPhoto',
+      'removePhoto',
     ]);
-    expect(availableActions('ready', manager)).toEqual(['deliver', 'cancel', 'promise', 'note']);
+    expect(availableActions('ready', manager)).toEqual(['deliver', 'cancel', 'promise', 'note', 'addPhoto']);
+  });
+
+  it('photos: technicians on the job may add them; only managers remove, and only in a draft', () => {
+    expect(permits('addPhoto', tech)).toBe(true);
+    expect(permits('addPhoto', { ...tech, onJob: false })).toBe(false);
+    expect(permits('removePhoto', tech)).toBe(false);
+    expect(allowedInStatus('removePhoto', 'approved')).toBe(false);
+    expect(allowedInStatus('inspect', 'approved')).toBe(false);
   });
 });

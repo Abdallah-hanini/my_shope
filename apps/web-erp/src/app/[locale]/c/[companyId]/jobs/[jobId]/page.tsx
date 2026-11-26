@@ -17,13 +17,20 @@ import {
   th,
   thNum,
 } from '@/components/ui';
+import { InspectionCard, PhotosCard } from '@/components/workshop/CheckIn';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobForm } from '@/components/workshop/JobForm';
 import { JobStatus } from '@/components/workshop/JobStatus';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { isoToZonedLocal } from '@/lib/time';
-import { jobStepAction, updateJobDraftAction } from '../../workshop-actions';
+import {
+  jobStepAction,
+  recordInspectionAction,
+  removePhotoAction,
+  updateJobDraftAction,
+  uploadPhotosAction,
+} from '../../workshop-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const buttonDanger =
@@ -109,6 +116,26 @@ export default async function JobPage({
             </dl>
           </Card>
 
+          <InspectionCard
+            job={j}
+            locale={locale}
+            timeZone={tz}
+            action={can('inspect') ? recordInspectionAction.bind(null, locale, companyId, j.id) : undefined}
+          />
+          <PhotosCard
+            job={j}
+            locale={locale}
+            timeZone={tz}
+            photoHref={(photoId, thumb) =>
+              `${base}/jobs/${j.id}/photos/${photoId}${thumb ? '?size=thumb' : ''}`
+            }
+            upload={can('addPhoto') ? uploadPhotosAction.bind(null, locale, companyId, j.id) : undefined}
+            remove={
+              can('removePhoto')
+                ? (photoId) => removePhotoAction.bind(null, locale, companyId, j.id, photoId)
+                : undefined
+            }
+          />
           <Card title={t('job.tasks')} id="tasks" flush>
             <Table caption={t('job.tasks')}>
               <thead>

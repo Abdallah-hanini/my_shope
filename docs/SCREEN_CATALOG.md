@@ -26,8 +26,8 @@ Counts are summarised at the end.
 | WEB-011 | Create service appointment | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-012 | Vehicle registry | WMS-001…014, BRD-02 | 3 | Implemented — search by plate/VIN/make/model/owner | /[locale]/c/[id]/vehicles | workshop.int; e2e |
 | WEB-013 | Vehicle profile and service history | WMS-001…014, BRD-02 | 3 | Implemented — profile, owner transfer, job history | /[locale]/c/[id]/vehicles/[vehicleId] | workshop.int; e2e |
-| WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Partial — complaint, odometer, fuel, promised time, tasks; no photos/inspection | /[locale]/c/[id]/jobs/new | e2e "check-in" |
-| WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Implemented — complaint, odometer, fuel, promised time, tasks, then inspection and photos (WEB-015) | /[locale]/c/[id]/jobs/new | e2e "check-in" |
+| WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Implemented — checklist with notes, photos by area with caption, thumbnails | job details (#inspection, #photos) | checkin.int; e2e |
 | WEB-016 | Diagnosis and fault codes | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-017 | Create repair quotation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-018 | Quotation details and approval history | WMS-001…014, BRD-02 | 3 | Planned | — | — |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 20 |
+| Implemented | 22 |
 | Next | 0 |
-| Partial | 10 |
-| Planned | 278 |
+| Partial | 9 |
+| Planned | 277 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

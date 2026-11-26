@@ -6,6 +6,9 @@ import { OPEN_JOB_STATUSES, type JobStatus } from '@erp/validation';
  */
 export type JobAction =
   | 'edit'
+  | 'inspect'
+  | 'addPhoto'
+  | 'removePhoto'
   | 'authorize'
   | 'assign'
   | 'start'
@@ -20,6 +23,7 @@ export type JobAction =
 /** Statuses in which each action is possible (permissions are checked separately). */
 export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
   edit: ['draft'],
+  inspect: ['draft'],
   authorize: ['draft'],
   assign: ['draft', 'approved', 'assigned', 'in_progress', 'rework'],
   start: ['assigned'],
@@ -30,6 +34,9 @@ export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
   cancel: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
   promise: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
   note: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready', 'delivered', 'cancelled'],
+  addPhoto: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
+  // Once work is authorised, photos are evidence (the database enforces this too).
+  removePhoto: ['draft'],
 };
 
 export const OPEN_STATUSES: readonly JobStatus[] = OPEN_JOB_STATUSES;
@@ -59,12 +66,17 @@ export interface Actor {
 export function permits(action: JobAction, a: Actor): boolean {
   switch (action) {
     case 'edit':
+    case 'inspect':
+    case 'removePhoto':
     case 'authorize':
     case 'assign':
     case 'deliver':
     case 'cancel':
     case 'promise':
       return a.manage;
+    case 'addPhoto':
+      // Technicians may photograph damage they find on a job they work on.
+      return a.manage || (a.work && a.onJob);
     case 'start':
     case 'submitQc':
       return a.manage || (a.work && a.onJob);

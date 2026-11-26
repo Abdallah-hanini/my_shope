@@ -1,7 +1,7 @@
 'use server';
 
 import { unwrap } from '@erp/api-client';
-import { resolveLocale } from '@erp/localization';
+import { createTranslator, resolveLocale } from '@erp/localization';
 import {
   assignTaskSchema,
   authorizeJobSchema,
@@ -10,6 +10,10 @@ import {
   createJobSchema,
   createVehicleSchema,
   deliverJobSchema,
+  INSPECTION_ITEMS,
+  PHOTO_LIMITS,
+  photoMetaSchema,
+  recordInspectionSchema,
   jobNoteSchema,
   jobVersionSchema,
   promiseJobSchema,
@@ -20,6 +24,8 @@ import {
 } from '@erp/validation';
 import { redirect } from 'next/navigation';
 import { formValues, mutate, validate } from '@/lib/actions';
+import { webConfig } from '@/lib/config';
+import { sessionForAction } from '@/lib/session';
 import type { FormState } from '@/lib/form-state';
 import { zonedLocalToIso } from '@/lib/time';
 
@@ -331,4 +337,104 @@ export async function jobStepAction(
   });
   if (failed) return failed;
   redirect(`/${locale}/c/${companyId}/jobs/${jobId}`);
+}
+
+// ── check-in inspection and photos ──────────────────────────────────────────
+
+export async function recordInspectionAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const values = formValues(form);
+  const items = INSPECTION_ITEMS.map((i) => ({
+    key: i.key,
+    status: values[`status_${i.key}`] ?? 'not_checked',
+    note: blank(values[`note_${i.key}`]) ?? null,
+  }));
+  const v = validate(recordInspectionSchema, { version: Number(values.version), items });
+  if (!v.ok) {
+    // "items.3.note" → the field of that item.
+    const fieldErrors = Object.fromEntries(
+      Object.entries(v.fieldErrors).map(([k, m]) => {
+        const hit = /^items\.(\d+)\.note$/.exec(k);
+        return [hit ? `note_${items[Number(hit[1])]!.key}` : k, m];
+      }),
+    );
+    return { fieldErrors, values };
+  }
+  const failed = await mutate(locale, values, async (api) => {
+    unwrap(
+      await api.POST('/api/v1/companies/{companyId}/jobs/{jobId}/inspection', {
+        params: { path: { companyId, jobId } },
+        body: v.data,
+      }),
+    );
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#inspection`);
+}
+
+/** Forwards the chosen files to the API as multipart; the API checks and re-encodes them. */
+export async function uploadPhotosAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  _p: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const t = createTranslator(locale);
+  const files = form.getAll('files').filter((f): f is File => f instanceof File && f.size > 0);
+  const values = formValues(form);
+  const meta = validate(photoMetaSchema, { area: values.area, caption: values.caption });
+  if (!meta.ok) return { fieldErrors: meta.fieldErrors, values };
+  if (files.length === 0) return { fieldErrors: { files: t('photo.files') }, values };
+  if (files.length > PHOTO_LIMITS.maxPerUpload || files.some((f) => f.size > PHOTO_LIMITS.maxBytes)) {
+    return { fieldErrors: { files: t('photo.files') }, values };
+  }
+  const session = await sessionForAction();
+  if (!session) return { error: t('error.sessionEnded'), values };
+  const body = new FormData();
+  body.set('area', meta.data.area);
+  if (meta.data.caption) body.set('caption', meta.data.caption);
+  for (const f of files) body.append('files', f, f.name);
+  let res: Response;
+  try {
+    res = await fetch(`${webConfig().API_INTERNAL_URL}/api/v1/companies/${companyId}/jobs/${jobId}/photos`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${session.accessToken}` },
+      body,
+      cache: 'no-store',
+    });
+  } catch {
+    return { error: t('error.network'), values };
+  }
+  if (!res.ok) {
+    if (res.status === 403) return { error: t('error.forbidden'), values };
+    const problem = (await res.json().catch(() => null)) as { detail?: string; title?: string } | null;
+    return { error: problem?.detail ?? problem?.title ?? t('error.title'), values };
+  }
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#photos`);
+}
+
+export async function removePhotoAction(
+  localeRaw: string,
+  companyId: string,
+  jobId: string,
+  photoId: string,
+): Promise<FormState> {
+  const locale = resolveLocale(localeRaw);
+  const failed = await mutate(locale, {}, async (api) => {
+    unwrap(
+      await api.DELETE('/api/v1/companies/{companyId}/jobs/{jobId}/photos/{photoId}', {
+        params: { path: { companyId, jobId, photoId } },
+      }),
+    );
+  });
+  if (failed) return failed;
+  redirect(`/${locale}/c/${companyId}/jobs/${jobId}#photos`);
 }

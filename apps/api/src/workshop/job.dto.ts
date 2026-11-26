@@ -80,6 +80,39 @@ export class JobListItemDto {
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
+export class InspectionItemDto {
+  @ApiProperty({ description: 'Checklist key (INSPECTION_ITEMS)' }) key!: string;
+  @ApiProperty({ enum: ['ok', 'attention', 'not_checked'] }) status!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) note!: string | null;
+}
+
+export class InspectionDto {
+  @ApiProperty({ format: 'date-time' }) recordedAt!: string;
+  @ApiProperty() recordedByName!: string;
+  @ApiProperty({ type: [InspectionItemDto] }) items!: InspectionItemDto[];
+}
+
+export class JobPhotoDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: ['front', 'rear', 'left', 'right', 'interior', 'odometer', 'damage', 'other'] })
+  area!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) caption!: string | null;
+  @ApiProperty() width!: number;
+  @ApiProperty() height!: number;
+  @ApiProperty() sizeBytes!: number;
+  @ApiProperty() uploadedByName!: string;
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+}
+
+export class RecordInspectionDto {
+  @ApiProperty() version!: number;
+  @ApiProperty({
+    type: [InspectionItemDto],
+    description: 'Every checklist item once; "attention" needs a note',
+  })
+  items!: InspectionItemDto[];
+}
+
 export class JobCardDto {
   @ApiProperty() id!: string;
   @ApiProperty() number!: string;
@@ -111,9 +144,17 @@ export class JobCardDto {
   @ApiProperty({
     type: [String],
     description:
-      'What the caller can do now (edit, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note); the server checks again',
+      'What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again',
   })
   actions!: string[];
+  @ApiPropertyOptional({
+    nullable: true,
+    type: InspectionDto,
+    description: 'Check-in inspection; null until recorded',
+  })
+  inspection!: InspectionDto | null;
+  @ApiProperty({ type: [JobPhotoDto], description: 'Oldest first; images at …/photos/{photoId}' })
+  photos!: JobPhotoDto[];
 }
 
 export class TechnicianDto {

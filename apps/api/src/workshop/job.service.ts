@@ -12,8 +12,11 @@ import type {
   JobVersionInput,
   PromiseJobInput,
   QcResultInput,
+  PhotoMetaInput,
+  RecordInspectionInput,
   UpdateJobDraftInput,
 } from '@erp/validation';
+import { INSPECTION_ITEMS, PHOTO_LIMITS } from '@erp/validation';
 import type { CompanyScope, Principal } from '../auth/principal';
 import { AuthzService } from '../authz/authz.service';
 import { resolveScope, type AssignmentGrant } from '../authz/scope';
@@ -23,6 +26,7 @@ import { writeAudit, type AuditContext } from '../platform/audit';
 import { enqueueOutbox } from '../platform/outbox';
 import { formatDocumentNumber, nextDocumentNumber } from '../platform/sequence';
 import type { JobCardDto, JobListItemDto, TechnicianDto } from './job.dto';
+import { processPhoto, type ProcessedPhoto } from './photo-processing';
 import {
   allowedInStatus,
   availableActions,
@@ -226,6 +230,7 @@ export class JobService {
   ) {
     return this.act(scope, p, id, 'authorize', input.version, ctx, async (tx, job) => {
       if (job.tasks.length === 0) throw unprocessable('Add at least one task before authorisation');
+      if (!job.inspectedAt) throw unprocessable('Record the check-in inspection before authorisation');
       const next = statusAfterAssignment(
         'approved',
         job.tasks.every((t) => t.technicianId),
@@ -434,6 +439,153 @@ export class JobService {
   }
 
   /** Notes do not change the job (allowed on closed jobs too), so they need no version. */
+  /** The whole check-in checklist (draft only); replaces an earlier answer. */
+  async recordInspection(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    input: RecordInspectionInput,
+    ctx: AuditContext,
+  ) {
+    return this.act(scope, p, id, 'inspect', input.version, ctx, async (tx, job) => {
+      await tx.inspectionItem.deleteMany({ where: { jobId: id } });
+      await tx.inspectionItem.createMany({
+        data: input.items.map((i) => ({
+          companyId: job.companyId,
+          jobId: id,
+          itemKey: i.key,
+          status: i.status,
+          note: i.note ?? null,
+        })),
+      });
+      await tx.jobCard.update({ where: { id }, data: { inspectedAt: new Date(), inspectedBy: p.userId } });
+      const attention = input.items.filter((i) => i.status === 'attention').length;
+      return {
+        event: { kind: 'inspection', data: { attention } },
+        audit: { action: 'workshop.job.inspect', after: { items: input.items } },
+      };
+    });
+  }
+
+  /**
+   * Adds photos. Each file is decoded and re-encoded first (outside the transaction), so nothing
+   * is stored unless every file is a valid image. Photos do not change the job (no version).
+   */
+  async addPhotos(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    files: { buffer: Buffer; originalname: string }[],
+    meta: PhotoMetaInput,
+    ctx: AuditContext,
+  ): Promise<JobCardDto> {
+    if (files.length === 0) throw unprocessable('Choose at least one photo');
+    if (files.length > PHOTO_LIMITS.maxPerUpload)
+      throw unprocessable(`At most ${PHOTO_LIMITS.maxPerUpload} photos at a time`);
+    const job = await this.load(this.prisma, scope, id);
+    if (!allowedInStatus('addPhoto', job.status as JobStatus)) {
+      throw conflict(`Photos cannot be added while the job is ${job.status.replace('_', ' ')}`);
+    }
+    if (!permits('addPhoto', await this.actorFor(p, job)))
+      throw forbidden('You cannot add photos to this job');
+    const processed: ProcessedPhoto[] = [];
+    for (const f of files) processed.push(await processPhoto(f.buffer));
+    await this.prisma.$transaction(async (tx) => {
+      // Serialise uploads per job so the per-job limit holds under concurrency.
+      await tx.$executeRaw`SELECT 1 FROM workshop.job_card WHERE id = ${id}::uuid FOR UPDATE`;
+      const existing = await tx.jobPhoto.count({ where: { jobId: id } });
+      if (existing + processed.length > PHOTO_LIMITS.maxPerJob) {
+        throw unprocessable(`A job can hold at most ${PHOTO_LIMITS.maxPerJob} photos (${existing} already)`);
+      }
+      const ids: string[] = [];
+      for (const ph of processed) {
+        const row = await tx.jobPhoto.create({
+          data: {
+            companyId: job.companyId,
+            jobId: id,
+            area: meta.area,
+            caption: meta.caption ?? null,
+            content: new Uint8Array(ph.content),
+            thumbnail: new Uint8Array(ph.thumbnail),
+            width: ph.width,
+            height: ph.height,
+            sizeBytes: ph.content.length,
+            sha256: ph.sha256,
+            uploadedBy: p.userId,
+          },
+          select: { id: true },
+        });
+        ids.push(row.id);
+      }
+      await this.event(tx, job, p.userId, {
+        kind: 'photo_added',
+        note: meta.caption ?? undefined,
+        data: { count: ids.length, area: meta.area },
+      });
+      await writeAudit(tx, ctx, {
+        action: 'workshop.job.photo_add',
+        entityType: 'job_card',
+        entityId: id,
+        companyId: job.companyId,
+        branchId: job.branchId,
+        after: {
+          photoIds: ids,
+          area: meta.area,
+          caption: meta.caption,
+          sha256: processed.map((x) => x.sha256),
+        },
+      });
+    });
+    return this.get(scope, p, id);
+  }
+
+  async removePhoto(
+    scope: CompanyScope,
+    p: Principal,
+    id: string,
+    photoId: string,
+    ctx: AuditContext,
+  ): Promise<JobCardDto> {
+    const job = await this.load(this.prisma, scope, id);
+    if (!allowedInStatus('removePhoto', job.status as JobStatus)) {
+      throw conflict('Photos are evidence once work is authorised and cannot be removed');
+    }
+    if (!permits('removePhoto', await this.actorFor(p, job)))
+      throw forbidden('Only workshop managers remove photos');
+    await this.prisma.$transaction(async (tx) => {
+      const photo = await tx.jobPhoto.findFirst({
+        where: { id: photoId, jobId: id },
+        select: { id: true, area: true, sha256: true },
+      });
+      if (!photo) throw notFound('Photo');
+      await tx.jobPhoto.delete({ where: { id: photoId } });
+      await this.event(tx, job, p.userId, { kind: 'photo_removed', data: { photoId, area: photo.area } });
+      await writeAudit(tx, ctx, {
+        action: 'workshop.job.photo_remove',
+        entityType: 'job_card',
+        entityId: id,
+        companyId: job.companyId,
+        branchId: job.branchId,
+        before: photo,
+      });
+    });
+    return this.get(scope, p, id);
+  }
+
+  /** The image bytes, for people who may see the job. */
+  async photo(scope: CompanyScope, id: string, photoId: string, size: 'full' | 'thumb'): Promise<Buffer> {
+    await this.load(this.prisma, scope, id);
+    const photo = await this.prisma.jobPhoto.findFirst({
+      where: { id: photoId, jobId: id },
+      select: size === 'thumb' ? { thumbnail: true } : { content: true },
+    });
+    if (!photo) throw notFound('Photo');
+    return Buffer.from(
+      (photo as { thumbnail?: Uint8Array; content?: Uint8Array }).thumbnail ??
+        (photo as { content: Uint8Array }).content,
+    );
+  }
+
   async addNote(
     scope: CompanyScope,
     p: Principal,
@@ -639,7 +791,26 @@ export class JobService {
       where: { jobId: job.id },
       orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
     });
+    const [items, photos] = await Promise.all([
+      this.prisma.inspectionItem.findMany({ where: { jobId: job.id } }),
+      this.prisma.jobPhoto.findMany({
+        where: { jobId: job.id },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          area: true,
+          caption: true,
+          width: true,
+          height: true,
+          sizeBytes: true,
+          uploadedBy: true,
+          createdAt: true,
+        },
+      }),
+    ]);
     const names = await this.userNames([
+      job.inspectedBy,
+      ...photos.map((ph) => ph.uploadedBy),
       job.createdBy,
       ...job.tasks.map((t) => t.technicianId),
       ...events.map((e) => e.actorUserId),
@@ -695,6 +866,27 @@ export class JobService {
         note: e.note,
       })),
       actions: availableActions(status, actor),
+      inspection: job.inspectedAt
+        ? {
+            recordedAt: job.inspectedAt.toISOString(),
+            recordedByName: names.get(job.inspectedBy ?? '') ?? '—',
+            // In checklist order, whatever order they were stored in.
+            items: INSPECTION_ITEMS.flatMap((def) => {
+              const it = items.find((i) => i.itemKey === def.key);
+              return it ? [{ key: it.itemKey, status: it.status, note: it.note }] : [];
+            }),
+          }
+        : null,
+      photos: photos.map((ph) => ({
+        id: ph.id,
+        area: ph.area,
+        caption: ph.caption,
+        width: ph.width,
+        height: ph.height,
+        sizeBytes: ph.sizeBytes,
+        uploadedByName: names.get(ph.uploadedBy) ?? '—',
+        createdAt: ph.createdAt.toISOString(),
+      })),
     };
   }
 }

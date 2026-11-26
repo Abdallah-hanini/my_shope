@@ -179,3 +179,71 @@ export const jobListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(200),
 });
 export type JobListQuery = z.infer<typeof jobListQuerySchema>;
+
+// ── check-in inspection and photos (WMS-003, WEB-015) ──────────────────────
+
+/** The check-in checklist (central definition; labels are localised as `insp.item.<key>`). */
+export const INSPECTION_ITEMS = [
+  { key: 'body', group: 'exterior' },
+  { key: 'glass', group: 'exterior' },
+  { key: 'lights', group: 'exterior' },
+  { key: 'tyres', group: 'exterior' },
+  { key: 'wipers', group: 'exterior' },
+  { key: 'warning_lights', group: 'interior' },
+  { key: 'seats_trim', group: 'interior' },
+  { key: 'air_conditioning', group: 'interior' },
+  { key: 'engine_oil', group: 'under_bonnet' },
+  { key: 'coolant', group: 'under_bonnet' },
+  { key: 'brake_fluid', group: 'under_bonnet' },
+  { key: 'battery', group: 'under_bonnet' },
+  { key: 'spare_wheel_tools', group: 'equipment' },
+  { key: 'valuables', group: 'equipment' },
+] as const;
+export type InspectionItemKey = (typeof INSPECTION_ITEMS)[number]['key'];
+export const INSPECTION_STATUSES = ['ok', 'attention', 'not_checked'] as const;
+
+const itemKeys = INSPECTION_ITEMS.map((i) => i.key) as [InspectionItemKey, ...InspectionItemKey[]];
+
+/** The whole checklist at once: every item exactly once; "attention" needs a note. */
+export const recordInspectionSchema = z.object({
+  version,
+  items: z
+    .array(
+      z
+        .object({
+          key: z.enum(itemKeys),
+          status: z.enum(INSPECTION_STATUSES),
+          note: optionalText(500),
+        })
+        .refine((i) => i.status !== 'attention' || !!i.note, {
+          message: 'describe what needs attention',
+          path: ['note'],
+        }),
+    )
+    .refine(
+      (items) =>
+        items.length === itemKeys.length && new Set(items.map((i) => i.key)).size === itemKeys.length,
+      {
+        message: 'every checklist item must be answered once',
+      },
+    ),
+});
+export type RecordInspectionInput = z.infer<typeof recordInspectionSchema>;
+
+export const PHOTO_AREAS = [
+  'front',
+  'rear',
+  'left',
+  'right',
+  'interior',
+  'odometer',
+  'damage',
+  'other',
+] as const;
+export const photoMetaSchema = z.object({
+  area: z.enum(PHOTO_AREAS),
+  caption: optionalText(200),
+});
+export type PhotoMetaInput = z.infer<typeof photoMetaSchema>;
+/** Upload limits (the server re-encodes every image; these bound what it accepts). */
+export const PHOTO_LIMITS = { maxBytes: 12 * 1024 * 1024, maxPerUpload: 5, maxPerJob: 40 } as const;

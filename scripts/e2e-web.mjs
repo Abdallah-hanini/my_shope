@@ -682,8 +682,47 @@ async function main() {
           await page.getByRole('button', { name, exact: true }).first().click();
           await page.waitForLoadState('networkidle');
         };
+        // Check-in inspection (required before authorisation) and a photo.
+        const insp = page.getByRole('form', { name: 'Check-in inspection' });
+        await insp.getByRole('radiogroup', { name: 'Body and paint' }).getByLabel('Needs attention').check();
+        await insp.getByLabel('Note: Body and paint').fill('Scratch on rear bumper');
+        await insp.getByRole('button', { name: 'Save inspection' }).click();
+        await page.getByText('Recorded by: E2E Owner').waitFor();
+        const sharp = createRequire(join(root, 'apps/api/package.json'))('sharp');
+        const png = await sharp({ create: { width: 800, height: 600, channels: 3, background: '#cc4422' } })
+          .png()
+          .toBuffer();
+        const photos = page.getByRole('form', { name: 'Add photos' });
+        await photos
+          .getByLabel(/^Photos \(up to 5/)
+          .setInputFiles({ name: 'rear.png', mimeType: 'image/png', buffer: png });
+        await photos.getByLabel('Area').selectOption('rear');
+        await photos.getByLabel(/^Caption/).fill('Scratch on bumper');
+        await photos.getByRole('button', { name: 'Add photos' }).click();
+        const img = page.getByRole('img', { name: 'Rear: Scratch on bumper' });
+        await img.waitFor();
+        await page.waitForFunction(() => {
+          const el = document.querySelector('li[data-photo=rear] img');
+          return el instanceof HTMLImageElement && el.complete && el.naturalWidth === 320;
+        });
         await step('Record authorisation');
         await page.locator('main').getByText('Approved', { exact: true }).first().waitFor();
+        // After authorisation the inspection is read-only evidence and photos cannot be removed.
+        assert(
+          (await page.getByRole('form', { name: 'Check-in inspection' }).count()) === 0,
+          'inspection still editable',
+        );
+        assert(
+          /Needs attention\s*Scratch on rear bumper/.test(
+            await page.locator('[data-inspection=body]').innerText(),
+          ),
+          'inspection summary',
+        );
+        assert(
+          (await page.locator('li[data-photo=rear]').getByRole('button', { name: 'Remove' }).count()) === 0,
+          'remove offered',
+        );
+        await page.getByRole('form', { name: 'Add photos' }).waitFor(); // adding is still possible
         for (const n of [1, 2]) {
           await page.getByLabel(`Technician ${n}`).selectOption({ label: 'E2E Owner' });
           await page

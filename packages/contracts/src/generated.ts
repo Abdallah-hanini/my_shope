@@ -864,6 +864,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/inspection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the check-in checklist (draft; managers) */
+        post: operations["recordJobInspection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload up to 5 photos (JPEG, PNG or WebP; re-encoded, metadata removed) */
+        post: operations["addJobPhotos"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The photo (JPEG); size=thumb for the 320 px thumbnail */
+        get: operations["getJobPhoto"];
+        put?: never;
+        post?: never;
+        /** Remove a photo (draft only; managers) */
+        delete: operations["removeJobPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1645,6 +1697,31 @@ export interface components {
             toStatus?: string | null;
             note?: string | null;
         };
+        InspectionItemDto: {
+            /** @description Checklist key (INSPECTION_ITEMS) */
+            key: string;
+            /** @enum {string} */
+            status: "ok" | "attention" | "not_checked";
+            note?: string | null;
+        };
+        InspectionDto: {
+            /** Format: date-time */
+            recordedAt: string;
+            recordedByName: string;
+            items: components["schemas"]["InspectionItemDto"][];
+        };
+        JobPhotoDto: {
+            id: string;
+            /** @enum {string} */
+            area: "front" | "rear" | "left" | "right" | "interior" | "odometer" | "damage" | "other";
+            caption?: string | null;
+            width: number;
+            height: number;
+            sizeBytes: number;
+            uploadedByName: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         JobCardDto: {
             id: string;
             number: string;
@@ -1681,8 +1758,12 @@ export interface components {
             tasks: components["schemas"]["JobTaskDto"][];
             /** @description Timeline, oldest first */
             events: components["schemas"]["JobEventDto"][];
-            /** @description What the caller can do now (edit, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note); the server checks again */
+            /** @description What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again */
             actions: string[];
+            /** @description Check-in inspection; null until recorded */
+            inspection?: components["schemas"]["InspectionDto"] | null;
+            /** @description Oldest first; images at …/photos/{photoId} */
+            photos: components["schemas"]["JobPhotoDto"][];
         };
         TechnicianDto: {
             id: string;
@@ -1737,6 +1818,11 @@ export interface components {
         };
         JobNoteDto: {
             note: string;
+        };
+        RecordInspectionDto: {
+            version: number;
+            /** @description Every checklist item once; "attention" needs a note */
+            items: components["schemas"]["InspectionItemDto"][];
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -3379,6 +3465,110 @@ export interface operations {
                 "application/json": components["schemas"]["JobNoteDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    recordJobInspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordInspectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    addJobPhotos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                    /** @enum {string} */
+                    area: "front" | "rear" | "left" | "right" | "interior" | "odometer" | "damage" | "other";
+                    caption?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    getJobPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                photoId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description JPEG image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+        };
+    };
+    removeJobPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                photoId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

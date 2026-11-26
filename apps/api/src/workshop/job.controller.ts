@@ -1,7 +1,25 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Res,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
+  ApiProduces,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -18,6 +36,9 @@ import {
   jobListQuerySchema,
   jobNoteSchema,
   jobVersionSchema,
+  PHOTO_LIMITS,
+  photoMetaSchema,
+  recordInspectionSchema,
   promiseJobSchema,
   qcResultSchema,
   updateJobDraftSchema,
@@ -29,6 +50,8 @@ import {
   type JobListQuery,
   type JobNoteInput,
   type JobVersionInput,
+  type PhotoMetaInput,
+  type RecordInspectionInput,
   type PromiseJobInput,
   type QcResultInput,
   type UpdateJobDraftInput,
@@ -48,6 +71,7 @@ import {
   JobVersionDto,
   PromiseJobDto,
   QcResultDto,
+  RecordInspectionDto,
   TechnicianDto,
   UpdateJobDraftDto,
 } from './job.dto';
@@ -349,5 +373,108 @@ export class JobController {
     @RequestId() rid?: string,
   ): Promise<JobCardDto> {
     return this.jobs.addNote(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/inspection')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'recordJobInspection',
+    summary: 'Record the check-in checklist (draft; managers)',
+  })
+  @ApiBody({ type: RecordInspectionDto })
+  @ApiOkResponse({ type: JobCardDto })
+  inspect(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(recordInspectionSchema)) body: RecordInspectionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.recordInspection(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/photos')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'addJobPhotos',
+    summary: `Upload up to ${PHOTO_LIMITS.maxPerUpload} photos (JPEG, PNG or WebP; re-encoded, metadata removed)`,
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['files', 'area'],
+      properties: {
+        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+        area: {
+          type: 'string',
+          enum: ['front', 'rear', 'left', 'right', 'interior', 'odometer', 'damage', 'other'],
+        },
+        caption: { type: 'string' },
+      },
+    },
+  })
+  @ApiOkResponse({ type: JobCardDto })
+  @UseInterceptors(
+    FilesInterceptor('files', PHOTO_LIMITS.maxPerUpload, {
+      limits: { fileSize: PHOTO_LIMITS.maxBytes, files: PHOTO_LIMITS.maxPerUpload, fields: 5 },
+    }),
+  )
+  addPhotos(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @UploadedFiles() files: { buffer: Buffer; originalname: string }[] | undefined,
+    @Body(new ZodPipe(photoMetaSchema)) body: PhotoMetaInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.addPhotos(scope, p, id, files ?? [], body, ctxOf(p, rid));
+  }
+
+  @Get('jobs/:jobId/photos/:photoId')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'photoId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'getJobPhoto',
+    summary: 'The photo (JPEG); size=thumb for the 320 px thumbnail',
+  })
+  @ApiProduces('image/jpeg')
+  @ApiOkResponse({ description: 'JPEG image', schema: { type: 'string', format: 'binary' } })
+  async photo(
+    @CurrentScope() scope: CompanyScope,
+    @Param('jobId', id404) id: string,
+    @Param('photoId', id404) photoId: string,
+    @Query('size') size: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    const bytes = await this.jobs.photo(scope, id, photoId, size === 'thumb' ? 'thumb' : 'full');
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Content-Length', String(bytes.length));
+    // Photos never change once stored; private because they need the caller's access.
+    res.setHeader('Cache-Control', 'private, max-age=86400, immutable');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', 'inline');
+    res.end(bytes);
+  }
+
+  @Delete('jobs/:jobId/photos/:photoId')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'photoId', format: 'uuid' })
+  @ApiOperation({ operationId: 'removeJobPhoto', summary: 'Remove a photo (draft only; managers)' })
+  @ApiOkResponse({ type: JobCardDto })
+  removePhoto(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Param('photoId', id404) photoId: string,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.removePhoto(scope, p, id, photoId, ctxOf(p, rid));
   }
 }

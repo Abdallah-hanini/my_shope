@@ -3219,6 +3219,252 @@
           "workshop"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/inspection": {
+      "post": {
+        "operationId": "recordJobInspection",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordInspectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the check-in checklist (draft; managers)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/photos": {
+      "post": {
+        "operationId": "addJobPhotos",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "files",
+                  "area"
+                ],
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "area": {
+                    "type": "string",
+                    "enum": [
+                      "front",
+                      "rear",
+                      "left",
+                      "right",
+                      "interior",
+                      "odometer",
+                      "damage",
+                      "other"
+                    ]
+                  },
+                  "caption": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload up to 5 photos (JPEG, PNG or WebP; re-encoded, metadata removed)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/photos/{photoId}": {
+      "get": {
+        "operationId": "getJobPhoto",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JPEG image",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The photo (JPEG); size=thumb for the 320 px thumbnail",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "delete": {
+        "operationId": "removeJobPhoto",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a photo (draft only; managers)",
+        "tags": [
+          "workshop"
+        ]
+      }
     }
   },
   "info": {
@@ -5865,6 +6111,104 @@
           "kind"
         ]
       },
+      "InspectionItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Checklist key (INSPECTION_ITEMS)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "attention",
+              "not_checked"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "status"
+        ]
+      },
+      "InspectionDto": {
+        "type": "object",
+        "properties": {
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedByName": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InspectionItemDto"
+            }
+          }
+        },
+        "required": [
+          "recordedAt",
+          "recordedByName",
+          "items"
+        ]
+      },
+      "JobPhotoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "enum": [
+              "front",
+              "rear",
+              "left",
+              "right",
+              "interior",
+              "odometer",
+              "damage",
+              "other"
+            ]
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "uploadedByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "area",
+          "width",
+          "height",
+          "sizeBytes",
+          "uploadedByName",
+          "createdAt"
+        ]
+      },
       "JobCardDto": {
         "type": "object",
         "properties": {
@@ -5990,10 +6334,27 @@
             }
           },
           "actions": {
-            "description": "What the caller can do now (edit, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note); the server checks again",
+            "description": "What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto); the server checks again",
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "inspection": {
+            "nullable": true,
+            "description": "Check-in inspection; null until recorded",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InspectionDto"
+              }
+            ]
+          },
+          "photos": {
+            "description": "Oldest first; images at …/photos/{photoId}",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPhotoDto"
             }
           }
         },
@@ -6016,7 +6377,8 @@
           "estimatedHours",
           "tasks",
           "events",
-          "actions"
+          "actions",
+          "photos"
         ]
       },
       "TechnicianDto": {
@@ -6210,6 +6572,25 @@
         },
         "required": [
           "note"
+        ]
+      },
+      "RecordInspectionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "items": {
+            "description": "Every checklist item once; \"attention\" needs a note",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InspectionItemDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
         ]
       },
       "ProblemDetailsDto": {

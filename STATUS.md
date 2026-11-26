@@ -11,6 +11,38 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-27: Check-in inspection and photos (WMS-003, WEB-015)
+
+### Changes
+
+- **Checklist (T-56):** 14 points in four groups (exterior, interior, under the bonnet, equipment and belongings), each OK, needs attention (note required) or not checked.
+  - Recorded by managers while the job is a draft; authorisation is refused until it exists.
+  - Fixed afterwards: the API refuses changes and a database trigger blocks them. Shown in the timeline.
+- **Photos (T-57, T-58):** upload up to 5 at a time with an area (front, rear, left, right, interior, odometer, damage, other) and a caption.
+  - Managers can add photos while the job is open; technicians only on jobs they work on (damage found during work).
+  - Every file is decoded and re-encoded: non-images are refused, orientation is applied, all metadata including GPS location is removed, images are scaled to at most 2048 px, and a thumbnail is made.
+  - Stored with a SHA-256; the audit records hashes, never image bytes.
+  - Removable only while the job is a draft, and never editable (database triggers). Limit of 40 per job.
+  - Served only to people who can see the job, through a web route that keeps the token on the server.
+- **Migration `checkin_inspection_photos`:** inspection items and photos tables, checks, triggers, and new timeline kinds. It stops with a clear message if any existing job is past draft (none were).
+- **Web:** the job details page has a "Check-in inspection" form (read-only after authorisation) and a "Photos" gallery with upload, full-size view and remove.
+
+### Evidence (2026-11-27, Linux Docker)
+
+- Unit tests:
+  - photo processing 4: re-encode and scale; GPS and EXIF removed; orientation applied; non-images, GIF and truncated files refused;
+  - lifecycle 6, validation 76.
+- Integration (checkin.int, 7):
+  - checklist rules and lock (API and database);
+  - metadata really removed from the stored file, with the expected headers;
+  - non-image, too many files, oversized file (413) and unknown area refused with nothing stored;
+  - who may add and remove photos, and evidence locked after authorisation (API and database);
+  - branch isolation, audit without bytes, the 40-photo limit.
+
+  The workshop suite was updated for "inspection before authorisation".
+- Browser end-to-end: the check-in flow now records the inspection (one item needing attention) and uploads a photo whose thumbnail loads at 320 px. After authorisation the inspection is read-only and photos cannot be removed.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 159/159 across 9 suites on a fresh database; browser end-to-end 38/38.
+
 ## 2026-11-26: Workshop job cards, first slice (Phase 3: WMS-001/006/010/011)
 
 ### Changes
@@ -54,7 +86,7 @@
 - Prices, quotations and approval of a quoted amount (WMS-005), parts reservation and issue (WMS-008), invoices and payment: need **D-05 (tax)** and **D-06 (costing)**.
 - Photos and inspection checklist at check-in (WEB-015), appointments (WEB-010/011), labour time clocking (WEB-023), extra work requests (WEB-025), bays (WEB-022).
 
- (notification inbox, outbox dispatcher P1-11)
+## 2026-11-26: AUTO360 UI/UX increment 6 (notification inbox, outbox dispatcher P1-11)
 
 ### Changes
 
@@ -98,7 +130,7 @@
 - Notification settings, email or phone push (WEB-229, ADM-008) need the mail-server decision; the manager app has no notifications yet.
 - No notification yet for approvals (maker-checker, P1-12, needs D-11).
 
- (export centre)
+## 2026-11-26: AUTO360 UI/UX increment 5 (export centre)
 
 ### Changes
 
@@ -137,7 +169,7 @@
 
 - No server-generated PDF, and no scheduled or emailed reports (they need a mail-server decision).
 
- (global search)
+## 2026-11-26: AUTO360 UI/UX increment 4 (global search)
 
 ### Changes
 
@@ -161,7 +193,7 @@
 
 - No type-ahead dropdown yet (T-39). Search does not cover journal line amounts.
 
- (trial balance, general ledger)
+## 2026-11-26: AUTO360 UI/UX increment 3 (trial balance, general ledger)
 
 ### Changes
 
@@ -188,7 +220,7 @@
 - Year-end closing is not set up, so revenue and expense balances accumulate from the first journal (T-37). Needs the accountant's fiscal-year and retained-earnings decisions.
 - No comparison column or export yet (planned with the export centre, WEB-205, which audits exports).
 
- (users, roles, permission matrix)
+## 2026-11-26: AUTO360 UI/UX increment 2 (users, roles, permission matrix)
 
 ### Changes
 

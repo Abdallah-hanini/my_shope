@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import type { PrismaClient } from '@prisma/client';
+import { INSPECTION_ITEMS } from '@erp/validation';
 import { OutboxDispatcher } from '../src/platform/outbox-dispatcher';
 import { api, bootApp, createUser, uid, type TestAuth } from './helpers';
 
@@ -185,7 +186,17 @@ describe('job card lifecycle', () => {
       version: 1,
     });
     expect(j.number).toMatch(/^JC-\d{4}-000001$/);
-    expect(j.actions).toEqual(['edit', 'authorize', 'assign', 'cancel', 'promise', 'note']);
+    expect(j.actions).toEqual([
+      'edit',
+      'inspect',
+      'authorize',
+      'assign',
+      'cancel',
+      'promise',
+      'note',
+      'addPhoto',
+      'removePhoto',
+    ]);
     expect(j.events.map((e: { kind: string }) => e.kind)).toEqual(['created']);
     ids.job = j.id;
     ids.task1 = j.tasks[0].id;
@@ -206,14 +217,25 @@ describe('job card lifecycle', () => {
     ).body;
     ids.task1 = edited.tasks[0].id;
     ids.task2 = edited.tasks[1].id;
-    await act(tok.tech!, ids.job!, 'authorize', {
+    // Authorisation needs the check-in inspection first.
+    const noInspection = await act(tok.advisor!, ids.job!, 'authorize', {
       version: 2,
+      authorizedByName: 'Khalid',
+      authorizedVia: 'phone',
+    }).expect(422);
+    expect(noInspection.body.detail).toMatch(/check-in inspection/);
+    await act(tok.advisor!, ids.job!, 'inspection', {
+      version: 2,
+      items: INSPECTION_ITEMS.map((i) => ({ key: i.key, status: 'ok' })),
+    }).expect(200);
+    await act(tok.tech!, ids.job!, 'authorize', {
+      version: 3,
       authorizedByName: 'Khalid',
       authorizedVia: 'phone',
     }).expect(403);
     const ok = (
       await act(tok.advisor!, ids.job!, 'authorize', {
-        version: 2,
+        version: 3,
         authorizedByName: 'Khalid',
         authorizedVia: 'phone',
       }).expect(200)
@@ -225,7 +247,7 @@ describe('job card lifecycle', () => {
         odometerIn: 1,
         fuelLevel: 'half',
         tasks,
-        version: 3,
+        version: 4,
       })
       .expect(409);
   });
@@ -238,19 +260,19 @@ describe('job card lifecycle', () => {
     expect(t).not.toContain('wakTech');
     await api(app, tok.tech).get(`${base()}/jobs/${ids.job}/technicians`).expect(403);
     await act(tok.advisor!, ids.job!, `tasks/${ids.task1}/assign`, {
-      version: 3,
+      version: 4,
       technicianId: ids.wakTech,
     }).expect(422);
     let j = (
       await act(tok.advisor!, ids.job!, `tasks/${ids.task1}/assign`, {
-        version: 3,
+        version: 4,
         technicianId: ids.tech,
       }).expect(200)
     ).body;
     expect(j.status).toBe('approved');
     j = (
       await act(tok.advisor!, ids.job!, `tasks/${ids.task2}/assign`, {
-        version: 4,
+        version: 5,
         technicianId: ids.tech2,
       }).expect(200)
     ).body;
@@ -259,10 +281,10 @@ describe('job card lifecycle', () => {
   });
 
   it('a stale version is refused, and two people starting at once produce one change', async () => {
-    await act(tok.tech!, ids.job!, 'start', { version: 4 }).expect(409);
+    await act(tok.tech!, ids.job!, 'start', { version: 5 }).expect(409);
     const [a, b] = await Promise.all([
-      act(tok.tech!, ids.job!, 'start', { version: 5 }),
-      act(tok.tech2!, ids.job!, 'start', { version: 5 }),
+      act(tok.tech!, ids.job!, 'start', { version: 6 }),
+      act(tok.tech2!, ids.job!, 'start', { version: 6 }),
     ]);
     expect([a.status, b.status].sort()).toEqual([200, 409]);
     expect((await job(ids.job!)).status).toBe('in_progress');
@@ -330,6 +352,7 @@ describe('job card lifecycle', () => {
     expect(j.events.map((e: { kind: string; toStatus: string | null }) => e.toStatus ?? e.kind)).toEqual([
       'draft',
       'updated',
+      'inspection',
       'approved',
       'assignment',
       'assigned',
