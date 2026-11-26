@@ -160,6 +160,14 @@ export default async function HomePage({
                   </li>
                 ))}
               </ul>
+              {health.report.events?.deadLettered ? (
+                <p
+                  role="alert"
+                  className="border-b border-[var(--color-border)] bg-[var(--color-warning-bg)] px-4 py-3 text-sm text-[var(--color-warning)]"
+                >
+                  {t('health.deadLetters').replace('{n}', String(health.report.events.deadLettered))}
+                </p>
+              ) : null}
               <p className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
                 {t('common.lastChecked')}:{' '}
                 <time dateTime={health.report.checkedAt}>

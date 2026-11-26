@@ -593,6 +593,51 @@ async function main() {
       await page.getByText('export.download', { exact: true }).first().waitFor();
     });
 
+    const bell = () => page.getByTestId('notification-bell');
+    const bellLabel = async (pattern) => {
+      // Events are delivered by the dispatcher within seconds; the bell refreshes on navigation.
+      for (let i = 0; i < 20; i++) {
+        await page.goto(`${base()}/journals`);
+        const label = (await bell().getAttribute('aria-label')) ?? '';
+        if (pattern.test(label)) return label;
+        await page.waitForTimeout(500);
+      }
+      throw new Error(`bell label never matched ${pattern}: ${await bell().getAttribute('aria-label')}`);
+    };
+    await check(
+      'Notifications: finished exports reach the bell and inbox; open and mark all as read',
+      async () => {
+        await bellLabel(/^Notifications: 2 unread$/);
+        await bell().click();
+        await page.waitForURL(`${base()}/notifications`);
+        const crumb = page.getByRole('navigation', { name: 'Breadcrumb' }).locator('[aria-current=page]');
+        assert((await crumb.innerText()) === 'Notifications', 'breadcrumb');
+        const items = page.locator('li[data-notification=export_ready]');
+        assert((await items.count()) === 2, `items: ${await items.count()}`);
+        assert(
+          /Your export “(Journal lines|Trial balance)” is ready to download \(.+\.(csv|xlsx)\)\./.test(
+            await items.first().innerText(),
+          ),
+          await items.first().innerText(),
+        );
+        await shot('notifications-en');
+        await Promise.all([
+          page.waitForURL(`${base()}/exports`),
+          items.first().getByRole('button', { name: 'Open' }).click(),
+        ]);
+        await bellLabel(/^Notifications: 1 unread$/);
+        await page.goto(`${base()}/notifications`);
+        await page.getByRole('button', { name: 'Mark all as read' }).click();
+        await page.waitForFunction(
+          () =>
+            document.querySelector('[data-testid=notification-bell]')?.getAttribute('aria-label') ===
+            'Notifications',
+        );
+        await page.getByRole('link', { name: 'Unread' }).click();
+        await page.getByText('Nothing unread.').waitFor();
+      },
+    );
+
     await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
@@ -608,6 +653,7 @@ async function main() {
           'ledger',
           'search?q=cash',
           'exports',
+          'notifications',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);
@@ -741,6 +787,23 @@ async function main() {
       await item.getByRole('button', { name: 'Remove' }).click();
       await item.waitFor({ state: 'detached' });
       await shot('user-profile-en');
+      // The staff member is told, in their inbox, that a role was given and removed.
+      for (let i = 0; i < 20; i++) {
+        await staffPage.goto(`${base()}/notifications`);
+        if ((await staffPage.locator('li[data-notification]').count()) >= 2) break;
+        await staffPage.waitForTimeout(500);
+      }
+      const staffInbox = await staffPage.locator('li[data-notification]').allInnerTexts();
+      assert(
+        staffInbox.some((x) =>
+          x.includes('E2E Owner gave you the role “Company administrator” (All branches).'),
+        ),
+        staffInbox.join(' | '),
+      );
+      assert(
+        staffInbox.some((x) => x.includes('E2E Owner removed your role “Company administrator”.')),
+        staffInbox.join(' | '),
+      );
       await page.goto(`${base()}/users`);
       await page.getByRole('link', { name: 'E2E Owner' }).click();
       await page.getByText('To change your own password or authenticator').waitFor();

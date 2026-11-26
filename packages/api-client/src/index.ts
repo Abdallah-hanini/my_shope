@@ -14,6 +14,8 @@ export type {
   Journal,
   LivenessReport,
   Me,
+  Notification,
+  NotificationPage,
   ProblemDetails,
   Role,
   RoleAssignment,

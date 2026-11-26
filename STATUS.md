@@ -5,12 +5,56 @@
 | Phase | Status |
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
-| 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
-| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). |
+| 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
+| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
 
-## 2026-11-26: AUTO360 UI/UX increment 5 (export centre)
+## 2026-11-26: AUTO360 UI/UX increment 6 (notification inbox, outbox dispatcher P1-11)
+
+### Changes
+
+- **Outbox dispatcher (T-47):** delivers each committed business event in one transaction with the notifications it creates, then marks it published.
+  - Several instances can share the work safely.
+  - Failures are retried with backoff (2 s up to 1 h) and dead-lettered after 10 attempts.
+  - Dead letters are logged as errors and counted in the health report and on the home status panel (information only; the API stays "up").
+  - Housekeeping removes delivered events after 30 days and read notifications after 90 (T-50).
+- **Events record who acted:** `enqueueOutbox` now stores the actor (new column). Exports emit `export.completed` when they finish, fail or are interrupted.
+- **Migration `notifications`:**
+  - table `platform.notification` (unique per event and person; closed list of kinds; links limited to paths inside the company);
+  - outbox columns `actor_user_id` and `dead_lettered_at`;
+  - events from before the dispatcher are marked delivered without notifying anyone (T-49).
+- **Rules (T-48):**
+  - journal reversed → original poster;
+  - role given or removed → that person;
+  - role changed → its holders;
+  - period closed → people who post journals (link only if they can open periods);
+  - export ready or failed → requester.
+
+  Nobody is told about their own action or about records they cannot see. No amounts in messages.
+- **API:** inbox list (keyset pages, unread only), unread count, mark read, mark all read. Own messages only; non-members get 404.
+- **Web:**
+  - Header bell with the unread count, fetched in the browser (refreshes on navigation, every 30 s and after inbox changes).
+  - Inbox page (All / Unread, Open → record, Mark all as read, Older) in English and Arabic.
+  - Breadcrumb entries for pages reached from the header.
+
+### Evidence (2026-11-26, Linux Docker)
+
+- Unit tests: API 66, web 31 (message text in both languages), localization 19, validation 67.
+- Integration on a fresh database: 136/136 across 7 suites. The 14 new notification tests cover each rule, self-actions and invisible records excluded, no duplicates on replay, unknown events, retry and dead-letter with health report, housekeeping, link check, inbox API, isolation, and real background delivery.
+- Format, build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11.
+- Browser end-to-end: 36/36. New checks:
+  - the owner's two finished exports reach the bell ("Notifications: 2 unread") and the inbox;
+  - "Open" goes to the export centre and the badge drops to 1; "Mark all as read" clears it;
+  - the staff member's inbox says "E2E Owner gave you the role “Company administrator” (All branches)." and "… removed your role …";
+  - Arabic phone layout of the inbox.
+
+### Not done / open
+
+- Notification settings, email or phone push (WEB-229, ADM-008) need the mail-server decision; the manager app has no notifications yet.
+- No notification yet for approvals (maker-checker, P1-12, needs D-11).
+
+ (export centre)
 
 ### Changes
 

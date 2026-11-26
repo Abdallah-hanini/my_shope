@@ -40,6 +40,7 @@ export default async function CompanyLayout({
       crumbs={[{ href: base, label: name }]}
       sectionBase={base}
       searchHref={`${base}/search`}
+      notifications={{ inboxHref: `${base}/notifications`, countHref: `${base}/notifications/count` }}
       companies={me.companies.map((c) => ({ id: c.companyId, name: companyName(c, locale), code: c.code }))}
       currentCompany={{ id: company.id, name }}
       canCreateCompany={me.user.isPlatformAdmin}

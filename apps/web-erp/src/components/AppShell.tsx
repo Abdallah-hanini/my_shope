@@ -5,6 +5,7 @@ import { sidebarCollapsed, themePreference } from '@/lib/preferences';
 import { currentPath } from '@/lib/session';
 import { Breadcrumbs, LanguageSwitch, type Crumb } from './shell/HeaderLinks';
 import { HeaderSearch } from './shell/HeaderSearch';
+import { NotificationBell } from './shell/NotificationBell';
 import { CompanySwitcher, ProfileMenu } from './shell/Menus';
 import { DesktopSidebar, MobileNav, type SidebarGroup } from './shell/Sidebar';
 
@@ -23,6 +24,7 @@ export async function AppShell({
   crumbs = [],
   sectionBase,
   searchHref,
+  notifications,
   companies = [],
   currentCompany,
   canCreateCompany = false,
@@ -38,6 +40,8 @@ export async function AppShell({
   sectionBase?: string;
   /** Company search page; shows the header search when set. */
   searchHref?: string;
+  /** Company inbox and unread-count endpoint; shows the bell when set. */
+  notifications?: { inboxHref: string; countHref: string };
   companies?: { id: string; name: string; code: string }[];
   currentCompany?: { id: string; name: string };
   canCreateCompany?: boolean;
@@ -110,6 +114,13 @@ export async function AppShell({
             >
               <LanguageSwitch locale={locale} />
             </Suspense>
+            {notifications ? (
+              <NotificationBell
+                locale={locale}
+                inboxHref={notifications.inboxHref}
+                countHref={notifications.countHref}
+              />
+            ) : null}
             {user ? <ProfileMenu locale={locale} name={user.name} email={user.email} theme={theme} /> : null}
           </div>
         </header>

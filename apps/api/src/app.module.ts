@@ -17,6 +17,7 @@ import { OrgModule } from './org/org.module';
 import { PlatformModule } from './platform/platform.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { ExportModule } from './exports/export.module';
+import { NotificationModule } from './notifications/notification.module';
 import { SearchModule } from './search/search.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
@@ -58,6 +59,7 @@ export class AppModule {
         ReportingModule,
         SearchModule,
         ExportModule,
+        NotificationModule,
       ],
       providers: [
         { provide: API_ENV, useValue: env },

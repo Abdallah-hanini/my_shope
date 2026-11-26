@@ -27,6 +27,13 @@ export class DependencyCheckDto {
   error?: string;
 }
 
+export class EventDeliveryDto {
+  @ApiProperty({ description: 'Business events waiting for delivery (normally 0 within seconds)' })
+  pending!: number;
+  @ApiProperty({ description: 'Events that failed too often and need an operator (see the API log)' })
+  deadLettered!: number;
+}
+
 export class HealthReportDto {
   @ApiProperty({ enum: ['up', 'down'] })
   status!: CheckStatus;
@@ -39,6 +46,13 @@ export class HealthReportDto {
 
   @ApiProperty({ type: [DependencyCheckDto] })
   checks!: DependencyCheckDto[];
+
+  @ApiPropertyOptional({
+    type: EventDeliveryDto,
+    nullable: true,
+    description: 'Outbox delivery (information; does not change status). Null when the database is down',
+  })
+  events?: EventDeliveryDto | null;
 }
 
 /** RFC 9457 problem details. */

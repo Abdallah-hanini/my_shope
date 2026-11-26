@@ -295,7 +295,7 @@ export class JournalService {
               lines: j.lines,
             },
           });
-          await enqueueOutbox(tx, {
+          await enqueueOutbox(tx, ctx, {
             companyId: scope.companyId,
             aggregateType: 'journal',
             aggregateId: journal.id,

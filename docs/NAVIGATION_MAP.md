@@ -28,6 +28,7 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
 
 **Header**
 - Breadcrumb: Home › Company › Section (derived from the URL in the browser).
+- Notifications (company pages): bell with the unread count (refreshed on navigation and every 30 s) → `/[locale]/c/[id]/notifications` (All / Unread, Open, Mark all as read).
 - Search (company pages): header box on wide screens, icon on phones and tablets → `/[locale]/c/[id]/search?q=`. `/` or Ctrl/⌘+K focuses it.
 - Company switcher: companies where the user holds a role, plus "New company" for platform administrators.
 - Language switch: keeps the current page.

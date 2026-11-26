@@ -99,6 +99,13 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **PDF:** Print → Save as PDF on the report page (print styles; T-43).
 - **Tests:** exports.int (14: file equals screen for all three kinds, Arabic Excel, GL paging, branch scope, isolation, recheck, failure, limits, expiry, DB checks, audit, real queue) and e2e.
 
+## Shell: notification inbox
+- **Route:** `/[locale]/c/[id]/notifications?filter=unread&cursor=` (any member; own messages only). API `GET /companies/{id}/notifications`, `GET …/unread-count`, `POST …/{id}/read`, `POST …/read-all`.
+- **Bell:** in the header on company pages; unread count in a badge and in the accessible name ("Notifications: 2 unread"). It is fetched in the browser through `/notifications/count` and refreshed on navigation, every 30 s while the tab is visible, and immediately after changes in the inbox. If the count cannot be fetched, no number is shown.
+- **Inbox:** newest first, 20 per page with "Older"; unread messages highlighted (and announced as "Unread" to screen readers); time in the company time zone. "Open" marks the message read and goes to its record (only paths inside the company); "Mark as read" for messages without a link; "Mark all as read".
+- **Messages (T-48):** journal reversed, role given, removed or changed, period closed, export ready or failed, in the reader's language with neutral wording when a name is missing.
+- **Tests:** notifications.int (14: each rule, self-actions and invisible records excluded, replay without duplicates, unknown events, retry and dead-letter with health report, housekeeping, link check, inbox paging, filters, read state, isolation, real background delivery) and e2e (bell, inbox, open, mark all read, staff inbox text).
+
 ## WEB-237 Global search
 - **Route:** `/[locale]/c/[id]/search?q=` (any member). API `GET /companies/{id}/search?q=&limit=`.
 - **Entry:** header search box on screens ≥ 1024 px (`/` or Ctrl/⌘+K focuses it); a search icon on smaller screens. A plain GET form that works without JavaScript.

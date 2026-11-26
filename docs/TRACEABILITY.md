@@ -26,7 +26,7 @@ Phases follow docs/ROADMAP.md: 0 foundation · 1 identity/org/accounting · 2 ca
 | SEC-04 | OIDC provider (PKCE on mobile, SecureStore tokens) | ARCHITECTURE, MOBILE | 1 | API + web done (Keycloak, D-03); manager app pending | `apps/api/src/auth/*`, `apps/web-erp/src/lib/session*.ts`, `app/session/*`; e2e + deployment checks |
 | SEC-05 | Audit trail: actor, scope, timestamp, reason, redacted before/after; append-only | SECURITY_QA, ADM-007 | 1 | Done (verified) | `platform.audit_event` + immutability trigger; audit.test.ts; integration |
 | SEC-06 | No privilege escalation when granting/revoking roles | SECURITY_QA | 1 | Done (verified) | `canDelegate`; integration escalation tests |
-| ARCH-13 | Transactional outbox (write side) | ARCHITECTURE | 1 | Write side done; relay P1-11 pending | `platform.outbox_event`, `enqueueOutbox` |
+| ARCH-13 | Transactional outbox (write side and dispatcher) | ARCHITECTURE | 1 | Done for in-process consumers (notifications): delivery in the consumer's transaction, retry with backoff, dead-letter after 10 attempts, health report, 30-day retention. External publishing not needed yet (T-47) | `platform.outbox_event`, `enqueueOutbox` (records the actor), `platform/outbox-dispatcher.ts`; `test/notifications.int.test.ts` |
 | UX-01 | WCAG contrast and 44pt touch targets in shared tokens | CLAUDE, MOBILE | 0 | Done (verified) | `packages/design-tokens` contrast tests |
 | UX-02 | Responsive web (no horizontal scroll at phone width) | CLAUDE | 0 | Done for shell | smoke: 390px viewport en/ar |
 | RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Partial: reporting view, KPI dictionary, dashboard, trial balance, general ledger, export centre (CSV/Excel, background jobs, download recheck, audit, export = screen tests) | `apps/api/src/reporting`, `apps/api/src/exports`; reporting.int, exports.int, e2e |
@@ -158,7 +158,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | ADM-005 | Templates | 5 | Not started | — |
 | ADM-006 | Bilingual RTL | 0 → all | Partial (foundation) | `packages/localization` (en/ar catalogs, RTL), `[locale]` routing in web-erp, mobile locale toggle; tests: localization.test.ts, locale.test.ts, HomeScreen.test.tsx, smoke RTL checks |
 | ADM-007 | Audit | 1 | Done (API + web, verified) | Append-only audit with redaction, list API with branch filter; `platform.audit_event`; integration; web screens + `scripts/e2e-web.mjs` |
-| ADM-008 | Notification settings | 5 | Not started | — |
+| ADM-008 | Notification settings | 5 | Not started (the inbox exists; per-person settings and email/push channels need the mail decision) | — |
 | ADM-009 | Import/export | 5 | Not started | — |
 | ADM-010 | Global search | 2 | Done for current modules (journals, accounts, branches, fiscal periods, people) | `apps/api/src/search`, migration `global_search`; `test/search.int.test.ts` (8); web `/search` + header box; e2e. New modules add their record types |
 | ADM-011 | Role-specific dashboard | 5 | Not started | — |

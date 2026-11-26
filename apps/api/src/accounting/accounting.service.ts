@@ -73,7 +73,7 @@ export class AccountingService {
           companyId: scope.companyId,
           after: a,
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: scope.companyId,
           aggregateType: 'account',
           aggregateId: a.id,
@@ -175,7 +175,7 @@ export class AccountingService {
         before: toPeriodDto(before),
         after: toPeriodDto(after),
       });
-      await enqueueOutbox(tx, {
+      await enqueueOutbox(tx, ctx, {
         companyId: scope.companyId,
         aggregateType: 'fiscal_period',
         aggregateId: periodId,

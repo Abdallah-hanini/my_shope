@@ -27,6 +27,8 @@ export type TrialBalance = Schemas['TrialBalanceDto'];
 export type GeneralLedger = Schemas['GeneralLedgerDto'];
 export type SearchResult = Schemas['SearchResultDto'];
 export type ExportJob = Schemas['ExportJobDto'];
+export type Notification = Schemas['NotificationDto'];
+export type NotificationPage = Schemas['NotificationPageDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

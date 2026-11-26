@@ -148,7 +148,7 @@ export class StaffService {
             temporaryPasswordIssued: true,
           },
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: scope.companyId,
           aggregateType: 'user',
           aggregateId: u.id,
@@ -235,7 +235,7 @@ export class StaffService {
           before: { status: target.status },
           after: { status: input.status },
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: scope.companyId,
           aggregateType: 'user',
           aggregateId: target.id,

@@ -266,6 +266,20 @@ export const createExportSchema = z.discriminatedUnion('kind', [
 ]);
 export type CreateExportInput = z.infer<typeof createExportSchema>;
 
+/** Notification inbox listing. */
+export const notificationListQuerySchema = z.object({
+  cursor: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,200}$/, 'invalid cursor')
+    .optional(),
+  unreadOnly: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true'),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type NotificationListQuery = z.infer<typeof notificationListQuerySchema>;
+
 /** Inclusive number of calendar months between two YYYY-MM values. */
 export function monthsBetween(from: string, to: string): number {
   const [fy, fm] = from.split('-').map(Number) as [number, number];

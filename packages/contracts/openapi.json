@@ -1769,6 +1769,188 @@
           "exports"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "1–100, default 20",
+            "schema": {}
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Newest first, with the unread count",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/notifications/unread-count": {
+      "get": {
+        "operationId": "countUnreadNotifications",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "unreadCount is 0 afterwards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/notifications/{notificationId}/read": {
+      "post": {
+        "operationId": "markNotificationRead",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "notifications"
+        ]
+      }
     }
   },
   "info": {
@@ -1844,6 +2026,23 @@
           "latencyMs"
         ]
       },
+      "EventDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "pending": {
+            "type": "number",
+            "description": "Business events waiting for delivery (normally 0 within seconds)"
+          },
+          "deadLettered": {
+            "type": "number",
+            "description": "Events that failed too often and need an operator (see the API log)"
+          }
+        },
+        "required": [
+          "pending",
+          "deadLettered"
+        ]
+      },
       "HealthReportDto": {
         "type": "object",
         "properties": {
@@ -1867,6 +2066,16 @@
             "items": {
               "$ref": "#/components/schemas/DependencyCheckDto"
             }
+          },
+          "events": {
+            "nullable": true,
+            "description": "Outbox delivery (information; does not change status). Null when the database is down",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventDeliveryDto"
+              }
+            ]
           }
         },
         "required": [
@@ -3688,6 +3897,88 @@
           "params",
           "status",
           "createdAt"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "journal_reversed",
+              "role_granted",
+              "role_revoked",
+              "role_changed",
+              "period_closed",
+              "export_ready",
+              "export_failed"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "nullable": true
+            },
+            "description": "Values for the message text, by kind (e.g. number, reversalNumber, role, roleAr, branch, period, actor, exportKind, fileName, error)"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path inside the company, e.g. \"journals/<id>\""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "params",
+          "createdAt"
+        ]
+      },
+      "NotificationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "unreadCount": {
+            "type": "number"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as \"cursor\" for older notifications"
+          }
+        },
+        "required": [
+          "items",
+          "unreadCount"
+        ]
+      },
+      "UnreadCountDto": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "unreadCount"
         ]
       },
       "ProblemDetailsDto": {

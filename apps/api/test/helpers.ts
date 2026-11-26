@@ -45,8 +45,9 @@ export async function createTestAuth(): Promise<{
 }
 
 /**
- * Boots the API against the test database. Export jobs are not processed in the background unless
- * a test opts in with { EXPORT_WORKER: 'on' }; tests drive ExportService.process directly.
+ * Boots the API against the test database. Export jobs and outbox events are not processed in the
+ * background unless a test opts in ({ EXPORT_WORKER: 'on' } / { OUTBOX_DISPATCHER: 'on' }); tests
+ * drive ExportService.process and OutboxDispatcher.drain directly.
  */
 export async function bootApp(
   overrides: Record<string, string> = {},
@@ -54,6 +55,7 @@ export async function bootApp(
   const env = loadApiEnv({
     ...process.env,
     EXPORT_WORKER: 'off',
+    OUTBOX_DISPATCHER: 'off',
     ...overrides,
     LOG_LEVEL: 'error',
     OIDC_ISSUER: ISSUER,

@@ -77,7 +77,7 @@ export class OrgService {
           companyId: company.id,
           after: { company, adminRoleId: role.id, adminAssignmentId: assignment.id },
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: company.id,
           aggregateType: 'company',
           aggregateId: company.id,
@@ -143,7 +143,7 @@ export class OrgService {
           branchId: branch.id,
           after: branch,
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: scope.companyId,
           aggregateType: 'branch',
           aggregateId: branch.id,

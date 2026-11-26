@@ -7,6 +7,12 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { sectionFor } from '@/lib/navigation';
 import type { SidebarGroup } from './Sidebar';
 
+/** Company pages reached from the header rather than the menu. */
+const PAGES_OUTSIDE_MENU = [
+  { path: 'search', label: 'search.title' },
+  { path: 'notifications', label: 'notify.title' },
+] as const;
+
 export interface Crumb {
   href: string;
   label: string;
@@ -33,9 +39,9 @@ export function Breadcrumbs({
   const section =
     sectionBase && path !== sectionBase
       ? (sectionFor(groups, path, sectionBase) ??
-        (path.startsWith(`${sectionBase}/search`)
-          ? { href: `${sectionBase}/search`, label: t('search.title') }
-          : undefined))
+        PAGES_OUTSIDE_MENU.map((p) => ({ href: `${sectionBase}/${p.path}`, label: t(p.label) })).find(
+          (p) => path === p.href || path.startsWith(`${p.href}/`),
+        ))
       : undefined;
   const all = section ? [...trail, section] : trail;
   return (

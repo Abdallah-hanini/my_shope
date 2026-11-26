@@ -191,7 +191,7 @@ export class IamService {
         before: { name: role.name, nameAr: role.nameAr, permissions: role.permissions },
         after: { name: after.name, nameAr: after.nameAr, permissions: after.permissions },
       });
-      await enqueueOutbox(tx, {
+      await enqueueOutbox(tx, ctx, {
         companyId: scope.companyId,
         aggregateType: 'role',
         aggregateId: role.id,
@@ -273,7 +273,7 @@ export class IamService {
           branchId,
           after: { ...a, roleCode: role.code },
         });
-        await enqueueOutbox(tx, {
+        await enqueueOutbox(tx, ctx, {
           companyId: scope.companyId,
           aggregateType: 'user',
           aggregateId: user.id,
@@ -322,7 +322,7 @@ export class IamService {
         branchId: a.branchId,
         before: { ...a, role: undefined, roleCode: a.role.code },
       });
-      await enqueueOutbox(tx, {
+      await enqueueOutbox(tx, ctx, {
         companyId: scope.companyId,
         aggregateType: 'user',
         aggregateId: a.userId,

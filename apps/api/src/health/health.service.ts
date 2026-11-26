@@ -67,6 +67,16 @@ export class HealthService {
       runCheck('cache', () => this.cache.ping()),
       runCheck('queue', () => this.queue.ping()),
     ]);
-    return aggregate(checks);
+    const report = aggregate(checks);
+    if (checks[0]?.status === 'up') {
+      const [pending, deadLettered] = await Promise.all([
+        this.prisma.outboxEvent.count({ where: { publishedAt: null, deadLetteredAt: null } }),
+        this.prisma.outboxEvent.count({ where: { deadLetteredAt: { not: null } } }),
+      ]).catch(() => [null, null] as const);
+      report.events = pending === null || deadLettered === null ? null : { pending, deadLettered };
+    } else {
+      report.events = null;
+    }
+    return report;
   }
 }

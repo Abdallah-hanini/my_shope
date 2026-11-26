@@ -496,6 +496,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Newest first, with the unread count */
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["countUnreadNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markAllNotificationsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markNotificationRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -517,6 +582,12 @@ export interface components {
             /** @description Short, non-sensitive failure reason */
             error?: string;
         };
+        EventDeliveryDto: {
+            /** @description Business events waiting for delivery (normally 0 within seconds) */
+            pending: number;
+            /** @description Events that failed too often and need an operator (see the API log) */
+            deadLettered: number;
+        };
         HealthReportDto: {
             /** @enum {string} */
             status: "up" | "down";
@@ -527,6 +598,8 @@ export interface components {
             checkedAt: string;
             version: string;
             checks: components["schemas"]["DependencyCheckDto"][];
+            /** @description Outbox delivery (information; does not change status). Null when the database is down */
+            events?: components["schemas"]["EventDeliveryDto"] | null;
         };
         CreateCompanyDto: {
             /** @example ACME */
@@ -1085,6 +1158,30 @@ export interface components {
              * @description The file is deleted after this time
              */
             expiresAt?: string | null;
+        };
+        NotificationDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed";
+            /** @description Values for the message text, by kind (e.g. number, reversalNumber, role, roleAr, branch, period, actor, exportKind, fileName, error) */
+            params: {
+                [key: string]: string | null;
+            };
+            /** @description Path inside the company, e.g. "journals/<id>" */
+            link?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            readAt?: string | null;
+        };
+        NotificationPageDto: {
+            items: components["schemas"]["NotificationDto"][];
+            unreadCount: number;
+            /** @description Pass as "cursor" for older notifications */
+            nextCursor?: string | null;
+        };
+        UnreadCountDto: {
+            unreadCount: number;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -2044,6 +2141,97 @@ export interface operations {
                 content: {
                     "text/csv": string;
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: {
+                /** @description 1–100, default 20 */
+                limit?: unknown;
+                unreadOnly?: "true" | "false";
+                cursor?: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPageDto"];
+                };
+            };
+        };
+    };
+    countUnreadNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCountDto"];
+                };
+            };
+        };
+    };
+    markAllNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description unreadCount is 0 afterwards */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCountDto"];
+                };
+            };
+        };
+    };
+    markNotificationRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDto"];
                 };
             };
         };

@@ -10,6 +10,7 @@ import { API_ENV, type ApiEnv } from '../config/env';
 import { PrismaService } from '../infra/prisma.service';
 import { ledgerBranchFilter } from '../reporting/report-scope';
 import { writeAudit, type AuditContext } from '../platform/audit';
+import { enqueueOutbox } from '../platform/outbox';
 import { ExportBuilders } from './builders';
 import { toCsv } from './csv';
 import type { ExportJobDto } from './export.dto';
@@ -229,9 +230,12 @@ export class ExportService {
       const p = input.params;
       const fileName = `${input.kind.replace('_', '-')}_${job.company.code}_${p.from}_${p.to}.${input.format}`;
       const finishedAt = new Date();
-      await this.prisma.exportJob.update({
-        where: { id },
-        data: {
+      await this.finish(
+        id,
+        input.kind,
+        'succeeded',
+        { fileName },
+        {
           status: 'succeeded',
           content: new Uint8Array(content),
           sizeBytes: content.length,
@@ -243,7 +247,7 @@ export class ExportService {
           finishedAt,
           expiresAt: new Date(finishedAt.getTime() + this.env.EXPORT_RETENTION_DAYS * 86_400_000),
         },
-      });
+      );
       return 'done';
     } catch (err) {
       const message =
@@ -252,12 +256,39 @@ export class ExportService {
           : 'The export failed unexpectedly; it has been logged. Try again or contact support.';
       if (!(err instanceof DomainError))
         this.logger.error(`export ${id} failed: ${err instanceof Error ? err.stack : String(err)}`);
-      await this.prisma.exportJob.update({
-        where: { id },
-        data: { status: 'failed', error: message, finishedAt: new Date() },
-      });
+      await this.finish(
+        id,
+        job.kind,
+        'failed',
+        { error: message },
+        { status: 'failed', error: message, finishedAt: new Date() },
+      );
       return 'done';
     }
+  }
+
+  /** Final state change and its outbox event (the requester is notified) in one transaction. */
+  private async finish(
+    id: string,
+    kind: string,
+    status: 'succeeded' | 'failed',
+    info: { fileName?: string; error?: string },
+    data: Prisma.ExportJobUpdateInput,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const job = await tx.exportJob.update({ where: { id }, data, select: { companyId: true } });
+      await enqueueOutbox(
+        tx,
+        { actorUserId: null },
+        {
+          companyId: job.companyId,
+          aggregateType: 'export_job',
+          aggregateId: id,
+          eventType: 'export.completed',
+          payload: { exportId: id, kind, status, ...info },
+        },
+      );
+    });
   }
 
   /**
@@ -269,14 +300,21 @@ export class ExportService {
       where: { status: 'succeeded', expiresAt: { lte: new Date() } },
       data: { status: 'expired', content: null },
     });
-    const interrupted = await this.prisma.exportJob.updateMany({
+    const stuck = await this.prisma.exportJob.findMany({
       where: { status: 'running', startedAt: { lt: new Date(Date.now() - STUCK_AFTER_MS) } },
-      data: {
-        status: 'failed',
-        error: 'The export was interrupted (server restart); request it again',
-        finishedAt: new Date(),
-      },
+      select: { id: true, kind: true },
     });
+    const error = 'The export was interrupted (server restart); request it again';
+    for (const j of stuck) {
+      await this.finish(
+        j.id,
+        j.kind,
+        'failed',
+        { error },
+        { status: 'failed', error, finishedAt: new Date() },
+      );
+    }
+    const interrupted = { count: stuck.length };
     const waiting = await this.prisma.exportJob.findMany({
       where: { status: 'queued', createdAt: { lt: new Date(Date.now() - 30_000) } },
       select: { id: true },

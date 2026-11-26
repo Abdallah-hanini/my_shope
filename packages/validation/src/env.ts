@@ -48,6 +48,9 @@ export const apiEnvSchema = z
     KEYCLOAK_ADMIN_CLIENT_SECRET: z.string().min(1).optional(),
     /** Process export jobs in this API instance (off in tests that drive jobs directly). */
     EXPORT_WORKER: z.enum(['on', 'off']).default('on'),
+    /** Deliver outbox events (notifications) from this API instance (off in tests that drive it). */
+    OUTBOX_DISPATCHER: z.enum(['on', 'off']).default('on'),
+    OUTBOX_POLL_MS: z.coerce.number().int().min(200).max(60_000).default(2000),
     EXPORT_RETENTION_DAYS: z.coerce.number().int().min(1).max(90).default(7),
     /** Largest file kept in the database; bigger exports fail with "narrow the range". */
     EXPORT_MAX_BYTES: z.coerce
