@@ -14,6 +14,7 @@ export const NOTIFICATION_KINDS = [
   'job_addition_proposed',
   'job_addition_approved',
   'job_addition_declined',
+  'job_part_arrived',
 ] as const;
 
 export class NotificationDto {

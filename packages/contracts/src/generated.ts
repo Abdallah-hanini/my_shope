@@ -1288,6 +1288,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/parts/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Special order: a part the branch has too little of, reserved for the job when it arrives */
+        post: operations["orderJobPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/cancel-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a special order (with a reason) */
+        post: operations["cancelPartOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reserve an ordered part from stock already at the branch */
+        post: operations["allocateOrderedPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/special-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Parts ordered for jobs, oldest first */
+        get: operations["listSpecialOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/tax": {
         parameters: {
             query?: never;
@@ -2531,7 +2599,7 @@ export interface components {
         NotificationDto: {
             id: string;
             /** @enum {string} */
-            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed" | "job_assigned" | "job_rework" | "job_ready" | "job_addition_proposed" | "job_addition_approved" | "job_addition_declined";
+            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed" | "job_assigned" | "job_rework" | "job_ready" | "job_addition_proposed" | "job_addition_approved" | "job_addition_declined" | "job_part_arrived";
             /** @description Values for the message text, by kind (e.g. number, reversalNumber, role, roleAr, branch, period, actor, exportKind, fileName, error) */
             params: {
                 [key: string]: string | null;
@@ -3208,14 +3276,24 @@ export interface components {
             /** @example 4.500 */
             quantity: string;
             /** @enum {string} */
-            status: "reserved" | "issued" | "returned" | "released";
+            status: "ordered" | "reserved" | "issued" | "returned" | "released" | "cancelled";
             /** @description Stock value taken out (issued) */
             cost?: string | null;
             /** @description Selling price per unit */
             salePrice?: string | null;
             issueNumber?: string | null;
             returnNumber?: string | null;
-            /** @description release, issue, return */
+            /**
+             * Format: date-time
+             * @description Special order
+             */
+            orderedAt?: string | null;
+            supplierName?: string | null;
+            orderRef?: string | null;
+            /** Format: date-time */
+            arrivedAt?: string | null;
+            cancelReason?: string | null;
+            /** @description release, issue, return, allocate, cancelOrder */
             actions: string[];
         };
         PartChoiceDto: {
@@ -3227,6 +3305,10 @@ export interface components {
             available: string;
             salePrice?: string | null;
         };
+        SupplierRefDto: {
+            id: string;
+            name: string;
+        };
         JobPartsDto: {
             jobId: string;
             parts: components["schemas"]["JobPartDto"][];
@@ -3234,6 +3316,12 @@ export interface components {
             canAdd: boolean;
             /** @description Parts with stock available at the branch (when canAdd) */
             choices: components["schemas"]["PartChoiceDto"][];
+            /** @description The caller can order parts for this job now (customer authorised) */
+            canOrder: boolean;
+            /** @description Active parts with what is available (when canOrder) */
+            orderChoices: components["schemas"]["PartChoiceDto"][];
+            /** @description Active suppliers (when canOrder) */
+            suppliers: components["schemas"]["SupplierRefDto"][];
         };
         AddJobPartDto: {
             partId: string;
@@ -3243,6 +3331,44 @@ export interface components {
         JobPartStepDto: {
             /** @description A new UUID per form */
             idempotencyKey: string;
+        };
+        OrderJobPartDto: {
+            partId: string;
+            /** @example 2 */
+            quantity: string;
+            supplierId?: string | null;
+            orderRef?: string | null;
+        };
+        CancelOrderDto: {
+            reason: string;
+        };
+        SpecialOrderDto: {
+            id: string;
+            jobId: string;
+            jobNumber: string;
+            jobStatus: string;
+            branchCode: string;
+            customerName: string;
+            plate: string;
+            partId: string;
+            sku: string;
+            partName: string;
+            unit: string;
+            quantity: string;
+            /** @enum {string} */
+            status: "ordered" | "reserved" | "issued" | "returned" | "released" | "cancelled";
+            supplierName?: string | null;
+            orderRef?: string | null;
+            /** Format: date-time */
+            orderedAt: string;
+            /** Format: date-time */
+            arrivedAt?: string | null;
+            /** @description Whole days from ordering to arrival (or until now) */
+            daysWaiting: number;
+        };
+        SpecialOrderListDto: {
+            /** @description Oldest first (up to 500) */
+            orders: components["schemas"]["SpecialOrderDto"][];
         };
         AccountRefDto: {
             id: string;
@@ -6411,6 +6537,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    orderJobPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderJobPartDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    cancelPartOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPartId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    allocateOrderedPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobPartId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPartsDto"];
+                };
+            };
+        };
+    };
+    listSpecialOrders: {
+        parameters: {
+            query?: {
+                branchId?: unknown;
+                status?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpecialOrderListDto"];
                 };
             };
         };

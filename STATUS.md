@@ -12,6 +12,51 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments. Not yet: purchase orders, returns, transfers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: Special orders (T-77)
+
+### Owner's decisions (2026-12-01)
+
+- No customer deposit for now; the part is paid with the job's invoice.
+- Parts are ordered only after the customer authorised the work.
+- When the delivery is received, it is reserved for the job automatically and the job's managers are notified.
+
+### Changes
+
+- **Order part** (Parts card on the job card): for a part the branch has too little of, after authorisation and before the quality check, by managers or stock managers. Optional supplier and the supplier's order reference. Refused when enough is available ("reserve it instead").
+- **Arrival:** receiving stock of that part at the branch reserves waiting orders, oldest first, in the receipt's transaction. An order that does not fit in what arrived stops the round, so a large early order is not overtaken. The job's timeline shows "Ordered part arrived and reserved". The branch's job managers get a notification (not the person who received).
+- **Reserve from stock** on an ordered line when stock is already there (for example released by another job).
+- **Cancel order** with a reason. Cancelling the job cancels its orders ("Job cancelled").
+- **Rules:**
+  - the quality check waits while ordered parts have not arrived;
+  - quotes price ordered parts like reserved ones;
+  - the database refuses to reserve an arriving order beyond what is on hand, and order details never change.
+- **Special orders list** (`/special-orders`, Inventory menu): waiting or all, oldest first, with job, plate, customer, supplier, order reference, date and days waiting. Permission `inventory.read`, branch scope.
+- **Migration `special_orders`:**
+  - order columns on the job part (ordered, supplier, reference, arrived, cancel reason) and statuses `ordered` and `cancelled`;
+  - an order shape check;
+  - the job part guard rewritten (only status, cost, movements, arrival and cancel reason may change, forward only);
+  - the reservation check now also runs when an order becomes a reservation;
+  - new timeline and notification kinds.
+- **Not yet:** customer deposits, purchase orders sent to suppliers, special orders for parts not in the catalogue (add the part first), splitting a partly delivered order.
+
+### Evidence (2026-12-01, Linux Docker)
+
+- Integration (special-orders.int, 8):
+  - not before authorisation; technicians refused; unknown supplier refused; supplier and reference shown;
+  - the quote prices 2 × 90.00; the quality check refused ("have not arrived");
+  - deliveries of 2 and 3 reserve the orders of 2 and 1 in order, while an order of 5 waits (on hand 5, reserved 3); timeline entries;
+  - notifications to the branch's managers and the administrator, not the receiver;
+  - ordering refused while enough is available; a later delivery reserves the 5; reserve from stock by hand after a release (technician refused; twice refused);
+  - cancel with a reason (empty refused; twice refused); cancelling the job cancels its order, and a later delivery leaves it cancelled;
+  - the list: open, all, another branch 404;
+  - database refusals: changed order details, arrival without stock, cancel without reason, ordered → issued.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; browser end-to-end 48/48.
+- Integration on a fresh database: 240 of 241 passed. The one failure is the time-of-day issue in `settings.int` described in T-76 (between 21:00 and 24:00 UTC); it is unrelated to this change.
+- Browser check (new):
+  - JC-2026-000002 inspected and authorised; 100 litres of oil ordered from Gulf Parts (ref PO-1), shown as Ordered and on the special orders list;
+  - after a delivery of 100 litres, the line is Reserved with "arrived", the timeline says so, and the list is empty;
+  - the special orders page in Arabic on a phone without horizontal scroll.
+
 ## 2026-12-01: Suppliers, supplier bills and supplier payments (T-76)
 
 ### Changes

@@ -28,6 +28,7 @@ export function renderNotification(n: NotificationLike, locale: Locale): string 
     plate: p.plate ?? '—',
     task: p.task ?? '—',
     finding: p.finding ?? '—',
+    part: p.part ?? '—',
     exportKind: p.exportKind ? t(`export.kind.${p.exportKind}` as MessageKey) : '—',
     fileName: p.fileName ?? '—',
     error: p.error ?? t('error.title'),

@@ -101,7 +101,7 @@ export class QuoteService {
     // Labour: each task at hours × the branch rate. Parts (T-75): each reserved or issued job part
     // at quantity × its selling price (in the line's hours and rate).
     const parts = await tx.jobPart.findMany({
-      where: { jobId: job.id, status: { in: ['reserved', 'issued'] } },
+      where: { jobId: job.id, status: { in: ['ordered', 'reserved', 'issued'] } },
       include: { part: true },
       orderBy: { createdAt: 'asc' },
     });

@@ -1178,6 +1178,7 @@ async function main() {
           'stock',
           'suppliers',
           'supplier-bills',
+          'special-orders',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1638,6 +1639,77 @@ async function main() {
         await page.locator('tr[data-bill]').filter({ hasText: 'GP-100' }).getByText('Paid').waitFor();
         await page.locator('[data-reconciled=true]').waitFor();
         await page.getByText('Matches the ledger').waitFor();
+      },
+    );
+
+    await check(
+      'Special order: after authorisation, order a part the branch has too little of; the delivery reserves it for the job',
+      async () => {
+        await page.goto(`${base()}/jobs?view=list`);
+        await Promise.all([
+          page.waitForURL(/\/jobs\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'JC-2026-000002' }).click(),
+        ]);
+        const job2 = page.url();
+        assert(
+          (await page.getByRole('form', { name: 'Order part' }).count()) === 0,
+          'order offered before authorisation',
+        );
+        await page
+          .getByRole('form', { name: 'Check-in inspection' })
+          .getByRole('button', { name: 'Save inspection' })
+          .click();
+        await page.getByText('Recorded by: E2E Owner').waitFor();
+        await page.getByRole('button', { name: 'Record authorisation', exact: true }).first().click();
+        await page.locator('main').getByText('Approved', { exact: true }).first().waitFor();
+        const order = page.getByRole('form', { name: 'Order part' });
+        const oil = await order
+          .locator('select[name=partId] option', { hasText: 'OIL-5W30' })
+          .getAttribute('value');
+        await order.getByLabel('Part (available now)').selectOption(oil);
+        await order.getByLabel('Quantity').fill('100');
+        await order.locator('select[name=supplierId]').selectOption({ label: 'Gulf Parts' });
+        await order.getByLabel('Supplier order ref.').fill('PO-1');
+        await order.getByRole('button', { name: 'Order part' }).click();
+        const row = page.locator('tr[data-job-part="OIL-5W30"][data-status=ordered]');
+        await row.getByText(/Gulf Parts · PO-1/).waitFor();
+        await shot('special-order-en');
+
+        await page.goto(`${base()}/special-orders`);
+        await page
+          .locator('tr[data-special-order="OIL-5W30"][data-status=ordered]')
+          .getByText('JC-2026-000002')
+          .waitFor();
+
+        await page.goto(`${base()}/parts?q=oil`);
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'OIL-5W30' }).click(),
+        ]);
+        const f = page.getByRole('form', { name: 'Receive stock DOH' });
+        await f.locator('select[name=supplierId]').selectOption({ label: 'Gulf Parts' });
+        await f.getByLabel(/^Quantity/).fill('100');
+        await f.getByLabel(/^Unit cost/).fill('9');
+        await f.getByLabel('Delivery note / supplier invoice no.').fill('DN-700');
+        await f.getByRole('button', { name: 'Receive stock' }).click();
+        await page
+          .locator('[data-movement]')
+          .first()
+          .getByText(/DN-700/)
+          .waitFor();
+
+        await page.goto(job2);
+        await page
+          .locator('tr[data-job-part="OIL-5W30"][data-status=reserved]')
+          .getByText(/arrived/)
+          .waitFor();
+        await page
+          .locator('#timeline-title')
+          .locator('xpath=../..')
+          .getByText('Ordered part arrived and reserved')
+          .waitFor();
+        await page.goto(`${base()}/special-orders`);
+        await page.getByText('No parts are on order.').waitFor();
       },
     );
 

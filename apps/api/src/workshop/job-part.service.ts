@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { AddJobPartInput, JobPartStepInput } from '@erp/validation';
+import type {
+  AddJobPartInput,
+  CancelOrderInput,
+  JobPartStepInput,
+  OrderJobPartInput,
+  SpecialOrderListQuery,
+} from '@erp/validation';
 import type { CompanyScope, Principal } from '../auth/principal';
 import { AuthzService } from '../authz/authz.service';
 import { resolveScope } from '../authz/scope';
@@ -9,7 +15,7 @@ import { PrismaService } from '../infra/prisma.service';
 import { applyMovement } from '../inventory/movement';
 import { stockOut } from '../inventory/stock-math';
 import { writeAudit, type AuditContext } from '../platform/audit';
-import type { JobPartsDto } from './job-part.dto';
+import type { JobPartsDto, SpecialOrderListDto } from './job-part.dto';
 
 type Tx = Prisma.TransactionClient;
 const D = Prisma.Decimal;
@@ -70,11 +76,13 @@ export class JobPartService {
     const [rows, allowed] = await Promise.all([
       this.prisma.jobPart.findMany({
         where: { jobId },
-        include: { part: true },
+        include: { part: true, supplier: { select: { name: true } } },
         orderBy: { createdAt: 'asc' },
       }),
       this.can(p, scope.companyId, job.branchId),
     ]);
+    const canOrder = allowed && ISSUE_STATUSES.includes(job.status);
+    const needAvail = canOrder || rows.some((r) => r.status === 'ordered');
     const movements = await this.prisma.stockMovement.findMany({
       where: {
         id: {
@@ -86,8 +94,34 @@ export class JobPartService {
     const num = (id: string | null) => movements.find((m) => m.id === id)?.number ?? null;
     const canAdd = allowed && ADD_STATUSES.includes(job.status);
     let choices: JobPartsDto['choices'] = [];
+    let orderChoices: JobPartsDto['orderChoices'] = [];
+    let suppliers: JobPartsDto['suppliers'] = [];
+    const avail = canAdd || needAvail ? await this.available(this.prisma, job.branchId) : new Map();
+    const free = (partId: string) => avail.get(partId) ?? new D(0);
+    if (canOrder) {
+      const [parts, sups] = await Promise.all([
+        this.prisma.part.findMany({
+          where: { companyId: scope.companyId, active: true },
+          orderBy: { sku: 'asc' },
+          take: 1000,
+        }),
+        this.prisma.supplier.findMany({
+          where: { companyId: scope.companyId, active: true },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        }),
+      ]);
+      orderChoices = parts.map((x) => ({
+        partId: x.id,
+        sku: x.sku,
+        name: x.name,
+        unit: x.unit,
+        available: free(x.id).toFixed(3),
+        salePrice: x.salePrice?.toFixed(2) ?? null,
+      }));
+      suppliers = sups;
+    }
     if (canAdd) {
-      const avail = await this.available(this.prisma, job.branchId);
       const parts = await this.prisma.part.findMany({
         where: { companyId: scope.companyId, active: true, id: { in: [...avail.keys()] } },
         orderBy: { sku: 'asc' },
@@ -107,8 +141,16 @@ export class JobPartService {
       jobId,
       canAdd,
       choices,
+      canOrder,
+      orderChoices,
+      suppliers,
       parts: rows.map((r) => {
         const actions: string[] = [];
+        if (allowed && r.status === 'ordered') {
+          if (ADD_STATUSES.includes(job.status) && !free(r.partId).lessThan(r.quantity))
+            actions.push('allocate');
+          actions.push('cancelOrder');
+        }
         if (allowed && r.status === 'reserved' && OPEN_STATUSES.includes(job.status)) actions.push('release');
         if (allowed && r.status === 'reserved' && ISSUE_STATUSES.includes(job.status)) actions.push('issue');
         if (allowed && r.status === 'issued' && OPEN_STATUSES.includes(job.status)) actions.push('return');
@@ -124,6 +166,11 @@ export class JobPartService {
           salePrice: r.part.salePrice?.toFixed(2) ?? null,
           issueNumber: num(r.issueMovementId),
           returnNumber: num(r.returnMovementId),
+          orderedAt: r.orderedAt?.toISOString() ?? null,
+          supplierName: r.supplier?.name ?? null,
+          orderRef: r.orderRef,
+          arrivedAt: r.arrivedAt?.toISOString() ?? null,
+          cancelReason: r.cancelReason,
           actions,
         };
       }),
@@ -216,6 +263,161 @@ export class JobPartService {
       });
     });
     return this.list(scope, p, pre.jobId);
+  }
+
+  /** Order a part for the job (T-77): after the customer authorised, when the branch has too little. */
+  async order(scope: CompanyScope, p: Principal, jobId: string, input: OrderJobPartInput, ctx: AuditContext) {
+    await this.prisma.$transaction(async (tx) => {
+      const job = await this.job(tx, scope, jobId, true);
+      if (!(await this.can(p, scope.companyId, job.branchId)))
+        throw forbidden('Only managers or stock managers order parts');
+      if (!ISSUE_STATUSES.includes(job.status))
+        throw conflict('Parts are ordered once the customer authorised the work, before the quality check');
+      const part = await tx.part.findUnique({
+        where: { companyId_id: { companyId: scope.companyId, id: input.partId } },
+      });
+      if (!part || !part.active) throw notFound('Part');
+      let supplierName: string | null = null;
+      if (input.supplierId) {
+        const sup = await tx.supplier.findUnique({
+          where: { companyId_id: { companyId: scope.companyId, id: input.supplierId } },
+        });
+        if (!sup) throw notFound('Supplier');
+        if (!sup.active) throw unprocessable(`Supplier ${sup.name} is inactive`);
+        supplierName = sup.name;
+      }
+      const avail = (await this.available(tx, job.branchId, [part.id])).get(part.id) ?? new D(0);
+      if (!avail.lessThan(input.quantity))
+        throw conflict(
+          `${avail.toFixed(3)} ${part.unit} of ${part.sku} are available at this branch; reserve it instead of ordering`,
+        );
+      const jp = await tx.jobPart.create({
+        data: {
+          companyId: scope.companyId,
+          branchId: job.branchId,
+          jobId,
+          partId: part.id,
+          quantity: input.quantity,
+          status: 'ordered',
+          orderedAt: new Date(),
+          supplierId: input.supplierId ?? null,
+          orderRef: input.orderRef ?? null,
+          createdBy: p.userId,
+        },
+      });
+      await this.event(
+        tx,
+        job,
+        p.userId,
+        'part_ordered',
+        `${part.sku} × ${new D(input.quantity).toFixed(3)}${supplierName ? ` · ${supplierName}` : ''}${input.orderRef ? ` · ${input.orderRef}` : ''}`,
+      );
+      await writeAudit(tx, ctx, {
+        action: 'workshop.part.order',
+        entityType: 'job_part',
+        entityId: jp.id,
+        companyId: scope.companyId,
+        branchId: job.branchId,
+        after: input,
+      });
+    });
+    return this.list(scope, p, jobId);
+  }
+
+  cancelOrder(
+    scope: CompanyScope,
+    p: Principal,
+    jobPartId: string,
+    input: CancelOrderInput,
+    ctx: AuditContext,
+  ) {
+    return this.step(scope, p, jobPartId, ctx, async (tx, jp, job) => {
+      if (jp.status !== 'ordered') throw conflict(`This part is ${jp.status}`);
+      await tx.jobPart.update({
+        where: { id: jp.id },
+        data: { status: 'cancelled', cancelReason: input.reason },
+      });
+      await this.event(
+        tx,
+        job,
+        p.userId,
+        'part_order_cancelled',
+        `${jp.part.sku} × ${jp.quantity.toFixed(3)} · ${input.reason}`,
+      );
+      return 'workshop.part.order_cancel';
+    });
+  }
+
+  /** Reserve an ordered part from stock that is already there (e.g. released by another job). */
+  allocate(scope: CompanyScope, p: Principal, jobPartId: string, ctx: AuditContext) {
+    return this.step(scope, p, jobPartId, ctx, async (tx, jp, job) => {
+      if (jp.status !== 'ordered') throw conflict(`This part is ${jp.status}`);
+      if (!ADD_STATUSES.includes(job.status)) throw conflict(`The job is ${job.status}`);
+      await tx.$queryRaw`SELECT 1 FROM inventory.stock WHERE branch_id = ${job.branchId}::uuid AND part_id = ${jp.partId}::uuid FOR UPDATE`;
+      const avail = (await this.available(tx, job.branchId, [jp.partId])).get(jp.partId) ?? new D(0);
+      if (avail.lessThan(jp.quantity))
+        throw unprocessable(
+          `Only ${avail.toFixed(3)} ${jp.part.unit} of ${jp.part.sku} available at this branch`,
+        );
+      await tx.jobPart.update({ where: { id: jp.id }, data: { status: 'reserved', arrivedAt: new Date() } });
+      await this.event(tx, job, p.userId, 'part_arrived', `${jp.part.sku} × ${jp.quantity.toFixed(3)}`);
+      return 'workshop.part.allocate';
+    });
+  }
+
+  /** Parts ordered for jobs, oldest first, in the caller's branches (T-77). */
+  async specialOrders(scope: CompanyScope, q: SpecialOrderListQuery): Promise<SpecialOrderListDto> {
+    if (q.branchId && !scope.allBranches && !scope.branchIds.includes(q.branchId)) throw notFound('Branch');
+    const rows = await this.prisma.jobPart.findMany({
+      where: {
+        companyId: scope.companyId,
+        orderedAt: { not: null },
+        ...(q.status === 'all' ? {} : { status: 'ordered' }),
+        ...(q.branchId
+          ? { branchId: q.branchId }
+          : scope.allBranches
+            ? {}
+            : { branchId: { in: scope.branchIds } }),
+      },
+      include: {
+        part: true,
+        supplier: { select: { name: true } },
+        job: {
+          select: {
+            number: true,
+            status: true,
+            branch: { select: { code: true } },
+            customer: { select: { name: true } },
+            vehicle: { select: { plate: true } },
+          },
+        },
+      },
+      orderBy: { orderedAt: 'asc' },
+      take: 500,
+    });
+    const now = Date.now();
+    return {
+      orders: rows.map((r) => ({
+        id: r.id,
+        jobId: r.jobId,
+        jobNumber: r.job.number,
+        jobStatus: r.job.status,
+        branchCode: r.job.branch.code,
+        customerName: r.job.customer.name,
+        plate: r.job.vehicle.plate,
+        partId: r.partId,
+        sku: r.part.sku,
+        partName: r.part.name,
+        unit: r.part.unit,
+        quantity: r.quantity.toFixed(3),
+        status: r.status,
+        supplierName: r.supplier?.name ?? null,
+        orderRef: r.orderRef,
+        orderedAt: r.orderedAt!.toISOString(),
+        arrivedAt: r.arrivedAt?.toISOString() ?? null,
+        daysWaiting: Math.floor(((r.arrivedAt?.getTime() ?? now) - r.orderedAt!.getTime()) / 86_400_000),
+      })),
+    };
   }
 
   release(scope: CompanyScope, p: Principal, jobPartId: string, ctx: AuditContext) {

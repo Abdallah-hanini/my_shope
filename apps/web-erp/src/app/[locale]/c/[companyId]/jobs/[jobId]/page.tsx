@@ -296,7 +296,13 @@ export default async function JobPage({
           </Card>
 
           {jobParts.ok ? (
-            <JobPartsCard jobId={j.id} data={jobParts.data} locale={locale} companyId={companyId} />
+            <JobPartsCard
+              jobId={j.id}
+              data={jobParts.data}
+              locale={locale}
+              companyId={companyId}
+              timeZone={tz}
+            />
           ) : null}
 
           {quotes.ok ? (

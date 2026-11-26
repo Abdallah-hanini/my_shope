@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -6,18 +6,32 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import {
   addJobPartSchema,
+  cancelOrderSchema,
   jobPartStepSchema,
+  orderJobPartSchema,
+  specialOrderListQuerySchema,
   type AddJobPartInput,
+  type CancelOrderInput,
   type JobPartStepInput,
+  type OrderJobPartInput,
+  type SpecialOrderListQuery,
 } from '@erp/validation';
 import { CurrentPrincipal, CurrentScope, RequestId, RequirePermission } from '../auth/decorators';
 import type { CompanyScope, Principal } from '../auth/principal';
 import { ZodPipe } from '../common/zod.pipe';
-import { AddJobPartDto, JobPartsDto, JobPartStepDto } from './job-part.dto';
+import {
+  AddJobPartDto,
+  CancelOrderDto,
+  JobPartsDto,
+  JobPartStepDto,
+  OrderJobPartDto,
+  SpecialOrderListDto,
+} from './job-part.dto';
 import { JobPartService } from './job-part.service';
 
 const id404 = new ParseUUIDPipe({ errorHttpStatusCode: 404 });
@@ -116,5 +130,72 @@ export class JobPartController {
     @RequestId() rid?: string,
   ) {
     return this.parts.returnToStock(s, p, id, b, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/parts/order')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'orderJobPart',
+    summary: 'Special order: a part the branch has too little of, reserved for the job when it arrives',
+  })
+  @ApiBody({ type: OrderJobPartDto })
+  @ApiCreatedResponse({ type: JobPartsDto })
+  order(
+    @CurrentScope() s: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) jobId: string,
+    @Body(new ZodPipe(orderJobPartSchema)) b: OrderJobPartInput,
+    @RequestId() rid?: string,
+  ) {
+    return this.parts.order(s, p, jobId, b, ctxOf(p, rid));
+  }
+
+  @Post('job-parts/:jobPartId/cancel-order')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobPartId', format: 'uuid' })
+  @ApiOperation({ operationId: 'cancelPartOrder', summary: 'Cancel a special order (with a reason)' })
+  @ApiBody({ type: CancelOrderDto })
+  @ApiOkResponse({ type: JobPartsDto })
+  cancelOrder(
+    @CurrentScope() s: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobPartId', id404) id: string,
+    @Body(new ZodPipe(cancelOrderSchema)) b: CancelOrderInput,
+    @RequestId() rid?: string,
+  ) {
+    return this.parts.cancelOrder(s, p, id, b, ctxOf(p, rid));
+  }
+
+  @Post('job-parts/:jobPartId/allocate')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobPartId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'allocateOrderedPart',
+    summary: 'Reserve an ordered part from stock already at the branch',
+  })
+  @ApiOkResponse({ type: JobPartsDto })
+  allocate(
+    @CurrentScope() s: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobPartId', id404) id: string,
+    @RequestId() rid?: string,
+  ) {
+    return this.parts.allocate(s, p, id, ctxOf(p, rid));
+  }
+
+  @Get('special-orders')
+  @RequirePermission('inventory.read')
+  @ApiQuery({ name: 'status', required: false, enum: ['open', 'all'] })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOperation({ operationId: 'listSpecialOrders', summary: 'Parts ordered for jobs, oldest first' })
+  @ApiOkResponse({ type: SpecialOrderListDto })
+  specialOrders(
+    @CurrentScope() s: CompanyScope,
+    @Query(new ZodPipe(specialOrderListQuerySchema)) q: SpecialOrderListQuery,
+  ) {
+    return this.parts.specialOrders(s, q);
   }
 }

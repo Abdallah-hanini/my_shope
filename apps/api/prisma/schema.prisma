@@ -1151,28 +1151,37 @@ model StockMovement {
 /// A part reserved for a job, then issued to it (cost to cost of parts sold), or released, or
 /// returned to stock (T-75).
 model JobPart {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  companyId        String   @map("company_id") @db.Uuid
-  branchId         String   @map("branch_id") @db.Uuid
-  jobId            String   @map("job_id") @db.Uuid
-  partId           String   @map("part_id") @db.Uuid
-  quantity         Decimal  @db.Decimal(14, 3)
-  /// reserved | issued | returned | released
-  status           String   @default("reserved")
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  branchId         String    @map("branch_id") @db.Uuid
+  jobId            String    @map("job_id") @db.Uuid
+  partId           String    @map("part_id") @db.Uuid
+  quantity         Decimal   @db.Decimal(14, 3)
+  /// ordered | reserved | issued | returned | released | cancelled
+  status           String    @default("reserved")
   /// Stock value taken out when issued (weighted average).
-  cost             Decimal? @db.Decimal(16, 2)
-  issueMovementId  String?  @unique @map("issue_movement_id") @db.Uuid
-  returnMovementId String?  @unique @map("return_movement_id") @db.Uuid
-  createdBy        String   @map("created_by") @db.Uuid
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  cost             Decimal?  @db.Decimal(16, 2)
+  issueMovementId  String?   @unique @map("issue_movement_id") @db.Uuid
+  returnMovementId String?   @unique @map("return_movement_id") @db.Uuid
+  /// Special order (T-77): ordered for this job because the branch had too little in stock.
+  orderedAt        DateTime? @map("ordered_at") @db.Timestamptz(6)
+  supplierId       String?   @map("supplier_id") @db.Uuid
+  orderRef         String?   @map("order_ref")
+  /// When delivered stock was reserved for it.
+  arrivedAt        DateTime? @map("arrived_at") @db.Timestamptz(6)
+  cancelReason     String?   @map("cancel_reason")
+  createdBy        String    @map("created_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   job        JobCard     @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
   part       Part        @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+  supplier   Supplier?   @relation(fields: [companyId, supplierId], references: [companyId, id], onDelete: Restrict)
   quoteLines QuoteLine[]
 
   @@index([jobId])
   @@index([branchId, partId, status])
+  @@index([supplierId])
   @@map("job_part")
   @@schema("workshop")
 }
@@ -1196,6 +1205,7 @@ model Supplier {
   company  Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
   receipts StockMovement[]
   bills    SupplierBill[]
+  jobParts JobPart[]
 
   @@unique([companyId, name])
   @@unique([companyId, id])

@@ -135,3 +135,10 @@ Available to reserve = on hand − Σ reserved quantities at the branch.
 | Price difference | Billed amount − the deliveries' stock value; posted to purchase price differences, stock value unchanged |
 | Payables check | Open bills owed = payables account balance (credit − debit) in the same branches, read in one snapshot |
 | Goods received check | Σ value of deliveries not on a live bill = goods received not invoiced balance (credit − debit) |
+
+## Special orders (T-77)
+
+| Figure | Definition |
+|---|---|
+| Days waiting | Whole days from ordering to arrival, or to now while waiting (24-hour periods, rounded down) |
+| Arrival order | Waiting orders of a part at a branch take a delivery by order time; the first that does not fit in what is available (on hand − reserved) stops the round |

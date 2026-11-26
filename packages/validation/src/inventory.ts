@@ -97,6 +97,34 @@ export type PartPriceInput = z.infer<typeof partPriceSchema>;
 export const addJobPartSchema = z.object({ partId: z.string().uuid(), quantity: quantitySchema });
 export type AddJobPartInput = z.infer<typeof addJobPartSchema>;
 
-export const JOB_PART_STATUSES = ['reserved', 'issued', 'returned', 'released'] as const;
+export const JOB_PART_STATUSES = [
+  'ordered',
+  'reserved',
+  'issued',
+  'returned',
+  'released',
+  'cancelled',
+] as const;
 export const jobPartStepSchema = z.object({ idempotencyKey: z.string().uuid() });
 export type JobPartStepInput = z.infer<typeof jobPartStepSchema>;
+
+// ── special orders (T-77) ───────────────────────────────────────────────────
+
+/** Order a part for a job when the branch has too little (after the customer authorised). */
+export const orderJobPartSchema = z.object({
+  partId: z.string().uuid(),
+  quantity: quantitySchema,
+  supplierId: z.string().uuid().nullable().optional(),
+  /** The supplier's order or confirmation reference, if any. */
+  orderRef: optionalText(80),
+});
+export type OrderJobPartInput = z.infer<typeof orderJobPartSchema>;
+
+export const cancelOrderSchema = z.object({ reason: z.string().trim().min(3).max(300) });
+export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
+
+export const specialOrderListQuerySchema = z.object({
+  status: z.enum(['open', 'all']).optional(),
+  branchId: z.string().uuid().optional(),
+});
+export type SpecialOrderListQuery = z.infer<typeof specialOrderListQuerySchema>;

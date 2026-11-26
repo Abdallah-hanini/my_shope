@@ -15,6 +15,7 @@ import { conflict, forbidden, notFound, unprocessable } from '../common/errors';
 import { PrismaService } from '../infra/prisma.service';
 import { writeAudit, type AuditContext } from '../platform/audit';
 import type { PartDto, PartListDto, PartListItemDto, ValuationDto } from './inventory.dto';
+import { allocateArrivals } from '../workshop/special-orders';
 import { applyMovement, type MovementPlan, type PostingAccounts } from './movement';
 import { averageCost, stockIn, stockOut, type StockLevel } from './stock-math';
 
@@ -303,6 +304,7 @@ export class InventoryService {
     permission: string,
     ctx: AuditContext,
     plan: (level: StockLevel, acc: PostingAccounts) => MovementPlan,
+    after?: (tx: Prisma.TransactionClient, movement: { number: string }) => Promise<unknown>,
   ): Promise<PartDto> {
     const existing = await this.prisma.stockMovement.findUnique({
       where: { companyId_idempotencyKey: { companyId: scope.companyId, idempotencyKey: a.idempotencyKey } },
@@ -325,7 +327,7 @@ export class InventoryService {
           where: { companyId_id: { companyId: scope.companyId, id: a.branchId } },
         });
         if (!branch) throw notFound('Branch');
-        await applyMovement(
+        const mv = await applyMovement(
           tx,
           { ...ctx, actorUserId: p.userId },
           {
@@ -337,6 +339,7 @@ export class InventoryService {
           },
           plan,
         );
+        if (after) await after(tx, mv);
       });
     } catch (e) {
       if (unique(e)) return this.get(scope, p, partId); // the same form, submitted twice at once
@@ -359,21 +362,38 @@ export class InventoryService {
       if (!s) throw notFound('Supplier');
       if (!s.active) throw unprocessable(`Supplier ${s.name} is inactive`);
     }
-    return this.move(scope, p, partId, input, 'inventory.manage', ctx, (level, acc) => {
-      if (!acc.goodsReceived)
-        throw unprocessable('The accountant must choose the goods received account first (Posting accounts)');
-      const c = stockIn(level, new D(input.quantity), new D(input.unitCost));
-      return {
-        kind: 'receipt',
-        quantity: new D(input.quantity),
-        unitCost: c.unitCost,
-        value: c.movementValue,
-        after: c.after,
-        debit: acc.inventory,
-        credit: acc.goodsReceived,
-        reference: input.reference,
-      };
-    });
+    return this.move(
+      scope,
+      p,
+      partId,
+      input,
+      'inventory.manage',
+      ctx,
+      (level, acc) => {
+        if (!acc.goodsReceived)
+          throw unprocessable(
+            'The accountant must choose the goods received account first (Posting accounts)',
+          );
+        const c = stockIn(level, new D(input.quantity), new D(input.unitCost));
+        return {
+          kind: 'receipt',
+          quantity: new D(input.quantity),
+          unitCost: c.unitCost,
+          value: c.movementValue,
+          after: c.after,
+          debit: acc.inventory,
+          credit: acc.goodsReceived,
+          reference: input.reference,
+        };
+      },
+      // Parts ordered for jobs at this branch take the delivery first (T-77).
+      (tx, mv) =>
+        allocateArrivals(
+          tx,
+          { ...ctx, actorUserId: p.userId },
+          { companyId: scope.companyId, branchId: input.branchId, partId, receipt: mv.number },
+        ),
+    );
   }
 
   adjust(scope: CompanyScope, p: Principal, partId: string, input: AdjustStockInput, ctx: AuditContext) {

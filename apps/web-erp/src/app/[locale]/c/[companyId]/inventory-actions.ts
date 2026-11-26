@@ -5,8 +5,10 @@ import { resolveLocale } from '@erp/localization';
 import {
   addJobPartSchema,
   adjustStockSchema,
+  cancelOrderSchema,
   createPartSchema,
   jobPartStepSchema,
+  orderJobPartSchema,
   partPriceSchema,
   receiveStockSchema,
   updatePartSchema,
@@ -124,7 +126,10 @@ export async function partAction(
   redirect(`/${locale}/c/${companyId}/parts/${partId}`);
 }
 
-export type JobPartOp = { kind: 'add' } | { kind: 'release' | 'issue' | 'return'; jobPartId: string };
+export type JobPartOp =
+  | { kind: 'add' }
+  | { kind: 'order' }
+  | { kind: 'release' | 'issue' | 'return' | 'allocate' | 'cancelOrder'; jobPartId: string };
 
 /** Parts on a job (T-75): reserve, release, issue, return. */
 export async function jobPartAction(
@@ -150,7 +155,40 @@ export async function jobPartAction(
         );
       });
     }
+    if (op.kind === 'order') {
+      const v = validate(orderJobPartSchema, {
+        partId: values.partId,
+        quantity: values.quantity ?? '',
+        supplierId: values.supplierId ? values.supplierId : null,
+        orderRef: values.orderRef,
+      });
+      if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+      return mutate(locale, values, async (api) => {
+        unwrap(
+          await api.POST('/api/v1/companies/{companyId}/jobs/{jobId}/parts/order', {
+            params: { path: { companyId, jobId } },
+            body: v.data,
+          }),
+        );
+      });
+    }
     const path = { params: { path: { companyId, jobPartId: op.jobPartId } } };
+    if (op.kind === 'allocate')
+      return mutate(locale, values, async (api) => {
+        unwrap(await api.POST('/api/v1/companies/{companyId}/job-parts/{jobPartId}/allocate', path));
+      });
+    if (op.kind === 'cancelOrder') {
+      const v = validate(cancelOrderSchema, { reason: values.reason ?? '' });
+      if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+      return mutate(locale, values, async (api) => {
+        unwrap(
+          await api.POST('/api/v1/companies/{companyId}/job-parts/{jobPartId}/cancel-order', {
+            ...path,
+            body: v.data,
+          }),
+        );
+      });
+    }
     if (op.kind === 'release')
       return mutate(locale, values, async (api) => {
         unwrap(await api.POST('/api/v1/companies/{companyId}/job-parts/{jobPartId}/release', path));

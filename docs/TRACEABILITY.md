@@ -78,7 +78,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | INV-011 | Landed cost | 2 | Not started | — |
 | INV-012 | Low stock and aging | 2 | Not started | — |
 | INV-013 | Serial tracking | 2 | Not started | — |
-| INV-014 | Kits and special orders | 2 | Not started | — |
+| INV-014 | Kits and special orders | 2 | Partly done (T-77): special orders for jobs, reserved automatically on delivery, list of waiting orders; kits not yet | `apps/api/src/workshop/special-orders.ts`; special-orders.int; e2e |
 | PRC-001 | Supplier profiles and terms | 2 | Done (T-76): suppliers with Arabic name, contact, tax number, payment terms (due dates), active; what is owed and overdue | `apps/api/src/purchasing`; purchasing.int; e2e |
 | PRC-002 | Requisitions | 2 | Not started | — |
 | PRC-003 | RFQ comparison | 2 | Not started | — |

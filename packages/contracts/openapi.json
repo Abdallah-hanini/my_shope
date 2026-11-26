@@ -4817,6 +4817,215 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/parts/order": {
+      "post": {
+        "operationId": "orderJobPart",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderJobPartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Special order: a part the branch has too little of, reserved for the job when it arrives",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/cancel-order": {
+      "post": {
+        "operationId": "cancelPartOrder",
+        "parameters": [
+          {
+            "name": "jobPartId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a special order (with a reason)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/job-parts/{jobPartId}/allocate": {
+      "post": {
+        "operationId": "allocateOrderedPart",
+        "parameters": [
+          {
+            "name": "jobPartId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPartsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reserve an ordered part from stock already at the branch",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/special-orders": {
+      "get": {
+        "operationId": "listSpecialOrders",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "open",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecialOrderListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Parts ordered for jobs, oldest first",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/tax": {
       "get": {
         "operationId": "getTaxSetup",
@@ -9107,7 +9316,8 @@
               "job_ready",
               "job_addition_proposed",
               "job_addition_approved",
-              "job_addition_declined"
+              "job_addition_declined",
+              "job_part_arrived"
             ]
           },
           "params": {
@@ -11408,10 +11618,12 @@
           "status": {
             "type": "string",
             "enum": [
+              "ordered",
               "reserved",
               "issued",
               "returned",
-              "released"
+              "released",
+              "cancelled"
             ]
           },
           "cost": {
@@ -11432,8 +11644,31 @@
             "type": "string",
             "nullable": true
           },
+          "orderedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Special order"
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "arrivedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
           "actions": {
-            "description": "release, issue, return",
+            "description": "release, issue, return, allocate, cancelOrder",
             "type": "array",
             "items": {
               "type": "string"
@@ -11483,6 +11718,21 @@
           "available"
         ]
       },
+      "SupplierRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "JobPartsDto": {
         "type": "object",
         "properties": {
@@ -11505,13 +11755,34 @@
             "items": {
               "$ref": "#/components/schemas/PartChoiceDto"
             }
+          },
+          "canOrder": {
+            "type": "boolean",
+            "description": "The caller can order parts for this job now (customer authorised)"
+          },
+          "orderChoices": {
+            "description": "Active parts with what is available (when canOrder)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartChoiceDto"
+            }
+          },
+          "suppliers": {
+            "description": "Active suppliers (when canOrder)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierRefDto"
+            }
           }
         },
         "required": [
           "jobId",
           "parts",
           "canAdd",
-          "choices"
+          "choices",
+          "canOrder",
+          "orderChoices",
+          "suppliers"
         ]
       },
       "AddJobPartDto": {
@@ -11540,6 +11811,146 @@
         },
         "required": [
           "idempotencyKey"
+        ]
+      },
+      "OrderJobPartDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "2"
+          },
+          "supplierId": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "partId",
+          "quantity"
+        ]
+      },
+      "CancelOrderDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "SpecialOrderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "jobNumber": {
+            "type": "string"
+          },
+          "jobStatus": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "partName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ordered",
+              "reserved",
+              "issued",
+              "returned",
+              "released",
+              "cancelled"
+            ]
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "arrivedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "daysWaiting": {
+            "type": "number",
+            "description": "Whole days from ordering to arrival (or until now)"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "jobNumber",
+          "jobStatus",
+          "branchCode",
+          "customerName",
+          "plate",
+          "partId",
+          "sku",
+          "partName",
+          "unit",
+          "quantity",
+          "status",
+          "orderedAt",
+          "daysWaiting"
+        ]
+      },
+      "SpecialOrderListDto": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "description": "Oldest first (up to 500)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpecialOrderDto"
+            }
+          }
+        },
+        "required": [
+          "orders"
         ]
       },
       "AccountRefDto": {

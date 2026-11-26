@@ -14,6 +14,7 @@ import {
   Package,
   Boxes,
   Truck,
+  PackageSearch,
   ReceiptText,
   CalendarRange,
   Car,
@@ -72,6 +73,7 @@ const icons = {
   Package,
   Boxes,
   Truck,
+  PackageSearch,
   ReceiptText,
 } as const;
 

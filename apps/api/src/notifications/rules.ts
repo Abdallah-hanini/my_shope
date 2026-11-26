@@ -17,7 +17,8 @@ export interface NotificationDraft {
     | 'job_ready'
     | 'job_addition_proposed'
     | 'job_addition_approved'
-    | 'job_addition_declined';
+    | 'job_addition_declined'
+    | 'job_part_arrived';
   params: Record<string, string | null>;
   /** Path inside the company area (checked by the database), or null. */
   link: string | null;
@@ -208,6 +209,24 @@ export const RULES: Record<string, Rule> = {
 
   'workshop.job.addition_proposed': additionProposed,
 
+  // A part ordered for a job arrived and is reserved for it (T-77): the branch's managers hear.
+  'workshop.job.part_arrived': async (tx, e) => {
+    const p = e.payload as { jobId?: string; jobPartId?: string };
+    if (!p.jobId || !p.jobPartId) throw new Error('part arrival event without job or job part');
+    const job = await jobSummary(tx, p.jobId);
+    const jp = await tx.jobPart.findUniqueOrThrow({
+      where: { id: p.jobPartId },
+      select: { quantity: true, part: { select: { sku: true, name: true } } },
+    });
+    const part = `${jp.part.sku} ${jp.part.name} × ${jp.quantity.toFixed(3)}`;
+    return (await branchManagers(tx, e.companyId, job.branchId, e.actorUserId)).map((userId) => ({
+      userId,
+      kind: 'job_part_arrived' as const,
+      params: { number: job.number, plate: job.plate, part },
+      link: `jobs/${p.jobId}`,
+    }));
+  },
+
   'workshop.job.addition_decided': async (tx, e) => {
     const p = e.payload as { jobId?: string; decision?: string; proposedBy?: string };
     if (!p.jobId || !p.proposedBy || !p.decision) throw new Error('decision event without job or proposer');
@@ -278,6 +297,26 @@ async function additionProposed(
       params: { number: job.number, plate: job.plate, finding: a.finding, actor },
       link: `jobs/${p.jobId}`,
     });
+  }
+  return out;
+}
+
+/** Active people who manage jobs at the branch and may see it now, except the actor. */
+async function branchManagers(tx: Tx, companyId: string, branchId: string, actor: string | null) {
+  const rows = await tx.roleAssignment.findMany({
+    where: {
+      companyId,
+      OR: [{ branchId: null }, { branchId }],
+      role: { permissions: { has: 'workshop.job.manage' } },
+      user: { status: 'active' },
+    },
+    select: { userId: true },
+    distinct: ['userId'],
+  });
+  const out: string[] = [];
+  for (const { userId } of rows) {
+    if (userId === actor) continue;
+    if (await canSee(tx, userId, companyId, 'workshop.job.manage', branchId)) out.push(userId);
   }
   return out;
 }

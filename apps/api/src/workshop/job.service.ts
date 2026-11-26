@@ -539,6 +539,10 @@ export class JobService {
         throw unprocessable('Finish every task before the quality check');
       if (await tx.jobAddition.count({ where: { jobId: id, status: 'proposed' } }))
         throw unprocessable('Additional work is waiting for the customer; record the decision first');
+      if (await tx.jobPart.count({ where: { jobId: id, status: 'ordered' } }))
+        throw unprocessable(
+          'Parts ordered for this job have not arrived; wait for them or cancel the order before the quality check',
+        );
       if (await tx.jobPart.count({ where: { jobId: id, status: 'reserved' } }))
         throw unprocessable('Parts are still only reserved; issue or release them before the quality check');
       await tx.jobCard.update({ where: { id }, data: { status: 'qc' } });
@@ -645,6 +649,10 @@ export class JobService {
       if (await tx.jobPart.count({ where: { jobId: id, status: 'issued' } }))
         throw conflict('Parts were issued to this job; return them to stock before cancelling');
       await tx.jobPart.updateMany({ where: { jobId: id, status: 'reserved' }, data: { status: 'released' } });
+      await tx.jobPart.updateMany({
+        where: { jobId: id, status: 'ordered' },
+        data: { status: 'cancelled', cancelReason: 'Job cancelled' },
+      });
       await tx.jobAddition.updateMany({
         where: { jobId: id, status: 'proposed' },
         data: {
