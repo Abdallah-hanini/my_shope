@@ -110,6 +110,7 @@ export class JobEventDto {
       'addition_approved',
       'addition_declined',
       'addition_withdrawn',
+      'bay',
     ],
   })
   kind!: string;
@@ -202,6 +203,9 @@ export class JobCardDto {
   @ApiProperty({ enum: STATUS }) status!: string;
   @ApiProperty() branchId!: string;
   @ApiProperty() branchCode!: string;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'The bay the car is on' })
+  bayId!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, example: 'B1 — Bay 1' }) bayLabel!: string | null;
   @ApiProperty({ type: JobPartyDto }) customer!: JobPartyDto;
   @ApiProperty({ type: JobVehicleDto }) vehicle!: JobVehicleDto;
   @ApiProperty() complaint!: string;
@@ -227,7 +231,7 @@ export class JobCardDto {
   @ApiProperty({
     type: [String],
     description:
-      'What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again',
+      'What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition, placeBay); the server checks again',
   })
   actions!: string[];
   @ApiPropertyOptional({

@@ -26,6 +26,7 @@ export function companyNavigation(
           ? [
               { href: `${base}/jobs`, label: t('nav.jobs'), icon: 'Wrench' as const },
               { href: `${base}/appointments`, label: t('nav.appointments'), icon: 'CalendarClock' as const },
+              { href: `${base}/bays`, label: t('nav.bays'), icon: 'LayoutGrid' as const },
             ]
           : []),
         ...(can('workshop.job.manage')

@@ -196,6 +196,7 @@ describe('job card lifecycle', () => {
       'note',
       'addPhoto',
       'removePhoto',
+      'placeBay',
     ]);
     expect(j.events.map((e: { kind: string }) => e.kind)).toEqual(['created']);
     ids.job = j.id;

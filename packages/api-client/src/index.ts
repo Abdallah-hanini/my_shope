@@ -6,6 +6,7 @@ export type {
   Appointment,
   AppointmentDay,
   AuditEvent,
+  BayBoard,
   Branch,
   Company,
   CurrentClock,

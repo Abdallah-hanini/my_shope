@@ -10,6 +10,7 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
     /jobs                                   Repair board (open jobs by status) · ?view=list · /jobs/new?vehicle= (check-in) · /jobs/[id]
     /appointments?branch=&date=             Appointment calendar (day view) → /appointments/new?branch=&start= · /appointments/[id] · /appointments/settings?branch= (hours)
     /jobs/[id]/print?doc=checkin|handover  Printable check-in / handover sheet (from the job card)
+    /bays?branch=                           Bay board: car on each bay, jobs waiting, bay set-up (managers)
     /labour-time?from=&to=&branch=          Labour time report (managers); clocking is on the job card
     /vehicles                               Vehicle registry → /vehicles/[id] (profile, service history, check in)
     /customers                              Customers → /customers/[id] (vehicles, add vehicle)

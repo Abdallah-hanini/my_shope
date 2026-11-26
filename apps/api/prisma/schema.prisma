@@ -68,6 +68,7 @@ model Branch {
   workshopSchedule WorkshopSchedule?
   workshopHours    WorkshopHours[]
   appointments     Appointment[]
+  bays             Bay[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -485,6 +486,8 @@ model JobCard {
   /// Check-in inspection: when and by whom the checklist was recorded (required before authorisation).
   inspectedAt             DateTime? @map("inspected_at") @db.Timestamptz(6)
   inspectedBy             String?   @map("inspected_by") @db.Uuid
+  /// The bay the car is on now (WEB-022); cleared on delivery or cancellation.
+  bayId                   String?   @map("bay_id") @db.Uuid
   version                 Int       @default(1)
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -500,6 +503,7 @@ model JobCard {
   photos          JobPhoto[]
   timeEntries     TaskTimeEntry[]
   additions       JobAddition[]
+  bay             Bay?             @relation(fields: [bayId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, id])
   @@unique([companyId, number])
@@ -726,5 +730,24 @@ model JobAdditionItem {
 
   @@id([additionId, lineNo])
   @@map("job_addition_item")
+  @@schema("workshop")
+}
+
+/// A named workshop bay of a branch (WEB-022). Holds at most one job at a time.
+model Bay {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  code      String
+  name      String
+  active    Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  branch Branch    @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  jobs   JobCard[]
+
+  @@unique([branchId, code])
+  @@map("bay")
   @@schema("workshop")
 }

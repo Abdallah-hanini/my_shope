@@ -11,6 +11,41 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-28: Bay allocation (WEB-022)
+
+### Changes
+
+- **Bays (T-67):** a manager names the bays of each branch (code such as B1 or L1, plus a name). They can rename bays and take them out of use or back into use. There are no default bays; bays are never deleted.
+- **Bay board** (Workshop → Bays):
+  - each bay shows its car: job, plate, vehicle, technicians and status, with "Release bay";
+  - open jobs waiting for a bay each have a "Put on bay" choice of free bays;
+  - managers have the bay set-up section.
+- **On the job card:** the current bay is shown, and the Bay panel lets you put the car on a bay, move it or release it. Each move is in the timeline ("Bay changed") and the audit trail.
+- **Rules:**
+  - One car per bay and one bay per car. The database enforces this, so two cars sent to the same bay at once produce one placement.
+  - Only active bays of the job's own branch.
+  - Managers and the job's technicians move cars.
+  - A bay with a car on it cannot be taken out of use.
+  - Delivering or cancelling a job frees its bay in the same transaction, and the database refuses a closed job that still holds a bay.
+- **Appointment capacity** (the number of bays in the workshop hours) stays a separate setting, so an owner can keep bays free for walk-ins.
+- **Migration `bays`:** the bay table, `job_card.bay_id`, a one-car-per-bay index, a closed-job check, guards for branch and active bays and for deactivation and deletion, and the new timeline kind.
+
+### Evidence (2026-11-28, Linux Docker)
+
+- Unit tests: lifecycle 6 (bay action by status and role); validation 83 (bay codes).
+- Integration (bays.int, 7):
+  - set-up by managers only, codes unique per branch, other branches 404;
+  - placement by a manager and by the job's technician, refused for other technicians;
+  - "taken by …" message, refusal of another branch's bay, two simultaneous placements giving one;
+  - deactivation refused while occupied, inactive bays hidden from staff and refused for placement;
+  - cancellation frees the bay;
+  - database guarantees (unique bay, branch and active guard, closed job without bay, no delete, occupied bay cannot be deactivated).
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 189/189 across 13 suites on a fresh database (the existing workshop test now expects the new "placeBay" action); browser end-to-end 42/42.
+- The new end-to-end check:
+  - adds B1 and L1 from the empty board, puts JC-2026-000002 on B1, and gets the server's refusal to take B1 out of use;
+  - opens the job from the board and moves it to L1, recorded in the timeline;
+  - also runs the Arabic phone layout for the board.
+
 ## 2026-11-28: Job card printouts (check-in and handover sheets)
 
 ### Changes

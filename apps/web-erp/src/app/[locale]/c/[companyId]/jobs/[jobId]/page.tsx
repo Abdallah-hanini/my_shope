@@ -27,6 +27,7 @@ import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { fill } from '@/lib/notifications';
 import { isoToZonedLocal } from '@/lib/time';
+import { placeBayAction } from '../../bay-actions';
 import {
   jobStepAction,
   recordInspectionAction,
@@ -67,6 +68,16 @@ export default async function JobPage({
           unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/technicians', path)),
         )
       : null;
+  const bays = can('placeBay')
+    ? await attempt(async () =>
+        unwrap(
+          await api.GET('/api/v1/companies/{companyId}/branches/{branchId}/bays', {
+            params: { path: { companyId, branchId: j.branchId } },
+          }),
+        ),
+      )
+    : null;
+  const freeBays = bays?.ok ? bays.data.bays.filter((b) => b.active && !b.job) : [];
   const tz = company.timezone;
   // Managers never enter their own time (the server refuses it too), so they are not offered.
   const otherTechs = techs?.ok ? techs.data.filter((x) => x.id !== me.user.id) : [];
@@ -119,6 +130,7 @@ export default async function JobPage({
               </Fact>
               <Fact label={t('job.fuelLevel')}>{t(`job.fuel.${j.fuelLevel}` as MessageKey)}</Fact>
               <Fact label={t('job.promised')}>{when(j.promisedAt)}</Fact>
+              <Fact label={t('bay.bay')}>{j.bayLabel ?? t('bay.noBay')}</Fact>
               {j.authorizedAt ? (
                 <Fact label={t('job.authorization')}>
                   {j.authorizedByName} · {t(`job.via.${j.authorizedVia}` as MessageKey)} ·{' '}
@@ -329,6 +341,28 @@ export default async function JobPage({
                     ))}
                   </select>
                 </label>
+              </InlineForm>
+            </Panel>
+          ) : null}
+          {can('placeBay') && (freeBays.length || j.bayId) ? (
+            <Panel title={t('bay.bay')}>
+              <InlineForm
+                action={placeBayAction.bind(null, locale, companyId, j.id, `${base}/jobs/${j.id}`)}
+                locale={locale}
+                submitLabel={j.bayId ? t('bay.move') : t('bay.place')}
+                submitClassName={buttonSecondary}
+                ariaLabel={t('bay.bay')}
+              >
+                {version}
+                <label className="sr-only" htmlFor="job-bay">
+                  {t('bay.bay')}
+                </label>
+                <select id="job-bay" name="bayId" className={`${inputClass} w-44`} defaultValue="">
+                  {j.bayId ? <option value="">{t('bay.releaseOption')}</option> : null}
+                  {freeBays.map((b) => (
+                    <option key={b.id} value={b.id}>{`${b.code} · ${b.name}`}</option>
+                  ))}
+                </select>
               </InlineForm>
             </Panel>
           ) : null}

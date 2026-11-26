@@ -383,3 +383,23 @@ export type DecideAdditionInput = z.infer<typeof decideAdditionSchema>;
 
 export const withdrawAdditionSchema = z.object({ version, reason: text(500).pipe(z.string().min(3)) });
 export type WithdrawAdditionInput = z.infer<typeof withdrawAdditionSchema>;
+
+// ── bays (WEB-022) ──────────────────────────────────────────────────────────
+
+/** A named workshop bay of a branch (e.g. "B1", "Lift 2"). */
+export const createBaySchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .pipe(z.string().regex(/^[A-Z0-9][A-Z0-9-]{0,9}$/, '1–10 letters, digits or "-"')),
+  name: text(60),
+});
+export type CreateBayInput = z.infer<typeof createBaySchema>;
+
+export const updateBaySchema = z.object({ version, name: text(60), active: z.boolean() });
+export type UpdateBayInput = z.infer<typeof updateBaySchema>;
+
+/** Put the job's car on a bay, move it, or release the bay (null). */
+export const placeJobBaySchema = z.object({ version, bayId: uuid.nullable() });
+export type PlaceJobBayInput = z.infer<typeof placeJobBaySchema>;

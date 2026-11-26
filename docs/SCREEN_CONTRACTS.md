@@ -98,6 +98,15 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Print rules:** A4 with 12 mm margins, light colours, no app menu, header or buttons. The language follows the page (Arabic sheets are right-to-left). No prices or legal terms (T-66).
 - **Tests:** web unit tests for the handover facts; e2e (content, print media, PDF, Arabic, phone width).
 
+## WEB-022 Workshop bay allocation
+- **Route:** `/[locale]/c/[id]/bays?branch=`, plus the "Bay" fact and panel on the job card. **Requirement:** WMS-002/006.
+- **Behaviour:**
+  - The bay board shows each active bay with its car (job, plate, vehicle, technicians, status, Release), and open jobs waiting for a bay, each with a free-bay choice.
+  - Managers add bays (code, name), rename them, and take them out of use or back into use.
+  - The job card shows the bay and offers Put on bay, Move or Release the bay.
+- **Permissions:** viewing needs `workshop.job.read`. Placing cars: managers, or technicians on the job. Setting up bays: `workshop.job.manage`.
+- **Tests:** bays.int (7); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

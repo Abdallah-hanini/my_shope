@@ -6,6 +6,7 @@ import type {
   CancelJobInput,
   CreateJobInput,
   DecideAdditionInput,
+  PlaceJobBayInput,
   ProposeAdditionInput,
   WithdrawAdditionInput,
   DeliverJobInput,
@@ -53,6 +54,7 @@ export function closeOpenEntries(tx: Tx, where: { taskId?: string; jobId?: strin
 }
 const jobInclude = {
   branch: { select: { code: true } },
+  bay: { select: { code: true, name: true } },
   customer: { select: { id: true, name: true, nameAr: true, phone: true } },
   vehicle: { select: { id: true, plate: true, make: true, model: true, year: true } },
   tasks: { orderBy: { lineNo: 'asc' } },
@@ -368,6 +370,39 @@ export class JobService {
     );
   }
 
+  /** Put the car on a bay of the job's branch, move it, or release the bay (WEB-022). */
+  async placeBay(scope: CompanyScope, p: Principal, id: string, input: PlaceJobBayInput, ctx: AuditContext) {
+    try {
+      return await this.act(scope, p, id, 'placeBay', input.version, ctx, async (tx, job) => {
+        if (input.bayId === job.bayId) throw conflict('The car is already there');
+        let bay: { code: string; name: string } | null = null;
+        if (input.bayId) {
+          const b = await tx.bay.findFirst({
+            where: { id: input.bayId, companyId: job.companyId, branchId: job.branchId, active: true },
+            include: { jobs: { select: { number: true } } },
+          });
+          if (!b) throw unprocessable('Choose an active bay of this branch');
+          if (b.jobs.length) throw conflict(`Bay ${b.code} is taken by ${b.jobs[0]!.number}`);
+          bay = b;
+        }
+        await tx.jobCard.update({ where: { id }, data: { bayId: input.bayId } });
+        return {
+          event: {
+            kind: 'bay',
+            note: bay ? `${bay.code} — ${bay.name}` : undefined,
+            data: { bayId: input.bayId, fromBayId: job.bayId },
+          },
+          audit: { action: 'workshop.job.bay', after: { bayId: input.bayId, fromBayId: job.bayId } },
+        };
+      });
+    } catch (e) {
+      // Two cars sent to the same bay at the same moment: the database keeps one.
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002')
+        throw conflict('That bay was just taken; choose another');
+      throw e;
+    }
+  }
+
   // ── additional work (WMS-009, WEB-025) ─────────────────────────────────────
 
   async proposeAddition(
@@ -560,6 +595,7 @@ export class JobService {
         where: { id },
         data: {
           status: 'delivered',
+          bayId: null, // the bay is free once the car has left
           deliveredToName: input.deliveredToName,
           deliveredAt: new Date(),
           odometerOut: input.odometerOut,
@@ -587,7 +623,7 @@ export class JobService {
       });
       await tx.jobCard.update({
         where: { id },
-        data: { status: 'cancelled', cancelledReason: input.reason },
+        data: { status: 'cancelled', cancelledReason: input.reason, bayId: null },
       });
       return {
         event: { kind: 'status', toStatus: 'cancelled', note: input.reason },
@@ -1016,6 +1052,8 @@ export class JobService {
       status,
       branchId: job.branchId,
       branchCode: job.branch.code,
+      bayId: job.bayId,
+      bayLabel: job.bay ? `${job.bay.code} — ${job.bay.name}` : null,
       customer: job.customer,
       vehicle: job.vehicle,
       complaint: job.complaint,

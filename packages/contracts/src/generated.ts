@@ -713,6 +713,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/bay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put the car on a bay, move it, or release the bay */
+        post: operations["placeJobBay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/jobs/{jobId}/additions": {
         parameters: {
             query?: never;
@@ -1166,6 +1183,41 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/branches/{branchId}/bays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bays with the car on each, and jobs waiting for a bay */
+        get: operations["getBayBoard"];
+        put?: never;
+        /** Add a bay (managers) */
+        post: operations["createBay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/bays/{bayId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, deactivate or reactivate a bay (managers) */
+        patch: operations["updateBay"];
         trace?: never;
     };
 }
@@ -1965,7 +2017,7 @@ export interface components {
             occurredAt: string;
             actorName: string;
             /** @enum {string} */
-            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn";
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay";
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
@@ -2062,6 +2114,10 @@ export interface components {
             status: "draft" | "approved" | "assigned" | "in_progress" | "rework" | "qc" | "ready" | "delivered" | "cancelled";
             branchId: string;
             branchCode: string;
+            /** @description The bay the car is on */
+            bayId?: string | null;
+            /** @example B1 — Bay 1 */
+            bayLabel?: string | null;
             customer: components["schemas"]["JobPartyDto"];
             vehicle: components["schemas"]["JobVehicleDto"];
             complaint: string;
@@ -2091,7 +2147,7 @@ export interface components {
             tasks: components["schemas"]["JobTaskDto"][];
             /** @description Timeline, oldest first */
             events: components["schemas"]["JobEventDto"][];
-            /** @description What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again */
+            /** @description What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition, placeBay); the server checks again */
             actions: string[];
             /** @description Check-in inspection; null until recorded */
             inspection?: components["schemas"]["InspectionDto"] | null;
@@ -2128,6 +2184,11 @@ export interface components {
             authorizedByName: string;
             /** @enum {string} */
             authorizedVia: "in_person" | "phone" | "written";
+        };
+        PlaceJobBayDto: {
+            version: number;
+            /** @description null releases the bay */
+            bayId: string | null;
         };
         ProposeAdditionDto: {
             version: number;
@@ -2382,6 +2443,49 @@ export interface components {
             totals: components["schemas"]["LabourFiguresDto"];
             /** @description Open entries (not in the figures) */
             clockedOnNow: components["schemas"]["ClockedOnNowDto"][];
+        };
+        BoardJobDto: {
+            id: string;
+            number: string;
+            status: string;
+            version: number;
+            plate: string;
+            vehicleName: string;
+            customerName: string;
+            technicianNames: string[];
+            /** @description The caller may move this car between bays */
+            canPlace: boolean;
+        };
+        BayDto: {
+            id: string;
+            /** @example B1 */
+            code: string;
+            /** @example Bay 1 */
+            name: string;
+            active: boolean;
+            version: number;
+            /** @description The car on the bay now */
+            job: components["schemas"]["BoardJobDto"] | null;
+        };
+        BayBoardDto: {
+            branchId: string;
+            /** @description Managers may add, rename and deactivate bays */
+            canManage: boolean;
+            /** @description By code; inactive bays only for managers */
+            bays: components["schemas"]["BayDto"][];
+            /** @description Open jobs without a bay, oldest first */
+            waiting: components["schemas"]["BoardJobDto"][];
+        };
+        CreateBayDto: {
+            /** @example B1 */
+            code: string;
+            /** @example Bay 1 */
+            name: string;
+        };
+        UpdateBayDto: {
+            version: number;
+            name: string;
+            active: boolean;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -3799,6 +3903,32 @@ export interface operations {
             };
         };
     };
+    placeJobBay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaceJobBayDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
     proposeAddition: {
         parameters: {
             query?: never;
@@ -4557,6 +4687,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LabourReportDto"];
+                };
+            };
+        };
+    };
+    getBayBoard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BayBoardDto"];
+                };
+            };
+        };
+    };
+    createBay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBayDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BayBoardDto"];
+                };
+            };
+        };
+    };
+    updateBay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bayId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBayDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BayBoardDto"];
                 };
             };
         };

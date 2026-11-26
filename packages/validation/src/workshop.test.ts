@@ -1,4 +1,5 @@
 import {
+  createBaySchema,
   decideAdditionSchema,
   proposeAdditionSchema,
   labourReportQuerySchema,
@@ -230,5 +231,14 @@ describe('additional work', () => {
     expect(
       decideAdditionSchema.safeParse({ decision: 'decline', version: 4, reason: 'Too expensive' }).success,
     ).toBe(true);
+  });
+});
+
+describe('bays', () => {
+  it('codes are short, upper case, letters, digits or "-"', () => {
+    expect(createBaySchema.parse({ code: ' b1 ', name: 'Bay 1' })).toEqual({ code: 'B1', name: 'Bay 1' });
+    expect(createBaySchema.safeParse({ code: 'LIFT-2', name: 'Lift 2' }).success).toBe(true);
+    expect(createBaySchema.safeParse({ code: 'bay one', name: 'x' }).success).toBe(false);
+    expect(createBaySchema.safeParse({ code: 'B1', name: '' }).success).toBe(false);
   });
 });

@@ -42,6 +42,7 @@ export type LabourReport = Schemas['LabourReportDto'];
 export type CurrentClock = Schemas['CurrentClockDto'];
 export type TimeEntry = Schemas['TimeEntryDto'];
 export type JobAddition = Schemas['JobAdditionDto'];
+export type BayBoard = Schemas['BayBoardDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

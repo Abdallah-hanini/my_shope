@@ -2707,6 +2707,61 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/bay": {
+      "post": {
+        "operationId": "placeJobBay",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceJobBayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put the car on a bay, move it, or release the bay",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/jobs/{jobId}/additions": {
       "post": {
         "operationId": "proposeAddition",
@@ -4351,6 +4406,159 @@
           }
         ],
         "summary": "Clocked hours, estimate against actual and efficiency per technician",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/branches/{branchId}/bays": {
+      "get": {
+        "operationId": "getBayBoard",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BayBoardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bays with the car on each, and jobs waiting for a bay",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "post": {
+        "operationId": "createBay",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BayBoardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a bay (managers)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/bays/{bayId}": {
+      "patch": {
+        "operationId": "updateBay",
+        "parameters": [
+          {
+            "name": "bayId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BayBoardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, deactivate or reactivate a bay (managers)",
         "tags": [
           "workshop"
         ]
@@ -7042,7 +7250,8 @@
               "addition_proposed",
               "addition_approved",
               "addition_declined",
-              "addition_withdrawn"
+              "addition_withdrawn",
+              "bay"
             ]
           },
           "fromStatus": {
@@ -7382,6 +7591,16 @@
           "branchCode": {
             "type": "string"
           },
+          "bayId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bay the car is on"
+          },
+          "bayLabel": {
+            "type": "string",
+            "nullable": true,
+            "example": "B1 — Bay 1"
+          },
           "customer": {
             "$ref": "#/components/schemas/JobPartyDto"
           },
@@ -7478,7 +7697,7 @@
             }
           },
           "actions": {
-            "description": "What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition); the server checks again",
+            "description": "What the caller can do now (edit, inspect, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note, addPhoto, removePhoto, proposeAddition, placeBay); the server checks again",
             "type": "array",
             "items": {
               "type": "string"
@@ -7625,6 +7844,23 @@
           "version",
           "authorizedByName",
           "authorizedVia"
+        ]
+      },
+      "PlaceJobBayDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "bayId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null releases the bay"
+          }
+        },
+        "required": [
+          "version",
+          "bayId"
         ]
       },
       "ProposeAdditionDto": {
@@ -8402,6 +8638,161 @@
           "rows",
           "totals",
           "clockedOnNow"
+        ]
+      },
+      "BoardJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "vehicleName": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "technicianNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canPlace": {
+            "type": "boolean",
+            "description": "The caller may move this car between bays"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "version",
+          "plate",
+          "vehicleName",
+          "customerName",
+          "technicianNames",
+          "canPlace"
+        ]
+      },
+      "BayDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "B1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bay 1"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          },
+          "job": {
+            "nullable": true,
+            "description": "The car on the bay now",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoardJobDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "active",
+          "version",
+          "job"
+        ]
+      },
+      "BayBoardDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "canManage": {
+            "type": "boolean",
+            "description": "Managers may add, rename and deactivate bays"
+          },
+          "bays": {
+            "description": "By code; inactive bays only for managers",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BayDto"
+            }
+          },
+          "waiting": {
+            "description": "Open jobs without a bay, oldest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardJobDto"
+            }
+          }
+        },
+        "required": [
+          "branchId",
+          "canManage",
+          "bays",
+          "waiting"
+        ]
+      },
+      "CreateBayDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "B1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bay 1"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "UpdateBayDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "active"
         ]
       },
       "ProblemDetailsDto": {

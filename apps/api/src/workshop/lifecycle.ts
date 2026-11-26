@@ -21,7 +21,8 @@ export type JobAction =
   | 'note'
   | 'proposeAddition'
   | 'decideAddition'
-  | 'withdrawAddition';
+  | 'withdrawAddition'
+  | 'placeBay';
 
 /** Statuses in which each action is possible (permissions are checked separately). */
 export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
@@ -44,6 +45,8 @@ export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
   proposeAddition: ['approved', 'assigned', 'in_progress', 'rework'],
   decideAddition: ['approved', 'assigned', 'in_progress', 'rework'],
   withdrawAddition: ['approved', 'assigned', 'in_progress', 'rework'],
+  // A car can stand on a bay from check-in until it leaves.
+  placeBay: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
 };
 
 export const OPEN_STATUSES: readonly JobStatus[] = OPEN_JOB_STATUSES;
@@ -111,6 +114,9 @@ export function permits(action: JobAction, a: Actor): boolean {
     case 'decideAddition':
       // Recording the customer's decision, like the first authorisation.
       return a.manage;
+    case 'placeBay':
+      // Whoever moves cars: managers, or technicians working on this job.
+      return a.manage || (a.work && a.onJob);
     case 'withdrawAddition':
       // Managers, or the proposer (checked by the service).
       return a.manage || a.work;

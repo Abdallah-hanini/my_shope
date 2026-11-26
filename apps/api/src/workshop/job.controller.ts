@@ -34,6 +34,8 @@ import {
   createJobSchema,
   decideAdditionSchema,
   proposeAdditionSchema,
+  placeJobBaySchema,
+  type PlaceJobBayInput,
   withdrawAdditionSchema,
   type DecideAdditionInput,
   type ProposeAdditionInput,
@@ -83,6 +85,7 @@ import {
   TechnicianDto,
   UpdateJobDraftDto,
 } from './job.dto';
+import { PlaceJobBayDto } from './bay.dto';
 import { JobService } from './job.service';
 
 const id404 = new ParseUUIDPipe({ errorHttpStatusCode: 404 });
@@ -221,6 +224,23 @@ export class JobController {
     @RequestId() rid?: string,
   ): Promise<JobCardDto> {
     return this.jobs.authorize(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/bay')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'placeJobBay', summary: 'Put the car on a bay, move it, or release the bay' })
+  @ApiBody({ type: PlaceJobBayDto })
+  @ApiOkResponse({ type: JobCardDto })
+  placeBay(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(placeJobBaySchema)) body: PlaceJobBayInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.placeBay(scope, p, id, body, ctxOf(p, rid));
   }
 
   @Post('jobs/:jobId/additions')

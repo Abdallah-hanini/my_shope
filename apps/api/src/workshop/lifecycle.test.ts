@@ -50,8 +50,18 @@ describe('job lifecycle', () => {
       'note',
       'addPhoto',
       'removePhoto',
+      'placeBay',
     ]);
-    expect(availableActions('ready', manager)).toEqual(['deliver', 'cancel', 'promise', 'note', 'addPhoto']);
+    expect(availableActions('ready', manager)).toEqual([
+      'deliver',
+      'cancel',
+      'promise',
+      'note',
+      'addPhoto',
+      'placeBay',
+    ]);
+    expect(availableActions('delivered', manager)).not.toContain('placeBay');
+    expect(permits('placeBay', { manage: false, work: true, qc: false, onJob: false })).toBe(false);
   });
 
   it('photos: technicians on the job may add them; only managers remove, and only in a draft', () => {

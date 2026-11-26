@@ -984,6 +984,51 @@ async function main() {
     );
 
     await check(
+      'Bays: set up bays, put a car on a bay, refuse to deactivate it, move the car from the job card',
+      async () => {
+        await page.goto(`${base()}/bays`);
+        await page.getByText('No bays yet.').waitFor();
+        const add = page.getByRole('form', { name: 'Add bay' });
+        for (const [code, name] of [
+          ['b1', 'Bay 1'],
+          ['L1', 'Lift 1'],
+        ]) {
+          await add.getByLabel('Code').fill(code);
+          await add.getByLabel('Name').fill(name);
+          await add.getByRole('button', { name: 'Add bay' }).click();
+          await page.locator(`li[data-bay="${code.toUpperCase()}"]`).waitFor();
+        }
+        const waiting = page.locator('li[data-waiting="JC-2026-000002"]');
+        await page.locator('li[data-waiting="JC-2026-000001"]').waitFor();
+        await waiting.getByRole('combobox').selectOption({ label: 'B1 · Bay 1' });
+        await waiting.getByRole('button', { name: 'Put on bay' }).click();
+        const b1 = page.locator('li[data-bay="B1"]');
+        await b1.getByText('JC-2026-000002').waitFor();
+        await b1.getByText('Occupied', { exact: true }).waitFor();
+        await shot('bays-en');
+        const edit = page.getByRole('form', { name: 'Edit bay B1' });
+        await edit.getByLabel('Status').selectOption('false');
+        await edit.getByRole('button', { name: 'Save' }).click();
+        await edit.getByText(/has JC-2026-000002 on it; move the car first/).waitFor();
+        await Promise.all([
+          page.waitForURL(/\/jobs\/[0-9a-f-]{36}$/),
+          b1.getByRole('link', { name: 'JC-2026-000002' }).click(),
+        ]);
+        await page.getByText('B1 — Bay 1').first().waitFor();
+        const panel = page.getByRole('form', { name: 'Bay' });
+        await panel.getByRole('combobox').selectOption({ label: 'L1 · Lift 1' });
+        await panel.getByRole('button', { name: 'Move' }).click();
+        await page.getByText('L1 — Lift 1').first().waitFor();
+        await page
+          .locator('#timeline-title')
+          .locator('xpath=../..')
+          .getByText('Bay changed')
+          .nth(1)
+          .waitFor();
+      },
+    );
+
+    await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
         await page.setViewportSize({ width: 390, height: 844 });
@@ -1005,6 +1050,7 @@ async function main() {
           'jobs/new',
           'appointments',
           'labour-time',
+          'bays',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
