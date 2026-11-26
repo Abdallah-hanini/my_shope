@@ -118,3 +118,48 @@ describe('check-in inspection', () => {
     expect(w.photoMetaSchema.safeParse({ area: 'roof' }).success).toBe(false);
   });
 });
+
+describe('appointments', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const w = require('./workshop') as typeof import('./workshop');
+  const sched = {
+    version: 0,
+    bays: 3,
+    slotMinutes: 30,
+    hours: [{ weekday: 6, opens: '08:00', closes: '17:00' }],
+  };
+
+  it('workshop hours: closes after opens, fits the slots, each weekday once', () => {
+    expect(w.workshopScheduleSchema.safeParse(sched).success).toBe(true);
+    expect(
+      w.workshopScheduleSchema.safeParse({
+        ...sched,
+        hours: [{ weekday: 6, opens: '17:00', closes: '08:00' }],
+      }).success,
+    ).toBe(false);
+    expect(
+      w.workshopScheduleSchema.safeParse({
+        ...sched,
+        hours: [{ weekday: 6, opens: '08:15', closes: '17:00' }],
+      }).success,
+    ).toBe(false);
+    expect(
+      w.workshopScheduleSchema.safeParse({ ...sched, hours: [...sched.hours, ...sched.hours] }).success,
+    ).toBe(false);
+    expect(w.workshopScheduleSchema.safeParse({ ...sched, slotMinutes: 20 }).success).toBe(false);
+    expect(w.workshopScheduleSchema.safeParse({ ...sched, bays: 0 }).success).toBe(false);
+  });
+
+  it('a booking needs an exact time with offset and a duration of 15 minutes to 8 hours', () => {
+    const ok = {
+      branchId: '11111111-1111-4111-8111-111111111111',
+      vehicleId: '22222222-2222-4222-8222-222222222222',
+      startsAt: '2026-12-01T08:00:00+03:00',
+      durationMinutes: '60',
+      service: 'Oil change',
+    };
+    expect(w.createAppointmentSchema.parse(ok).durationMinutes).toBe(60);
+    expect(w.createAppointmentSchema.safeParse({ ...ok, startsAt: '2026-12-01 08:00' }).success).toBe(false);
+    expect(w.createAppointmentSchema.safeParse({ ...ok, durationMinutes: 600 }).success).toBe(false);
+  });
+});

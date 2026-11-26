@@ -52,7 +52,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | ID | Capability | Phase | Status | Evidence |
 |---|---|---|---|---|
 | WMS-001 | Customer and vehicle registry | 3 | Done (first slice): customers, vehicles (plate/VIN unique, ownership transfer audited), service history | `apps/api/src/crm`, migration `workshop_job_cards`; workshop.int; e2e |
-| WMS-002 | Service scheduling and capacity | 3 | Not started | — |
+| WMS-002 | Service scheduling and capacity | 3 | Done: workshop hours and bays per branch (no defaults), booking on the slot grid, peak-based bay limit serialised per branch, no double booking of a vehicle, reschedule/cancel/no-show, check-in to a job card | `workshop/scheduling.ts` (unit 4), `appointment.service.ts`, migration `appointments`; appointments.int (9); e2e |
 | WMS-003 | Check-in inspection/photos | 3 | Done: 14-point checklist (required before authorisation, locked after), photos re-encoded with metadata removed, evidence locked after authorisation (API and database) | `packages/validation/src/workshop.ts` (INSPECTION_ITEMS), `workshop/photo-processing.ts`, migration `checkin_inspection_photos`; checkin.int (7), photo-processing unit (4), e2e |
 | WMS-004 | Diagnostics and fault codes | 3 | Not started | — |
 | WMS-005 | Versioned estimates and customer approval | 3 | Not started | — |

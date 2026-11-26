@@ -916,6 +916,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/branches/{branchId}/workshop-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkshopSchedule"];
+        /** Bays, slot length and opening hours (managers) */
+        put: operations["setWorkshopSchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One day of a branch: slots with free bays and the appointments */
+        get: operations["getAppointmentDay"];
+        put?: never;
+        post: operations["bookAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAppointment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rescheduleAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/no-show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** After the appointment time */
+        post: operations["markAppointmentNoShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1650,6 +1749,8 @@ export interface components {
         CreateJobDto: {
             branchId: string;
             vehicleId: string;
+            /** @description Check-in of this booked appointment */
+            appointmentId?: string | null;
             complaint: string;
             odometerIn: number;
             /** @enum {string} */
@@ -1823,6 +1924,93 @@ export interface components {
             version: number;
             /** @description Every checklist item once; "attention" needs a note */
             items: components["schemas"]["InspectionItemDto"][];
+        };
+        WorkshopHoursDto: {
+            /** @description 0 = Sunday … 6 = Saturday */
+            weekday: number;
+            /** @example 08:00 */
+            opens: string;
+            /** @example 17:00 */
+            closes: string;
+        };
+        WorkshopScheduleDto: {
+            branchId: string;
+            /** @description false until a manager sets the hours; booking is refused until then */
+            configured: boolean;
+            bays: number;
+            /** @enum {number} */
+            slotMinutes: 15 | 30 | 60;
+            /** @description Open days only, in the company time zone */
+            hours: components["schemas"]["WorkshopHoursDto"][];
+            /** @description 0 = never saved */
+            version: number;
+        };
+        SetWorkshopScheduleDto: {
+            /** @description Current version (0 when never saved) */
+            version: number;
+            bays: number;
+            /** @enum {number} */
+            slotMinutes: 15 | 30 | 60;
+            hours: components["schemas"]["WorkshopHoursDto"][];
+        };
+        SlotDto: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            /** @description Most cars booked at once in this slot */
+            booked: number;
+            free: number;
+        };
+        AppointmentDto: {
+            id: string;
+            branchId: string;
+            branchCode: string;
+            customer: components["schemas"]["JobPartyDto"];
+            vehicle: components["schemas"]["JobVehicleDto"];
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            durationMinutes: number;
+            service: string;
+            notes?: string | null;
+            /** @enum {string} */
+            status: "booked" | "checked_in" | "cancelled" | "no_show";
+            jobId?: string | null;
+            jobNumber?: string | null;
+            cancelledReason?: string | null;
+            createdByName: string;
+            version: number;
+            /** @description checkIn, reschedule, cancel, noShow — what the caller can do now */
+            actions: string[];
+        };
+        AppointmentDayDto: {
+            branchId: string;
+            /** @example 2026-12-05 */
+            date: string;
+            /** @example Asia/Qatar */
+            timeZone: string;
+            schedule: components["schemas"]["WorkshopScheduleDto"];
+            /** @description Empty when the workshop is closed or not configured */
+            slots: components["schemas"]["SlotDto"][];
+            /** @description All appointments starting that day, by time */
+            appointments: components["schemas"]["AppointmentDto"][];
+        };
+        CreateAppointmentDto: {
+            branchId: string;
+            vehicleId: string;
+            /** Format: date-time */
+            startsAt: string;
+            durationMinutes: number;
+            service: string;
+            notes?: string | null;
+        };
+        RescheduleAppointmentDto: {
+            version: number;
+            /** Format: date-time */
+            startsAt: string;
+            durationMinutes: number;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -3576,6 +3764,204 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    getWorkshopSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopScheduleDto"];
+                };
+            };
+        };
+    };
+    setWorkshopSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetWorkshopScheduleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopScheduleDto"];
+                };
+            };
+        };
+    };
+    getAppointmentDay: {
+        parameters: {
+            query: {
+                /** @description Local date (company time zone) */
+                date: unknown;
+                branchId: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDayDto"];
+                };
+            };
+        };
+    };
+    bookAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAppointmentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+        };
+    };
+    getAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+        };
+    };
+    rescheduleAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RescheduleAppointmentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+        };
+    };
+    cancelAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+        };
+    };
+    markAppointmentNoShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
                 };
             };
         };

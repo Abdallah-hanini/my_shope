@@ -62,6 +62,18 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Permission:** `accounting.journal.reverse`. The card is hidden for reversals and for journals already reversed.
 - **Tests:** e2e reversal; API reversal, including the concurrent double reversal.
 
+## WEB-010 Appointment calendar
+- **Route:** `/[locale]/c/[id]/appointments?branch=&date=`. **Requirement:** WMS-002.
+- **Behaviour:** a day view per branch in the company time zone. Each slot shows "x of y free" (or Full) and the appointments in it, and free future slots offer "+ Book". There are previous, today and next day links. When the hours are not set, a notice links to `/appointments/settings` (bays, slot length, hours per weekday; manage permission; version check).
+- **Permission:** `workshop.job.read` to view; `workshop.job.manage` to book or change.
+- **Tests:** appointments.int; e2e.
+
+## WEB-011 Create service appointment
+- **Routes:** `/[locale]/c/[id]/appointments/new?branch=&start=` and `/appointments/[id]`.
+- **Fields:** vehicle, start, length, requested service, notes. The server refuses times outside hours or off the grid, past times, full bays and double bookings of a car.
+- **Actions:** check in (opens a prefilled job card and links it), reschedule, cancel with a reason, and no-show after the start time.
+- **Tests:** appointments.int; e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

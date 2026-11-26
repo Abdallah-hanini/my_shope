@@ -22,8 +22,8 @@ Counts are summarised at the end.
 |---|---|---|---|---|---|---|
 | WEB-008 | Workshop overview | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-009 | Live repair Kanban board | WMS-001…014, BRD-02 | 3 | Implemented — open jobs by status, overdue badge, tasks progress | /[locale]/c/[id]/jobs | e2e "board" |
-| WEB-010 | Appointment calendar | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-011 | Create service appointment | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-010 | Appointment calendar | WMS-001…014, BRD-02 | 3 | Implemented — day view per branch with free bays per slot | /[locale]/c/[id]/appointments | appointments.int; e2e |
+| WEB-011 | Create service appointment | WMS-001…014, BRD-02 | 3 | Implemented — book from a free slot; reschedule, cancel, no-show, check-in | /[locale]/c/[id]/appointments/new, /appointments/[id] | appointments.int; e2e |
 | WEB-012 | Vehicle registry | WMS-001…014, BRD-02 | 3 | Implemented — search by plate/VIN/make/model/owner | /[locale]/c/[id]/vehicles | workshop.int; e2e |
 | WEB-013 | Vehicle profile and service history | WMS-001…014, BRD-02 | 3 | Implemented — profile, owner transfer, job history | /[locale]/c/[id]/vehicles/[vehicleId] | workshop.int; e2e |
 | WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Implemented — complaint, odometer, fuel, promised time, tasks, then inspection and photos (WEB-015) | /[locale]/c/[id]/jobs/new | e2e "check-in" |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 22 |
+| Implemented | 24 |
 | Next | 0 |
 | Partial | 9 |
-| Planned | 277 |
+| Planned | 275 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

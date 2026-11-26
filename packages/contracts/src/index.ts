@@ -35,6 +35,9 @@ export type Vehicle = Schemas['VehicleDto'];
 export type JobCard = Schemas['JobCardDto'];
 export type JobListItem = Schemas['JobListItemDto'];
 export type Technician = Schemas['TechnicianDto'];
+export type Appointment = Schemas['AppointmentDto'];
+export type AppointmentDay = Schemas['AppointmentDayDto'];
+export type WorkshopSchedule = Schemas['WorkshopScheduleDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

@@ -11,6 +11,44 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-27: Appointment booking (WMS-002, WEB-010/011)
+
+### Changes
+
+- **Workshop hours (T-59):** per branch, a manager sets the bays (1–50), slot length (15, 30 or 60 minutes) and opening hours per weekday, in the company time zone. There are no default hours: booking is refused with a clear message until they are set. Changes are versioned and audited.
+- **Appointments:** branch, vehicle (its owner becomes the customer), start, length, requested service and notes. Statuses: booked → checked in, cancelled (reason) or no-show (only after the start time). Booked appointments can be rescheduled.
+- **Rules on the server (T-60):**
+  - inside opening hours, on the slot grid, in whole slots, and not in the past;
+  - never more cars at once than bays (peak count, so back-to-back bookings do not add up);
+  - bookings of a branch are serialised (three simultaneous requests for the last bay produce one booking);
+  - no overlapping bookings of the same vehicle.
+- **Check-in (T-61):** "Check in" opens a new job card prefilled with the vehicle, branch and service. The job and appointment are linked in the same transaction, and a database check enforces the link.
+- **Migration `appointments`:** schedule, hours and appointment tables with checks.
+- **Web:**
+  - Workshop → Appointments: day view per branch with "x of y free" per slot, the appointments, and "+ Book" on free future slots; previous, today and next day.
+  - Workshop hours settings; booking form; appointment page with check-in, reschedule, cancel and no-show.
+  - English and Arabic, phone layout.
+
+### Evidence (2026-11-27, Linux Docker)
+
+- Unit tests: scheduling 4 (time-zone conversion, opening-hours, grid and length messages, peak counting with the back-to-back case, day slots).
+- Integration (appointments.int, 9), including:
+  - refusal until hours are set; only managers set them; version conflict;
+  - opening hours, grid, length and past-time refusals;
+  - the bay limit by peak; no double booking; three concurrent requests for the last bay → exactly one 201;
+  - day view counts; technicians view only;
+  - reschedule rules and a stale version; cancel with a reason freeing the bay; closed appointments unchangeable; no-show only after the start;
+  - check-in linking, refused twice and for another vehicle, with the database check;
+  - branch isolation.
+- Browser end-to-end: 39/39. The new check sets the hours from the "not set" notice, books 09:00 tomorrow from the calendar ("1 of 2 free" afterwards), gets the server's refusal for an overlapping booking of the same car, and checks in to job card JC-2026-000002 with the service prefilled; the appointment then shows "Checked in" with the job link.
+
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 168/168 across 10 suites on a fresh database; browser end-to-end 39/39.
+
+### Not done / open
+
+- Reminders to customers (SMS/WhatsApp) need D-09.
+- Individual bay allocation (WEB-022) and a week view.
+
 ## 2026-11-27: Check-in inspection and photos (WMS-003, WEB-015)
 
 ### Changes

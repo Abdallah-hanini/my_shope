@@ -3465,6 +3465,409 @@
           "workshop"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/branches/{branchId}/workshop-schedule": {
+      "get": {
+        "operationId": "getWorkshopSchedule",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopScheduleDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "put": {
+        "operationId": "setWorkshopSchedule",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWorkshopScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkshopScheduleDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bays, slot length and opening hours (managers)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/appointments": {
+      "get": {
+        "operationId": "getAppointmentDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "description": "Local date (company time zone)",
+            "schema": {
+              "example": "2026-12-05"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDayDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One day of a branch: slots with free bays and the appointments",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "post": {
+        "operationId": "bookAppointment",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}": {
+      "get": {
+        "operationId": "getAppointment",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/reschedule": {
+      "post": {
+        "operationId": "rescheduleAppointment",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/cancel": {
+      "post": {
+        "operationId": "cancelAppointment",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/appointments/{appointmentId}/no-show": {
+      "post": {
+        "operationId": "markAppointmentNoShow",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "After the appointment time",
+        "tags": [
+          "workshop"
+        ]
+      }
     }
   },
   "info": {
@@ -5927,6 +6330,11 @@
           "vehicleId": {
             "type": "string"
           },
+          "appointmentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Check-in of this booked appointment"
+          },
           "complaint": {
             "type": "string"
           },
@@ -6591,6 +6999,308 @@
         "required": [
           "version",
           "items"
+        ]
+      },
+      "WorkshopHoursDto": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "number",
+            "description": "0 = Sunday … 6 = Saturday"
+          },
+          "opens": {
+            "type": "string",
+            "example": "08:00"
+          },
+          "closes": {
+            "type": "string",
+            "example": "17:00"
+          }
+        },
+        "required": [
+          "weekday",
+          "opens",
+          "closes"
+        ]
+      },
+      "WorkshopScheduleDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "false until a manager sets the hours; booking is refused until then"
+          },
+          "bays": {
+            "type": "number"
+          },
+          "slotMinutes": {
+            "type": "number",
+            "enum": [
+              15,
+              30,
+              60
+            ]
+          },
+          "hours": {
+            "description": "Open days only, in the company time zone",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopHoursDto"
+            }
+          },
+          "version": {
+            "type": "number",
+            "description": "0 = never saved"
+          }
+        },
+        "required": [
+          "branchId",
+          "configured",
+          "bays",
+          "slotMinutes",
+          "hours",
+          "version"
+        ]
+      },
+      "SetWorkshopScheduleDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Current version (0 when never saved)"
+          },
+          "bays": {
+            "type": "number"
+          },
+          "slotMinutes": {
+            "type": "number",
+            "enum": [
+              15,
+              30,
+              60
+            ]
+          },
+          "hours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopHoursDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "bays",
+          "slotMinutes",
+          "hours"
+        ]
+      },
+      "SlotDto": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "booked": {
+            "type": "number",
+            "description": "Most cars booked at once in this slot"
+          },
+          "free": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "booked",
+          "free"
+        ]
+      },
+      "AppointmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/JobPartyDto"
+          },
+          "vehicle": {
+            "$ref": "#/components/schemas/JobVehicleDto"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "number"
+          },
+          "service": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "booked",
+              "checked_in",
+              "cancelled",
+              "no_show"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "actions": {
+            "description": "checkIn, reschedule, cancel, noShow — what the caller can do now",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "branchId",
+          "branchCode",
+          "customer",
+          "vehicle",
+          "startsAt",
+          "endsAt",
+          "durationMinutes",
+          "service",
+          "status",
+          "createdByName",
+          "version",
+          "actions"
+        ]
+      },
+      "AppointmentDayDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-12-05"
+          },
+          "timeZone": {
+            "type": "string",
+            "example": "Asia/Qatar"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/WorkshopScheduleDto"
+          },
+          "slots": {
+            "description": "Empty when the workshop is closed or not configured",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotDto"
+            }
+          },
+          "appointments": {
+            "description": "All appointments starting that day, by time",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentDto"
+            }
+          }
+        },
+        "required": [
+          "branchId",
+          "date",
+          "timeZone",
+          "schedule",
+          "slots",
+          "appointments"
+        ]
+      },
+      "CreateAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "number"
+          },
+          "service": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "branchId",
+          "vehicleId",
+          "startsAt",
+          "durationMinutes",
+          "service"
+        ]
+      },
+      "RescheduleAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "version",
+          "startsAt",
+          "durationMinutes"
         ]
       },
       "ProblemDetailsDto": {

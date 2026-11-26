@@ -779,6 +779,72 @@ async function main() {
     });
 
     await check(
+      'Appointments: set workshop hours, book a free slot, refuse a double booking, check in to a job card',
+      async () => {
+        await page.goto(`${base()}/appointments`);
+        await page.getByText('The workshop hours of this branch are not set yet').waitFor();
+        await Promise.all([
+          page.waitForURL(/\/appointments\/settings\?branch=/),
+          page.getByRole('link', { name: 'Set workshop hours' }).click(),
+        ]);
+        await page.locator('#h-bays').fill('2');
+        for (const d of [0, 1, 2, 3, 4, 5, 6]) await page.locator(`input[name=open_${d}]`).check();
+        await Promise.all([
+          page.waitForURL(/\/appointments\?branch=/),
+          page.getByRole('button', { name: 'Save hours' }).click(),
+        ]);
+        await page.getByRole('link', { name: 'Next day' }).click();
+        const nine = page.locator('tr[data-slot="09:00"]');
+        await nine.getByText('2 of 2 free').waitFor();
+        await shot('appointments-empty-en');
+        await Promise.all([
+          page.waitForURL(/\/appointments\/new\?/),
+          nine.getByRole('link', { name: '+ Book' }).click(),
+        ]);
+        await page.locator('#appt-service').fill('Oil change and filter');
+        await Promise.all([
+          page.waitForURL(/\/appointments\/[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Book', exact: true }).click(),
+        ]);
+        const apptUrl = page.url();
+        await page.locator('main').getByText('Booked', { exact: true }).waitFor();
+        await page.getByRole('link', { name: 'Back' }).click();
+        await page.locator('tr[data-slot="09:00"]').getByText('1 of 2 free').waitFor();
+        await page.locator('tr[data-slot="09:00"]').getByText('Oil change and filter').waitFor();
+        await shot('appointments-day-en');
+        // The same car cannot be booked twice at overlapping times; the server says why.
+        await page.locator('tr[data-slot="09:30"]').getByRole('link', { name: '+ Book' }).click();
+        await page.locator('#appt-service').fill('Second booking');
+        await page.getByRole('button', { name: 'Book', exact: true }).click();
+        await page
+          .locator('form [role=alert]')
+          .getByText('This vehicle already has an appointment at that time')
+          .waitFor();
+        // Check-in turns the appointment into a job card.
+        await page.goto(apptUrl);
+        await Promise.all([
+          page.waitForURL(/\/jobs\/new\?.*appointment=/),
+          page.getByRole('link', { name: 'Check in (open job card)' }).click(),
+        ]);
+        assert(
+          (await page.locator('#job-complaint').inputValue()) === 'Oil change and filter',
+          'complaint not prefilled',
+        );
+        await page.locator('#job-odometer').fill('120900');
+        await page.locator('input[name=taskDescription]').first().fill('Oil and filter change');
+        await page.locator('input[name=taskHours]').first().fill('0.75');
+        await Promise.all([
+          page.waitForURL(/\/jobs\/[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Open job card' }).click(),
+        ]);
+        await page.getByRole('heading', { name: 'JC-2026-000002' }).waitFor();
+        await page.goto(apptUrl);
+        await page.locator('main').getByText('Checked in', { exact: true }).waitFor();
+        await page.getByRole('link', { name: 'JC-2026-000002' }).waitFor();
+      },
+    );
+
+    await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
         await page.setViewportSize({ width: 390, height: 844 });
@@ -798,6 +864,7 @@ async function main() {
           'vehicles',
           'customers',
           'jobs/new',
+          'appointments',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);

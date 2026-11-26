@@ -8,6 +8,7 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
 /[locale]/c/[companyId]                     Executive overview (reports.financial.read) or area links
   Workshop
     /jobs                                   Repair board (open jobs by status) · ?view=list · /jobs/new?vehicle= (check-in) · /jobs/[id]
+    /appointments?branch=&date=             Appointment calendar (day view) → /appointments/new?branch=&start= · /appointments/[id] · /appointments/settings?branch= (hours)
     /vehicles                               Vehicle registry → /vehicles/[id] (profile, service history, check in)
     /customers                              Customers → /customers/[id] (vehicles, add vehicle)
   Finance

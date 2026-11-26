@@ -170,6 +170,8 @@ export class JobTaskInputDto {
 export class CreateJobDto {
   @ApiProperty() branchId!: string;
   @ApiProperty() vehicleId!: string;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Check-in of this booked appointment' })
+  appointmentId?: string | null;
   @ApiProperty() complaint!: string;
   @ApiProperty() odometerIn!: number;
   @ApiProperty({ enum: ['empty', 'quarter', 'half', 'three_quarters', 'full'] }) fuelLevel!: string;

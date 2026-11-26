@@ -177,6 +177,24 @@ export class JobService {
           },
         },
       });
+      if (input.appointmentId) {
+        // Check-in of a booked appointment: lock it, check it matches, link both ways.
+        const [appt] = await tx.$queryRaw<
+          { id: string; status: string; vehicle_id: string; branch_id: string }[]
+        >`
+          SELECT id, status, vehicle_id, branch_id FROM workshop.appointment
+           WHERE id = ${input.appointmentId}::uuid AND company_id = ${scope.companyId}::uuid FOR UPDATE`;
+        if (!appt) throw unprocessable('appointmentId is not an appointment of this company');
+        if (appt.status !== 'booked')
+          throw conflict(`This appointment is ${appt.status.replace('_', ' ')}, not booked`);
+        if (appt.vehicle_id !== vehicle.id || appt.branch_id !== input.branchId) {
+          throw unprocessable('The appointment is for another vehicle or branch');
+        }
+        await tx.appointment.update({
+          where: { id: appt.id },
+          data: { status: 'checked_in', jobId: job.id, version: { increment: 1 } },
+        });
+      }
       await this.event(tx, job, p.userId, { kind: 'created', toStatus: 'draft' });
       await writeAudit(tx, ctx, {
         action: 'workshop.job.create',

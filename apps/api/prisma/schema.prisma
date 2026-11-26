@@ -44,6 +44,7 @@ model Company {
   customers       Customer[]
   vehicles        Vehicle[]
   jobCards        JobCard[]
+  appointments    Appointment[]
 
   @@map("company")
   @@schema("org")
@@ -60,10 +61,13 @@ model Branch {
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  roleAssignments RoleAssignment[]
-  journals        Journal[]
-  jobCards        JobCard[]
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  roleAssignments  RoleAssignment[]
+  journals         Journal[]
+  jobCards         JobCard[]
+  workshopSchedule WorkshopSchedule?
+  workshopHours    WorkshopHours[]
+  appointments     Appointment[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -413,9 +417,10 @@ model Customer {
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  vehicles Vehicle[]
-  jobCards JobCard[]
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  vehicles     Vehicle[]
+  jobCards     JobCard[]
+  appointments Appointment[]
 
   @@unique([companyId, id])
   @@index([companyId, phone])
@@ -439,9 +444,10 @@ model Vehicle {
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  customer Customer  @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
-  jobCards JobCard[]
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer     Customer      @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  jobCards     JobCard[]
+  appointments Appointment[]
 
   @@unique([companyId, id])
   @@unique([companyId, plate])
@@ -490,6 +496,7 @@ model JobCard {
   tasks           JobTask[]
   events          JobEvent[]
   inspectionItems InspectionItem[]
+  appointment     Appointment?
   photos          JobPhoto[]
 
   @@unique([companyId, id])
@@ -575,5 +582,69 @@ model JobPhoto {
 
   @@index([jobId, createdAt])
   @@map("job_photo")
+  @@schema("workshop")
+}
+
+// ─────────────────────────── appointments (WMS-002) ──────────────────────────
+
+/// Bays and slot length of a branch's workshop. Missing = not configured (booking refused).
+model WorkshopSchedule {
+  companyId   String   @map("company_id") @db.Uuid
+  branchId    String   @id @map("branch_id") @db.Uuid
+  bays        Int
+  slotMinutes Int      @map("slot_minutes")
+  version     Int      @default(1)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, branchId])
+  @@map("workshop_schedule")
+  @@schema("workshop")
+}
+
+/// Opening hours per weekday (0 = Sunday) in the company's time zone; a missing day is closed.
+model WorkshopHours {
+  companyId    String @map("company_id") @db.Uuid
+  branchId     String @map("branch_id") @db.Uuid
+  weekday      Int
+  opensMinute  Int    @map("opens_minute")
+  closesMinute Int    @map("closes_minute")
+
+  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([branchId, weekday])
+  @@map("workshop_hours")
+  @@schema("workshop")
+}
+
+model Appointment {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  branchId        String   @map("branch_id") @db.Uuid
+  customerId      String   @map("customer_id") @db.Uuid
+  vehicleId       String   @map("vehicle_id") @db.Uuid
+  startsAt        DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt          DateTime @map("ends_at") @db.Timestamptz(6)
+  service         String
+  notes           String?
+  status          String   @default("booked")
+  jobId           String?  @unique @map("job_id") @db.Uuid
+  cancelledReason String?  @map("cancelled_reason")
+  createdBy       String   @map("created_by") @db.Uuid
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch   Branch   @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  customer Customer @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  vehicle  Vehicle  @relation(fields: [companyId, vehicleId], references: [companyId, id], onDelete: Restrict)
+  job      JobCard? @relation(fields: [jobId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, id])
+  @@index([branchId, startsAt])
+  @@index([vehicleId, startsAt])
+  @@map("appointment")
   @@schema("workshop")
 }

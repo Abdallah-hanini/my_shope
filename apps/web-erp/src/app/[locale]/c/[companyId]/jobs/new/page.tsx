@@ -15,10 +15,13 @@ export default async function NewJobPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; companyId: string }>;
-  searchParams: Promise<{ vehicle?: string }>;
+  searchParams: Promise<{ vehicle?: string; branch?: string; appointment?: string }>;
 }) {
   const { locale, companyId } = await params;
-  const vehicle = (await searchParams).vehicle;
+  const sp = await searchParams;
+  const vehicle = sp.vehicle;
+  const UUID = /^[0-9a-f-]{36}$/i;
+  const appointmentId = sp.appointment && UUID.test(sp.appointment) ? sp.appointment : undefined;
   if (!isLocale(locale)) notFound();
   const t = createTranslator(locale);
   const ctx = await loadCompany(companyId);
@@ -30,6 +33,16 @@ export default async function NewJobPage({
     attempt(async () => unwrap(await api.GET('/api/v1/companies/{companyId}/branches', path))),
   ]);
   if (!vehicles.ok) return <ProblemNotice result={vehicles} locale={locale} />;
+  // Check-in of a booked appointment: its service is the starting complaint.
+  const appointment = appointmentId
+    ? await attempt(async () =>
+        unwrap(
+          await api.GET('/api/v1/companies/{companyId}/appointments/{appointmentId}', {
+            params: { path: { companyId, appointmentId } },
+          }),
+        ),
+      )
+    : null;
   // Branches where this person may open jobs: all of them for company-wide roles, else their own.
   const mine = me.companies.find((c) => c.companyId === companyId)?.assignments ?? [];
   const companyWide = mine.some((a) => a.branchId === null);
@@ -59,7 +72,13 @@ export default async function NewJobPage({
               label: `${v.plate} — ${v.make} ${v.model} (${v.customerName})`,
             }))}
             branches={branchList.map((b) => ({ id: b.id, label: `${b.code} — ${localName(b, locale)}` }))}
-            defaults={{ vehicleId: vehicle }}
+            defaults={{
+              vehicleId: vehicle,
+              branchId: sp.branch,
+              ...(appointment?.ok && appointment.data.status === 'booked'
+                ? { appointmentId: appointment.data.id, complaint: appointment.data.service }
+                : {}),
+            }}
           />
         </Card>
       )}

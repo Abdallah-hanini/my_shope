@@ -23,7 +23,10 @@ export function companyNavigation(
       label: t('nav.groupWorkshop'),
       items: [
         ...(can('workshop.job.read')
-          ? [{ href: `${base}/jobs`, label: t('nav.jobs'), icon: 'Wrench' as const }]
+          ? [
+              { href: `${base}/jobs`, label: t('nav.jobs'), icon: 'Wrench' as const },
+              { href: `${base}/appointments`, label: t('nav.appointments'), icon: 'CalendarClock' as const },
+            ]
           : []),
         ...(can('crm.customer.read')
           ? [

@@ -29,6 +29,7 @@ export function JobForm({
   vehicles?: { id: string; label: string }[];
   branches?: { id: string; label: string }[];
   defaults: {
+    appointmentId?: string;
     vehicleId?: string;
     branchId?: string;
     complaint?: string;
@@ -63,6 +64,9 @@ export function JobForm({
     <form action={formAction} className="flex flex-col gap-5" noValidate>
       <FormError message={state.error ?? err.form} />
       {defaults.version ? <input type="hidden" name="version" value={defaults.version} /> : null}
+      {defaults.appointmentId ? (
+        <input type="hidden" name="appointmentId" value={defaults.appointmentId} />
+      ) : null}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {mode === 'create' ? (
           <>

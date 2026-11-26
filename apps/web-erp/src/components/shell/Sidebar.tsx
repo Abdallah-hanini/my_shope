@@ -6,6 +6,7 @@ import {
   BookOpen,
   BookText,
   Building2,
+  CalendarClock,
   CalendarRange,
   Car,
   CarFront,
@@ -55,6 +56,7 @@ const icons = {
   Wrench,
   Car,
   Contact,
+  CalendarClock,
 } as const;
 
 function isActive(path: string, href: string, exact: boolean) {

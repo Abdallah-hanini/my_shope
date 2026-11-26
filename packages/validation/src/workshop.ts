@@ -113,6 +113,8 @@ export type JobTaskInput = z.infer<typeof taskInput>;
 export const createJobSchema = z.object({
   branchId: uuid,
   vehicleId: uuid,
+  /** Check-in of a booked appointment (same branch and vehicle); the appointment is linked. */
+  appointmentId: uuid.optional().nullable(),
   complaint: text(2000),
   odometerIn: z.coerce.number().int().min(0).max(9_999_999),
   fuelLevel: z.enum(FUEL_LEVELS),
@@ -123,7 +125,7 @@ export type CreateJobInput = z.infer<typeof createJobSchema>;
 
 /** Details editable while the job is a draft (tasks freeze when the customer authorises them). */
 export const updateJobDraftSchema = createJobSchema
-  .omit({ branchId: true, vehicleId: true })
+  .omit({ branchId: true, vehicleId: true, appointmentId: true })
   .extend({ version });
 export type UpdateJobDraftInput = z.infer<typeof updateJobDraftSchema>;
 
@@ -247,3 +249,74 @@ export const photoMetaSchema = z.object({
 export type PhotoMetaInput = z.infer<typeof photoMetaSchema>;
 /** Upload limits (the server re-encodes every image; these bound what it accepts). */
 export const PHOTO_LIMITS = { maxBytes: 12 * 1024 * 1024, maxPerUpload: 5, maxPerJob: 40 } as const;
+
+// ── appointments (WMS-002, WEB-010/011) ─────────────────────────────────────
+
+const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time as HH:MM');
+const toMinutes = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3));
+export const SLOT_MINUTES = [15, 30, 60] as const;
+
+/**
+ * Workshop hours and capacity of a branch. Weekdays 0 = Sunday … 6 = Saturday; a day missing from
+ * `hours` is closed. Times are in the company's time zone.
+ */
+export const workshopScheduleSchema = z
+  .object({
+    version: z.number().int().min(0),
+    bays: z.coerce.number().int().min(1).max(50),
+    slotMinutes: z.coerce
+      .number()
+      .refine(
+        (v) => (SLOT_MINUTES as readonly number[]).includes(v),
+        'slot length must be 15, 30 or 60 minutes',
+      ),
+    hours: z
+      .array(z.object({ weekday: z.coerce.number().int().min(0).max(6), opens: clock, closes: clock }))
+      .max(7)
+      .refine((h) => new Set(h.map((d) => d.weekday)).size === h.length, 'each weekday once'),
+  })
+  .superRefine((v, ctx) => {
+    v.hours.forEach((d, i) => {
+      const o = toMinutes(d.opens);
+      const c = toMinutes(d.closes);
+      if (c <= o)
+        ctx.addIssue({ code: 'custom', path: ['hours', i, 'closes'], message: 'must be after opening time' });
+      else if (o % v.slotMinutes !== 0 || c % v.slotMinutes !== 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['hours', i, 'opens'],
+          message: `times must fit the ${v.slotMinutes}-minute slots`,
+        });
+      }
+    });
+  });
+export type WorkshopScheduleInput = z.infer<typeof workshopScheduleSchema>;
+
+export const APPOINTMENT_STATUSES = ['booked', 'checked_in', 'cancelled', 'no_show'] as const;
+const duration = z.coerce.number().int().min(15).max(480);
+const instant = z.string().datetime({ offset: true });
+
+export const createAppointmentSchema = z.object({
+  branchId: uuid,
+  vehicleId: uuid,
+  startsAt: instant,
+  durationMinutes: duration,
+  service: text(500),
+  notes: optionalText(1000),
+});
+export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+
+export const rescheduleAppointmentSchema = z.object({
+  version,
+  startsAt: instant,
+  durationMinutes: duration,
+});
+export type RescheduleAppointmentInput = z.infer<typeof rescheduleAppointmentSchema>;
+export const cancelAppointmentSchema = cancelJobSchema;
+export type CancelAppointmentInput = z.infer<typeof cancelAppointmentSchema>;
+
+export const appointmentDayQuerySchema = z.object({
+  branchId: uuid,
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD'),
+});
+export type AppointmentDayQuery = z.infer<typeof appointmentDayQuerySchema>;

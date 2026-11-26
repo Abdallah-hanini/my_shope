@@ -3,6 +3,8 @@ import createClient, { type Middleware } from 'openapi-fetch';
 
 export type {
   Account,
+  Appointment,
+  AppointmentDay,
   AuditEvent,
   Branch,
   Company,
@@ -29,6 +31,7 @@ export type {
   Technician,
   TrialBalance,
   Vehicle,
+  WorkshopSchedule,
 } from '@erp/contracts';
 
 /** Thrown for any non-2xx response. Carries the RFC 9457 body when the server sent one. */

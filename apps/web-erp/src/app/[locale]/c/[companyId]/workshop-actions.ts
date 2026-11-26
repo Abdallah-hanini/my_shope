@@ -183,6 +183,7 @@ export async function createJobAction(
   const v = validate(createJobSchema, {
     branchId: values.branchId,
     vehicleId: values.vehicleId,
+    appointmentId: blank(values.appointmentId) ?? null,
     ...jobInput(form, values, timeZone),
   });
   if (!v.ok) return { fieldErrors: v.fieldErrors, values };
