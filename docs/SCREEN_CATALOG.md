@@ -94,8 +94,8 @@ Counts are summarised at the end.
 | ID | View | Requirements | Phase | Status | Route / location | Evidence |
 |---|---|---|---|---|---|---|
 | WEB-066 | Procurement dashboard | PRC-001…010 | 2 | Planned | — | — |
-| WEB-067 | Supplier directory | PRC-001…010 | 2 | Planned | — | — |
-| WEB-068 | Supplier profile | PRC-001…010 | 2 | Planned | — | — |
+| WEB-067 | Supplier directory | PRC-001…010 | 2 | Implemented — suppliers with terms, owed and overdue; add supplier | /[locale]/c/[id]/suppliers | purchasing.int; e2e |
+| WEB-068 | Supplier profile | PRC-001…010 | 2 | Implemented — profile, bills, enter a bill against deliveries, edit | /suppliers/[id] | purchasing.int; e2e |
 | WEB-069 | Purchase requisitions | PRC-001…010 | 2 | Planned | — | — |
 | WEB-070 | Request for quotation | PRC-001…010 | 2 | Planned | — | — |
 | WEB-071 | Supplier quotation comparison | PRC-001…010 | 2 | Planned | — | — |
@@ -105,7 +105,7 @@ Counts are summarised at the end.
 | WEB-075 | Purchase approval | PRC-001…010 | 2 | Planned | — | — |
 | WEB-076 | Incoming shipments | PRC-001…010 | 2 | Planned | — | — |
 | WEB-077 | Goods receiving and inspection | PRC-001…010 | 2 | Planned | — | — |
-| WEB-078 | Three-way invoice matching | PRC-001…010 | 2 | Planned | — | — |
+| WEB-078 | Three-way invoice matching | PRC-001…010 | 2 | Partial — supplier bills matched to deliveries (two-way), price differences with a reason, payments, cancel; list reconciled to the ledger | /supplier-bills, /supplier-bills/[id] | purchasing.int; e2e |
 | WEB-079 | Purchase returns | PRC-001…010 | 2 | Planned | — | — |
 | WEB-080 | Supplier performance | PRC-001…010 | 2 | Planned | — | — |
 

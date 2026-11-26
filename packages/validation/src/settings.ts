@@ -160,6 +160,10 @@ export const postingSettingsSchema = z.object({
   /** Parts on jobs (T-75): cost of parts sold, parts revenue. */
   cogsAccountId: z.string().uuid().nullable().optional(),
   partsRevenueAccountId: z.string().uuid().nullable().optional(),
+  /** Supplier bills (T-76): payables, recoverable input tax, purchase price differences. */
+  payablesAccountId: z.string().uuid().nullable().optional(),
+  inputTaxAccountId: z.string().uuid().nullable().optional(),
+  priceVarianceAccountId: z.string().uuid().nullable().optional(),
 });
 export type PostingSettingsInput = z.infer<typeof postingSettingsSchema>;
 

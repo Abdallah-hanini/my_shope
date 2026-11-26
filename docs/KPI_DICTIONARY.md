@@ -124,3 +124,14 @@ Invoice balance = total − Σ payments (0 for a cancelled invoice). Every posti
 | Return from a job | Inventory | Cost of parts sold | Exactly the value it was issued at |
 
 Available to reserve = on hand − Σ reserved quantities at the branch.
+
+## Supplier payables (T-76)
+
+| Figure | Definition |
+|---|---|
+| Owed to a supplier | Σ (bill total − payments) over the supplier's bills that are not cancelled, in the caller's branches |
+| Overdue | The part of "owed" on bills whose due date (invoice date + payment terms) is before today in the company's time zone |
+| Bill total | Σ billed amounts (before tax) + tax; tax = billed amount × rate on the invoice date, 2 decimals half up |
+| Price difference | Billed amount − the deliveries' stock value; posted to purchase price differences, stock value unchanged |
+| Payables check | Open bills owed = payables account balance (credit − debit) in the same branches, read in one snapshot |
+| Goods received check | Σ value of deliveries not on a live bill = goods received not invoiced balance (credit − debit) |

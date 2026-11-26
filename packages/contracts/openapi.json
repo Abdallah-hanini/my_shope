@@ -6653,6 +6653,488 @@
           "inventory"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/suppliers": {
+      "get": {
+        "operationId": "listSuppliers",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suppliers with what is owed to each",
+        "tags": [
+          "purchasing"
+        ]
+      },
+      "post": {
+        "operationId": "createSupplier",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/suppliers/{supplierId}": {
+      "get": {
+        "operationId": "getSupplier",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A supplier with its bills",
+        "tags": [
+          "purchasing"
+        ]
+      },
+      "patch": {
+        "operationId": "updateSupplier",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/suppliers/{supplierId}/unbilled-receipts": {
+      "get": {
+        "operationId": "listUnbilledReceipts",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnbilledReceiptsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Receipts at a branch not yet on a bill",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/supplier-bills": {
+      "get": {
+        "operationId": "listSupplierBills",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "open",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierBillListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bills by due date, with payables and goods received reconciled to the ledger",
+        "tags": [
+          "purchasing"
+        ]
+      },
+      "post": {
+        "operationId": "createSupplierBill",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierBillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierBillDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A supplier invoice for receipts; posts Dr goods received (+variance, input tax), Cr payables",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}": {
+      "get": {
+        "operationId": "getSupplierBill",
+        "parameters": [
+          {
+            "name": "billId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierBillDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}/payments": {
+      "post": {
+        "operationId": "paySupplierBill",
+        "parameters": [
+          {
+            "name": "billId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierPaymentInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierBillDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cash or bank transfer to the supplier",
+        "tags": [
+          "purchasing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}/cancel": {
+      "post": {
+        "operationId": "cancelSupplierBill",
+        "parameters": [
+          {
+            "name": "billId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSupplierBillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierBillDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an unpaid bill (reversing journal)",
+        "tags": [
+          "purchasing"
+        ]
+      }
     }
   },
   "info": {
@@ -11904,6 +12386,33 @@
               }
             ]
           },
+          "payablesAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "inputTaxAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "priceVarianceAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
           "version": {
             "type": "number",
             "description": "0 until first saved"
@@ -11960,6 +12469,18 @@
             "nullable": true
           },
           "partsRevenueAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "payablesAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "inputTaxAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "priceVarianceAccountId": {
             "type": "string",
             "nullable": true
           }
@@ -12458,6 +12979,21 @@
           "unit"
         ]
       },
+      "SupplierChoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "BranchStockDto": {
         "type": "object",
         "properties": {
@@ -12518,7 +13054,9 @@
             "enum": [
               "receipt",
               "adjustment_in",
-              "adjustment_out"
+              "adjustment_out",
+              "issue",
+              "return"
             ]
           },
           "quantity": {
@@ -12543,6 +13081,11 @@
           "reason": {
             "type": "string",
             "nullable": true
+          },
+          "supplierName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Receipt: the supplier"
           },
           "journalNumber": {
             "type": "string"
@@ -12623,6 +13166,13 @@
             "example": "45.00",
             "description": "Selling price per unit"
           },
+          "suppliers": {
+            "description": "Active suppliers for the receive form",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierChoiceDto"
+            }
+          },
           "version": {
             "type": "number"
           },
@@ -12656,6 +13206,7 @@
           "active",
           "onHand",
           "value",
+          "suppliers",
           "version",
           "branches",
           "movements",
@@ -12711,6 +13262,11 @@
         "properties": {
           "branchId": {
             "type": "string"
+          },
+          "supplierId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The supplier who delivered"
           },
           "quantity": {
             "type": "string",
@@ -12847,6 +13403,816 @@
           "rows",
           "totalValue",
           "reconciled"
+        ]
+      },
+      "SupplierDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentTermsDays": {
+            "type": "number",
+            "description": "Days from invoice date to due date"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          },
+          "balance": {
+            "type": "string",
+            "example": "150.00",
+            "description": "Still owed on open bills (caller’s branches)"
+          },
+          "overdue": {
+            "type": "string",
+            "example": "0.00",
+            "description": "Of which past the due date"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "paymentTermsDays",
+          "active",
+          "version",
+          "balance",
+          "overdue"
+        ]
+      },
+      "SupplierListDto": {
+        "type": "object",
+        "properties": {
+          "suppliers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierDto"
+            }
+          },
+          "canManage": {
+            "type": "boolean",
+            "description": "The caller may add and edit suppliers"
+          }
+        },
+        "required": [
+          "suppliers",
+          "canManage"
+        ]
+      },
+      "CreateSupplierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentTermsDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "paymentTermsDays"
+        ]
+      },
+      "SupplierBillSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "PB-2026-000001"
+          },
+          "supplierId": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "supplierInvoiceNo": {
+            "type": "string"
+          },
+          "billDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "paid": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "paid",
+              "cancelled"
+            ]
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Open and past its due date"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "supplierId",
+          "supplierName",
+          "branchCode",
+          "supplierInvoiceNo",
+          "billDate",
+          "dueDate",
+          "currency",
+          "total",
+          "paid",
+          "balance",
+          "status",
+          "overdue"
+        ]
+      },
+      "BranchRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code"
+        ]
+      },
+      "SupplierDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentTermsDays": {
+            "type": "number",
+            "description": "Days from invoice date to due date"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "number"
+          },
+          "balance": {
+            "type": "string",
+            "example": "150.00",
+            "description": "Still owed on open bills (caller’s branches)"
+          },
+          "overdue": {
+            "type": "string",
+            "example": "0.00",
+            "description": "Of which past the due date"
+          },
+          "bills": {
+            "description": "Newest first (up to 200)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierBillSummaryDto"
+            }
+          },
+          "canManage": {
+            "type": "boolean"
+          },
+          "billBranches": {
+            "description": "Branches where the caller may enter bills",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchRefDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "paymentTermsDays",
+          "active",
+          "version",
+          "balance",
+          "overdue",
+          "bills",
+          "canManage",
+          "billBranches"
+        ]
+      },
+      "UpdateSupplierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentTermsDays": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "paymentTermsDays",
+          "version",
+          "active"
+        ]
+      },
+      "UnbilledReceiptDto": {
+        "type": "object",
+        "properties": {
+          "movementId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "partName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitCost": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "fromThisSupplier": {
+            "type": "boolean",
+            "description": "False for older receipts recorded without a supplier"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "movementId",
+          "number",
+          "sku",
+          "partName",
+          "quantity",
+          "unitCost",
+          "value",
+          "fromThisSupplier",
+          "receivedAt"
+        ]
+      },
+      "TaxChoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "UnbilledReceiptsDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnbilledReceiptDto"
+            }
+          },
+          "taxCodes": {
+            "description": "Active tax codes for the bill",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxChoiceDto"
+            }
+          },
+          "defaultTaxCodeId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "branchId",
+          "receipts",
+          "taxCodes"
+        ]
+      },
+      "ReconciliationDto": {
+        "type": "object",
+        "properties": {
+          "openBills": {
+            "type": "string",
+            "description": "Open bills still owed"
+          },
+          "payablesLedger": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payables account balance (credit)"
+          },
+          "unbilledReceipts": {
+            "type": "string",
+            "description": "Receipts not yet on a bill"
+          },
+          "goodsReceivedLedger": {
+            "type": "string",
+            "nullable": true,
+            "description": "Goods received not invoiced balance (credit)"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "description": "Both pairs agree (accounts set)"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "openBills",
+          "unbilledReceipts",
+          "reconciled",
+          "asOf"
+        ]
+      },
+      "SupplierBillListDto": {
+        "type": "object",
+        "properties": {
+          "bills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierBillSummaryDto"
+            }
+          },
+          "reconciliation": {
+            "$ref": "#/components/schemas/ReconciliationDto"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bills",
+          "reconciliation",
+          "currency"
+        ]
+      },
+      "SupplierBillLineInputDto": {
+        "type": "object",
+        "properties": {
+          "movementId": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "example": "91.00"
+          }
+        },
+        "required": [
+          "movementId",
+          "amount"
+        ]
+      },
+      "CreateSupplierBillDto": {
+        "type": "object",
+        "properties": {
+          "supplierId": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "supplierInvoiceNo": {
+            "type": "string"
+          },
+          "billDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "taxCodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierBillLineInputDto"
+            }
+          },
+          "varianceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplierId",
+          "branchId",
+          "supplierInvoiceNo",
+          "billDate",
+          "lines",
+          "idempotencyKey"
+        ]
+      },
+      "SupplierBillLineDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "movementId": {
+            "type": "string"
+          },
+          "movementNumber": {
+            "type": "string",
+            "example": "SM-2026-000001"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "partName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "receiptValue": {
+            "type": "string",
+            "description": "Stock value of the receipt"
+          },
+          "amount": {
+            "type": "string",
+            "description": "What the supplier billed for it, before tax"
+          }
+        },
+        "required": [
+          "lineNo",
+          "movementId",
+          "movementNumber",
+          "sku",
+          "partName",
+          "quantity",
+          "receiptValue",
+          "amount"
+        ]
+      },
+      "SupplierPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "PV-2026-000001"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank"
+            ]
+          },
+          "amount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidByName": {
+            "type": "string"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "journalNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "method",
+          "amount",
+          "paidByName",
+          "paidAt",
+          "journalNumber"
+        ]
+      },
+      "SupplierBillDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "PB-2026-000001"
+          },
+          "supplierId": {
+            "type": "string"
+          },
+          "supplierName": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "supplierInvoiceNo": {
+            "type": "string"
+          },
+          "billDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "paid": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "paid",
+              "cancelled"
+            ]
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Open and past its due date"
+          },
+          "receiptsValue": {
+            "type": "string"
+          },
+          "netAmount": {
+            "type": "string"
+          },
+          "varianceAmount": {
+            "type": "string",
+            "description": "Billed minus the receipts’ value (price variance)"
+          },
+          "varianceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "journalNumber": {
+            "type": "string"
+          },
+          "cancelJournalNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierBillLineDto"
+            }
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierPaymentDto"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "description": "What the caller may do now",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pay",
+                "cancel"
+              ]
+            }
+          },
+          "payBlockedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the caller may not pay (they entered this bill)"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "supplierId",
+          "supplierName",
+          "branchCode",
+          "supplierInvoiceNo",
+          "billDate",
+          "dueDate",
+          "currency",
+          "total",
+          "paid",
+          "balance",
+          "status",
+          "overdue",
+          "receiptsValue",
+          "netAmount",
+          "varianceAmount",
+          "taxAmount",
+          "journalNumber",
+          "createdByName",
+          "createdAt",
+          "lines",
+          "payments",
+          "actions"
+        ]
+      },
+      "SupplierPaymentInputDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank"
+            ]
+          },
+          "amount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "amount",
+          "idempotencyKey"
+        ]
+      },
+      "CancelSupplierBillDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "ProblemDetailsDto": {

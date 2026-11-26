@@ -50,6 +50,15 @@ export function companyNavigation(
         : [],
     },
     {
+      label: t('nav.groupPurchasing'),
+      items: can('purchasing.read')
+        ? [
+            { href: `${base}/suppliers`, label: t('nav.suppliers'), icon: 'Truck' as const },
+            { href: `${base}/supplier-bills`, label: t('nav.supplierBills'), icon: 'ReceiptText' as const },
+          ]
+        : [],
+    },
+    {
       label: t('nav.groupFinance'),
       items: [
         ...(can('accounting.journal.read')

@@ -37,7 +37,14 @@ export interface PostingAccounts {
 export async function applyMovement(
   tx: Tx,
   ctx: AuditContext & { actorUserId: string },
-  m: { companyId: string; branchId: string; partId: string; idempotencyKey: string; jobId?: string | null },
+  m: {
+    companyId: string;
+    branchId: string;
+    partId: string;
+    idempotencyKey: string;
+    jobId?: string | null;
+    supplierId?: string | null;
+  },
   plan: (level: StockLevel, acc: PostingAccounts) => MovementPlan,
 ): Promise<{ id: string; number: string; value: Prisma.Decimal }> {
   const part = await tx.part.findUnique({
@@ -93,6 +100,7 @@ export async function applyMovement(
       number,
       kind: p.kind,
       jobId: m.jobId ?? null,
+      supplierId: m.supplierId ?? null,
       quantity: p.quantity,
       unitCost: p.unitCost,
       value: p.value,

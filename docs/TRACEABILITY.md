@@ -71,7 +71,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | INV-004 | Retail/wholesale pricing | 2 | Partly done: one selling price per part, set by the owner, used on quotes; wholesale price lists later | `inventory.service.ts` setPrice; job-parts.int; e2e |
 | INV-005 | Warehouse/bin | 2 | Not started | — |
 | INV-006 | Stock movements and reservations | 2 | Partly done: numbered, immutable stock movements posted to the ledger; reservations come with parts on jobs | `apps/api/src/inventory`, migration `parts_stock`; inventory.int (7) |
-| INV-007 | Receipts/issues/transfers | 2 | Partly done: receipts at cost (Dr inventory, Cr goods received not invoiced), repeated forms record once; issues to jobs and transfers next | inventory.int; e2e |
+| INV-007 | Receipts/issues/transfers | 2 | Partly done: receipts at cost (Dr inventory, Cr goods received not invoiced), repeated forms record once; issues to and returns from jobs (T-75); receipts name their supplier and are cleared by supplier bills (T-76); transfers next | inventory.int; job-parts.int; purchasing.int; e2e |
 | INV-008 | Quarantine and condition inspection | 2 | Not started | — |
 | INV-009 | Counts/adjustments with approval | 2 | Partly done: counted differences with a reason and their own permission, no negative stock (also concurrently); no second approver (D-11: none for now) | inventory.int; e2e |
 | INV-010 | FIFO or weighted average policy | 2 | Done: weighted average (D-06, owner 2026-11-29); stock value reconciles to the inventory account | `inventory/stock-math.ts` (unit 3); inventory.int valuation |
@@ -79,13 +79,13 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | INV-012 | Low stock and aging | 2 | Not started | — |
 | INV-013 | Serial tracking | 2 | Not started | — |
 | INV-014 | Kits and special orders | 2 | Not started | — |
-| PRC-001 | Supplier profiles and terms | 2 | Not started | — |
+| PRC-001 | Supplier profiles and terms | 2 | Done (T-76): suppliers with Arabic name, contact, tax number, payment terms (due dates), active; what is owed and overdue | `apps/api/src/purchasing`; purchasing.int; e2e |
 | PRC-002 | Requisitions | 2 | Not started | — |
 | PRC-003 | RFQ comparison | 2 | Not started | — |
 | PRC-004 | PO approvals | 2 | Not started | — |
 | PRC-005 | Partial goods receipts | 2 | Not started | — |
 | PRC-006 | Quality inspection | 2 | Not started | — |
-| PRC-007 | Three-way matching | 2 | Not started | — |
+| PRC-007 | Three-way matching | 2 | Partly done (T-76): two-way match of supplier bills to deliveries (each delivery billed once; differences with a reason to price differences); purchase orders not yet | purchasing.int; e2e |
 | PRC-008 | Purchase returns | 2 | Not started | — |
 | PRC-009 | Foreign currency and landed costs | 2 | Not started | — |
 | PRC-010 | Supplier performance | 2 | Not started | — |
@@ -103,7 +103,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | POS-012 | Commissions | 3 | Not started | — |
 | ACC-001 | Chart of accounts | 1 | Done (API + web, verified) | Hierarchy, header vs posting, type consistency; no template (D-04); `accounting.account`; integration; web screens + `scripts/e2e-web.mjs`; general ledger WEB-100 |
 | ACC-002 | Journals and GL | 1 | Done (API + web, verified) | Balanced, immutable, idempotent, gapless-numbered journals and reversal; DB-enforced; journal.service.ts + migration triggers; integration incl. concurrency; web screens + `scripts/e2e-web.mjs` |
-| ACC-003 | AR/AP | 1–3 | Not started | — |
+| ACC-003 | AR/AP | 1–3 | Partly done: customer invoices and payments (T-72); supplier bills, payments, due dates and overdue, reconciled to payables (T-76). Statements and ageing report not yet | billing.int; purchasing.int; e2e |
 | ACC-004 | Cash and bank | 1–3 | Not started | — |
 | ACC-005 | Reconciliation | 3 | Not started | — |
 | ACC-006 | Expenses/petty cash | 3 | Not started | — |

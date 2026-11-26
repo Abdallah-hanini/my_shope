@@ -39,7 +39,7 @@ export class StockMovementDto {
   @ApiProperty() id!: string;
   @ApiProperty({ example: 'SM-2026-000001' }) number!: string;
   @ApiProperty() branchCode!: string;
-  @ApiProperty({ enum: ['receipt', 'adjustment_in', 'adjustment_out'] }) kind!: string;
+  @ApiProperty({ enum: ['receipt', 'adjustment_in', 'adjustment_out', 'issue', 'return'] }) kind!: string;
   @ApiProperty() quantity!: string;
   @ApiProperty() unitCost!: string;
   @ApiProperty() value!: string;
@@ -47,12 +47,21 @@ export class StockMovementDto {
   @ApiProperty() valueAfter!: string;
   @ApiPropertyOptional({ nullable: true, type: String }) reference!: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) reason!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Receipt: the supplier' })
+  supplierName!: string | null;
   @ApiProperty() journalNumber!: string;
   @ApiProperty() createdByName!: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
+export class SupplierChoiceDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() name!: string;
+}
+
 export class PartDto extends PartListItemDto {
+  @ApiProperty({ type: [SupplierChoiceDto], description: 'Active suppliers for the receive form' })
+  suppliers!: SupplierChoiceDto[];
   @ApiProperty() version!: number;
   @ApiProperty({ type: [BranchStockDto] }) branches!: BranchStockDto[];
   @ApiProperty({ type: [StockMovementDto], description: 'Newest first (up to 100)' })
@@ -107,6 +116,8 @@ export class UpdatePartDto {
 }
 export class ReceiveStockDto {
   @ApiProperty() branchId!: string;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'The supplier who delivered' })
+  supplierId?: string | null;
   @ApiProperty({ example: '10' }) quantity!: string;
   @ApiProperty({ example: '12.50' }) unitCost!: string;
   @ApiProperty({ description: 'Supplier delivery note or invoice number' }) reference!: string;

@@ -156,6 +156,12 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Quote:** part lines (quantity × selling price) are marked "part". **Invoice:** parts revenue is posted separately.
 - **Tests:** job-parts.int (6); e2e.
 
+## Suppliers and supplier bills (WEB-067/068/078, T-76)
+- **Routes:** `/[locale]/c/[id]/suppliers` (list with terms, owed, overdue; add supplier), `/suppliers/[id]` (profile, "Enter a supplier bill": deliveries not yet billed at the branch with a tick and the billed amount, invoice number and date, tax, reason for a difference; bills; edit), `/supplier-bills` (open or all by due date; open bills vs payables account and unbilled deliveries vs goods received account, with the time), `/supplier-bills/[id]` (deliveries, totals, journal, payments with "Pay supplier", "Cancel bill").
+- **Part page:** "Receive stock" has a supplier choice; movements show the supplier.
+- **Permissions:** `purchasing.read`; `purchasing.manage` (suppliers company-wide; bills and cancelling at the branch); `purchasing.pay` (not on a bill you entered, unless the owner). Posting accounts: supplier payables, input tax, purchase price differences.
+- **Tests:** purchasing.int (11); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

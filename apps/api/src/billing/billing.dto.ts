@@ -104,6 +104,9 @@ export class PostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto, description: 'Cost of parts sold' })
   cogsAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) partsRevenueAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) payablesAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) inputTaxAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) priceVarianceAccount!: AccountRefDto | null;
   @ApiProperty({ description: '0 until first saved' }) version!: number;
   @ApiProperty() canManage!: boolean;
 }
@@ -121,6 +124,9 @@ export class SetPostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: String }) stockAdjustmentAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) cogsAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) partsRevenueAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) payablesAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) inputTaxAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) priceVarianceAccountId?: string | null;
 }
 export class CreateInvoiceDto {
   @ApiProperty({ description: 'The approved quote to invoice' }) quoteId!: string;

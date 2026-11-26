@@ -39,6 +39,9 @@ const ACCOUNTS = [
   'stockAdjustment',
   'cogs',
   'partsRevenue',
+  'payables',
+  'inputTax',
+  'priceVariance',
 ] as const;
 const METHOD_ACCOUNT = { cash: 'cashAccountId', card: 'cardAccountId', bank: 'bankAccountId' } as const;
 /** Account types each posting setting accepts. */
@@ -53,6 +56,9 @@ const ACCOUNT_TYPES: Record<(typeof ACCOUNTS)[number], string> = {
   stockAdjustment: 'expense',
   cogs: 'expense',
   partsRevenue: 'revenue',
+  payables: 'liability',
+  inputTax: 'asset',
+  priceVariance: 'expense',
 };
 
 /**
@@ -107,6 +113,9 @@ export class BillingService {
       stockAdjustmentAccount: ref(s?.stockAdjustmentAccountId),
       cogsAccount: ref(s?.cogsAccountId),
       partsRevenueAccount: ref(s?.partsRevenueAccountId),
+      payablesAccount: ref(s?.payablesAccountId),
+      inputTaxAccount: ref(s?.inputTaxAccountId),
+      priceVarianceAccount: ref(s?.priceVarianceAccountId),
       version: s?.version ?? 0,
       canManage: await this.can(p, scope.companyId, 'accounting.account.manage'),
     };
@@ -142,6 +151,9 @@ export class BillingService {
       stockAdjustmentAccountId: input.stockAdjustmentAccountId ?? null,
       cogsAccountId: input.cogsAccountId ?? null,
       partsRevenueAccountId: input.partsRevenueAccountId ?? null,
+      payablesAccountId: input.payablesAccountId ?? null,
+      inputTaxAccountId: input.inputTaxAccountId ?? null,
+      priceVarianceAccountId: input.priceVarianceAccountId ?? null,
     };
     await this.prisma.$transaction(async (tx) => {
       if (input.version === 0) {

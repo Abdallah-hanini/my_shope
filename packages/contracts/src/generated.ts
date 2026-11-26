@@ -1811,6 +1811,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Suppliers with what is owed to each */
+        get: operations["listSuppliers"];
+        put?: never;
+        post: operations["createSupplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/suppliers/{supplierId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A supplier with its bills */
+        get: operations["getSupplier"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateSupplier"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/suppliers/{supplierId}/unbilled-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Receipts at a branch not yet on a bill */
+        get: operations["listUnbilledReceipts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/supplier-bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bills by due date, with payables and goods received reconciled to the ledger */
+        get: operations["listSupplierBills"];
+        put?: never;
+        /** A supplier invoice for receipts; posts Dr goods received (+variance, input tax), Cr payables */
+        post: operations["createSupplierBill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSupplierBill"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cash or bank transfer to the supplier */
+        post: operations["paySupplierBill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/supplier-bills/{billId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an unpaid bill (reversing journal) */
+        post: operations["cancelSupplierBill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3366,6 +3485,9 @@ export interface components {
             /** @description Cost of parts sold */
             cogsAccount?: components["schemas"]["AccountRefDto"] | null;
             partsRevenueAccount?: components["schemas"]["AccountRefDto"] | null;
+            payablesAccount?: components["schemas"]["AccountRefDto"] | null;
+            inputTaxAccount?: components["schemas"]["AccountRefDto"] | null;
+            priceVarianceAccount?: components["schemas"]["AccountRefDto"] | null;
             /** @description 0 until first saved */
             version: number;
             canManage: boolean;
@@ -3382,6 +3504,9 @@ export interface components {
             stockAdjustmentAccountId?: string | null;
             cogsAccountId?: string | null;
             partsRevenueAccountId?: string | null;
+            payablesAccountId?: string | null;
+            inputTaxAccountId?: string | null;
+            priceVarianceAccountId?: string | null;
         };
         InvoiceLineDto: {
             lineNo: number;
@@ -3525,6 +3650,10 @@ export interface components {
             /** @enum {string} */
             unit: "each" | "litre" | "kg" | "metre" | "set";
         };
+        SupplierChoiceDto: {
+            id: string;
+            name: string;
+        };
         BranchStockDto: {
             branchId: string;
             branchCode: string;
@@ -3544,7 +3673,7 @@ export interface components {
             number: string;
             branchCode: string;
             /** @enum {string} */
-            kind: "receipt" | "adjustment_in" | "adjustment_out";
+            kind: "receipt" | "adjustment_in" | "adjustment_out" | "issue" | "return";
             quantity: string;
             unitCost: string;
             value: string;
@@ -3552,6 +3681,8 @@ export interface components {
             valueAfter: string;
             reference?: string | null;
             reason?: string | null;
+            /** @description Receipt: the supplier */
+            supplierName?: string | null;
             journalNumber: string;
             createdByName: string;
             /** Format: date-time */
@@ -3580,6 +3711,8 @@ export interface components {
              * @example 45.00
              */
             salePrice?: string | null;
+            /** @description Active suppliers for the receive form */
+            suppliers: components["schemas"]["SupplierChoiceDto"][];
             version: number;
             branches: components["schemas"]["BranchStockDto"][];
             /** @description Newest first (up to 100) */
@@ -3603,6 +3736,8 @@ export interface components {
         };
         ReceiveStockDto: {
             branchId: string;
+            /** @description The supplier who delivered */
+            supplierId?: string | null;
             /** @example 10 */
             quantity: string;
             /** @example 12.50 */
@@ -3642,6 +3777,243 @@ export interface components {
             ledgerBalance?: string | null;
             /** @description Stock value equals the inventory account balance */
             reconciled: boolean;
+        };
+        SupplierDto: {
+            id: string;
+            name: string;
+            nameAr?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            taxNumber?: string | null;
+            /** @description Days from invoice date to due date */
+            paymentTermsDays: number;
+            active: boolean;
+            version: number;
+            /**
+             * @description Still owed on open bills (caller’s branches)
+             * @example 150.00
+             */
+            balance: string;
+            /**
+             * @description Of which past the due date
+             * @example 0.00
+             */
+            overdue: string;
+        };
+        SupplierListDto: {
+            suppliers: components["schemas"]["SupplierDto"][];
+            /** @description The caller may add and edit suppliers */
+            canManage: boolean;
+        };
+        CreateSupplierDto: {
+            name: string;
+            nameAr?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            taxNumber?: string | null;
+            paymentTermsDays: number;
+        };
+        SupplierBillSummaryDto: {
+            id: string;
+            /** @example PB-2026-000001 */
+            number: string;
+            supplierId: string;
+            supplierName: string;
+            branchCode: string;
+            supplierInvoiceNo: string;
+            /** Format: date */
+            billDate: string;
+            /** Format: date */
+            dueDate: string;
+            currency: string;
+            total: string;
+            paid: string;
+            balance: string;
+            /** @enum {string} */
+            status: "open" | "paid" | "cancelled";
+            /** @description Open and past its due date */
+            overdue: boolean;
+        };
+        BranchRefDto: {
+            id: string;
+            code: string;
+        };
+        SupplierDetailDto: {
+            id: string;
+            name: string;
+            nameAr?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            taxNumber?: string | null;
+            /** @description Days from invoice date to due date */
+            paymentTermsDays: number;
+            active: boolean;
+            version: number;
+            /**
+             * @description Still owed on open bills (caller’s branches)
+             * @example 150.00
+             */
+            balance: string;
+            /**
+             * @description Of which past the due date
+             * @example 0.00
+             */
+            overdue: string;
+            /** @description Newest first (up to 200) */
+            bills: components["schemas"]["SupplierBillSummaryDto"][];
+            canManage: boolean;
+            /** @description Branches where the caller may enter bills */
+            billBranches: components["schemas"]["BranchRefDto"][];
+        };
+        UpdateSupplierDto: {
+            name: string;
+            nameAr?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            taxNumber?: string | null;
+            paymentTermsDays: number;
+            version: number;
+            active: boolean;
+        };
+        UnbilledReceiptDto: {
+            movementId: string;
+            number: string;
+            sku: string;
+            partName: string;
+            quantity: string;
+            unitCost: string;
+            value: string;
+            reference?: string | null;
+            /** @description False for older receipts recorded without a supplier */
+            fromThisSupplier: boolean;
+            /** Format: date-time */
+            receivedAt: string;
+        };
+        TaxChoiceDto: {
+            id: string;
+            code: string;
+            name: string;
+        };
+        UnbilledReceiptsDto: {
+            branchId: string;
+            receipts: components["schemas"]["UnbilledReceiptDto"][];
+            /** @description Active tax codes for the bill */
+            taxCodes: components["schemas"]["TaxChoiceDto"][];
+            defaultTaxCodeId?: string | null;
+        };
+        ReconciliationDto: {
+            /** @description Open bills still owed */
+            openBills: string;
+            /** @description Payables account balance (credit) */
+            payablesLedger?: string | null;
+            /** @description Receipts not yet on a bill */
+            unbilledReceipts: string;
+            /** @description Goods received not invoiced balance (credit) */
+            goodsReceivedLedger?: string | null;
+            /** @description Both pairs agree (accounts set) */
+            reconciled: boolean;
+            /** Format: date-time */
+            asOf: string;
+        };
+        SupplierBillListDto: {
+            bills: components["schemas"]["SupplierBillSummaryDto"][];
+            reconciliation: components["schemas"]["ReconciliationDto"];
+            currency: string;
+        };
+        SupplierBillLineInputDto: {
+            movementId: string;
+            /** @example 91.00 */
+            amount: string;
+        };
+        CreateSupplierBillDto: {
+            supplierId: string;
+            branchId: string;
+            supplierInvoiceNo: string;
+            /** Format: date */
+            billDate: string;
+            taxCodeId?: string | null;
+            lines: components["schemas"]["SupplierBillLineInputDto"][];
+            varianceReason?: string | null;
+            idempotencyKey: string;
+        };
+        SupplierBillLineDto: {
+            lineNo: number;
+            movementId: string;
+            /** @example SM-2026-000001 */
+            movementNumber: string;
+            sku: string;
+            partName: string;
+            quantity: string;
+            reference?: string | null;
+            /** @description Stock value of the receipt */
+            receiptValue: string;
+            /** @description What the supplier billed for it, before tax */
+            amount: string;
+        };
+        SupplierPaymentDto: {
+            id: string;
+            /** @example PV-2026-000001 */
+            number: string;
+            /** @enum {string} */
+            method: "cash" | "bank";
+            amount: string;
+            reference?: string | null;
+            paidByName: string;
+            /** Format: date-time */
+            paidAt: string;
+            journalNumber: string;
+        };
+        SupplierBillDto: {
+            id: string;
+            /** @example PB-2026-000001 */
+            number: string;
+            supplierId: string;
+            supplierName: string;
+            branchCode: string;
+            supplierInvoiceNo: string;
+            /** Format: date */
+            billDate: string;
+            /** Format: date */
+            dueDate: string;
+            currency: string;
+            total: string;
+            paid: string;
+            balance: string;
+            /** @enum {string} */
+            status: "open" | "paid" | "cancelled";
+            /** @description Open and past its due date */
+            overdue: boolean;
+            receiptsValue: string;
+            netAmount: string;
+            /** @description Billed minus the receipts’ value (price variance) */
+            varianceAmount: string;
+            varianceReason?: string | null;
+            taxCode?: string | null;
+            taxPct?: string | null;
+            taxAmount: string;
+            journalNumber: string;
+            cancelJournalNumber?: string | null;
+            cancelReason?: string | null;
+            cancelledByName?: string | null;
+            createdByName: string;
+            /** Format: date-time */
+            createdAt: string;
+            lines: components["schemas"]["SupplierBillLineDto"][];
+            payments: components["schemas"]["SupplierPaymentDto"][];
+            /** @description What the caller may do now */
+            actions: ("pay" | "cancel")[];
+            /** @description Why the caller may not pay (they entered this bill) */
+            payBlockedReason?: string | null;
+        };
+        SupplierPaymentInputDto: {
+            /** @enum {string} */
+            method: "cash" | "bank";
+            amount: string;
+            reference?: string | null;
+            idempotencyKey: string;
+        };
+        CancelSupplierBillDto: {
+            reason: string;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -6963,6 +7335,247 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValuationDto"];
+                };
+            };
+        };
+    };
+    listSuppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierListDto"];
+                };
+            };
+        };
+    };
+    createSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSupplierDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierDetailDto"];
+                };
+            };
+        };
+    };
+    getSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplierId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierDetailDto"];
+                };
+            };
+        };
+    };
+    updateSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplierId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSupplierDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierDetailDto"];
+                };
+            };
+        };
+    };
+    listUnbilledReceipts: {
+        parameters: {
+            query: {
+                branchId: unknown;
+            };
+            header?: never;
+            path: {
+                supplierId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnbilledReceiptsDto"];
+                };
+            };
+        };
+    };
+    listSupplierBills: {
+        parameters: {
+            query?: {
+                status?: "open" | "all";
+                supplierId?: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierBillListDto"];
+                };
+            };
+        };
+    };
+    createSupplierBill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSupplierBillDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierBillDto"];
+                };
+            };
+        };
+    };
+    getSupplierBill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                billId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierBillDto"];
+                };
+            };
+        };
+    };
+    paySupplierBill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                billId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplierPaymentInputDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierBillDto"];
+                };
+            };
+        };
+    };
+    cancelSupplierBill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                billId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelSupplierBillDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierBillDto"];
                 };
             };
         };

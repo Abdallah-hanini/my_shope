@@ -33,6 +33,9 @@ export const COMPANY_PERMISSIONS = [
   'inventory.read',
   'inventory.manage',
   'inventory.adjust',
+  'purchasing.read',
+  'purchasing.manage',
+  'purchasing.pay',
 ] as const;
 
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];
@@ -60,6 +63,7 @@ export const PERMISSION_GROUPS: { id: string; permissions: CompanyPermission[] }
   { id: 'customers', permissions: ['crm.customer.read', 'crm.customer.manage'] },
   { id: 'billing', permissions: ['billing.invoice.manage'] },
   { id: 'inventory', permissions: ['inventory.read', 'inventory.manage', 'inventory.adjust'] },
+  { id: 'purchasing', permissions: ['purchasing.read', 'purchasing.manage', 'purchasing.pay'] },
   {
     id: 'workshop',
     permissions: [

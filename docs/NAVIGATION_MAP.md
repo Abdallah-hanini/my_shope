@@ -16,6 +16,8 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
     /settings/posting                       Posting accounts (accountant)
     /parts?q=                               Parts catalogue with stock → /parts/[id] (stock per branch, receive, adjust, movements)
     /stock                                  Stock value reconciled to the ledger
+    /suppliers                              Suppliers (owed, overdue) → /suppliers/[id] (bills, enter a bill, edit)
+    /supplier-bills?status=all              Supplier bills by due date, reconciled to payables and goods received → /supplier-bills/[id] (pay, cancel)
     /settings/company                       Letterhead (CR no., address, phone, logo)
     /settings/tax                           Tax set-up (accountant)
     /settings/pricing                       Labour rates per branch, managers' discount limit

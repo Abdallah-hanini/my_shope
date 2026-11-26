@@ -30,7 +30,7 @@ export async function postSystemJournal(
     postingDate: string;
     description: string;
     currency: string;
-    sourceType: 'invoice' | 'payment' | 'stock' | 'reversal';
+    sourceType: 'invoice' | 'payment' | 'stock' | 'reversal' | 'supplier_bill' | 'supplier_payment';
     sourceId: string;
     reversalOfId?: string;
     lines: SystemLine[];

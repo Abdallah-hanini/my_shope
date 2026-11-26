@@ -81,6 +81,17 @@ export default async function PartPage({
               >
                 <input type="hidden" name="idempotencyKey" value={randomUUID()} />
                 <label className={field}>
+                  {t('pur.supplier')}
+                  <select name="supplierId" defaultValue="" className={`${inputClass} w-48`}>
+                    <option value="">{t('pur.noSupplier')}</option>
+                    {p.suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={field}>
                   {`${t('inv.quantity')} (${unit})`}
                   <input name="quantity" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                 </label>
@@ -176,6 +187,7 @@ export default async function PartPage({
                 </td>
                 <td className={td}>
                   <span className="text-xs">
+                    {m.supplierName ? `${m.supplierName} · ` : ''}
                     {m.reference ?? m.reason} · {m.journalNumber} · {m.createdByName} ·{' '}
                     {formatDateTime(locale, m.createdAt, company.timezone)}
                   </span>

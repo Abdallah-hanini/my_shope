@@ -13,6 +13,8 @@ import {
   Tags,
   Package,
   Boxes,
+  Truck,
+  ReceiptText,
   CalendarRange,
   Car,
   CarFront,
@@ -69,6 +71,8 @@ const icons = {
   Tags,
   Package,
   Boxes,
+  Truck,
+  ReceiptText,
 } as const;
 
 function isActive(path: string, href: string, exact: boolean) {

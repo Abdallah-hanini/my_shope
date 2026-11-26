@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting", "crm", "workshop", "inventory"]
+  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting", "crm", "workshop", "inventory", "purchasing"]
 }
 
 enum RecordStatus {
@@ -55,6 +55,7 @@ model Company {
   taxSettings     TaxSettings?
   pricingSettings PricingSettings?
   labourRates     LabourRate[]
+  suppliers       Supplier[]
 
   @@map("company")
   @@schema("org")
@@ -82,6 +83,7 @@ model Branch {
   labourRates      LabourRate[]
   stock            Stock[]
   stockMovements   StockMovement[]
+  supplierBills    SupplierBill[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -247,6 +249,8 @@ enum JournalSource {
   invoice
   payment
   stock
+  supplier_bill
+  supplier_payment
 
   @@schema("accounting")
 }
@@ -965,6 +969,10 @@ model PostingSettings {
   stockAdjustmentAccountId String? @map("stock_adjustment_account_id") @db.Uuid
   cogsAccountId            String? @map("cogs_account_id") @db.Uuid
   partsRevenueAccountId    String? @map("parts_revenue_account_id") @db.Uuid
+  /// Supplier bills (T-76): what the company owes suppliers, recoverable input tax, price differences.
+  payablesAccountId        String? @map("payables_account_id") @db.Uuid
+  inputTaxAccountId        String? @map("input_tax_account_id") @db.Uuid
+  priceVarianceAccountId   String? @map("price_variance_account_id") @db.Uuid
   version                  Int     @default(1)
 
   @@map("posting_settings")
@@ -1112,6 +1120,8 @@ model StockMovement {
   kind           String
   /// Issue or return: the job the part went to.
   jobId          String?  @map("job_id") @db.Uuid
+  /// Receipt: the supplier who delivered (T-76; older receipts have none).
+  supplierId     String?  @map("supplier_id") @db.Uuid
   quantity       Decimal  @db.Decimal(14, 3)
   unitCost       Decimal  @map("unit_cost") @db.Decimal(14, 4)
   value          Decimal  @db.Decimal(16, 2)
@@ -1124,12 +1134,16 @@ model StockMovement {
   createdBy      String   @map("created_by") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  part   Part   @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
-  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  part      Part               @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+  branch    Branch             @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  supplier  Supplier?          @relation(fields: [companyId, supplierId], references: [companyId, id], onDelete: Restrict)
+  billLines SupplierBillLine[]
 
   @@unique([companyId, number])
   @@unique([companyId, idempotencyKey])
+  @@unique([companyId, id])
   @@index([branchId, partId, createdAt])
+  @@index([supplierId])
   @@map("stock_movement")
   @@schema("inventory")
 }
@@ -1161,4 +1175,118 @@ model JobPart {
   @@index([branchId, partId, status])
   @@map("job_part")
   @@schema("workshop")
+}
+
+// ── purchasing (T-76) ───────────────────────────────────────────────────────
+
+model Supplier {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String   @map("company_id") @db.Uuid
+  name             String
+  nameAr           String?  @map("name_ar")
+  phone            String?
+  email            String?
+  taxNumber        String?  @map("tax_number")
+  /// Days from the supplier's invoice date to its due date (0 = due on receipt).
+  paymentTermsDays Int      @default(0) @map("payment_terms_days")
+  active           Boolean  @default(true)
+  version          Int      @default(1)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  receipts StockMovement[]
+  bills    SupplierBill[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, id])
+  @@map("supplier")
+  @@schema("purchasing")
+}
+
+/// A supplier's invoice matched to the stock receipts it charges for, posted to the ledger:
+/// Dr goods received (receipt values), Dr/Cr price variance, Dr input tax, Cr payables.
+model SupplierBill {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  branchId          String    @map("branch_id") @db.Uuid
+  supplierId        String    @map("supplier_id") @db.Uuid
+  number            String
+  supplierInvoiceNo String    @map("supplier_invoice_no")
+  billDate          DateTime  @map("bill_date") @db.Date
+  dueDate           DateTime  @map("due_date") @db.Date
+  currency          String    @db.Char(3)
+  receiptsValue     Decimal   @map("receipts_value") @db.Decimal(14, 2)
+  netAmount         Decimal   @map("net_amount") @db.Decimal(14, 2)
+  varianceAmount    Decimal   @map("variance_amount") @db.Decimal(14, 2)
+  varianceReason    String?   @map("variance_reason")
+  taxCode           String?   @map("tax_code")
+  taxPct            Decimal?  @map("tax_pct") @db.Decimal(7, 4)
+  taxAmount         Decimal   @map("tax_amount") @db.Decimal(14, 2)
+  total             Decimal   @db.Decimal(14, 2)
+  idempotencyKey    String    @map("idempotency_key")
+  journalId         String    @unique @map("journal_id") @db.Uuid
+  /// Cancelled (unpaid only) by reversing its journal; the receipts can then be billed again.
+  cancelled         Boolean   @default(false)
+  cancelJournalId   String?   @unique @map("cancel_journal_id") @db.Uuid
+  cancelReason      String?   @map("cancel_reason")
+  cancelledBy       String?   @map("cancelled_by") @db.Uuid
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  createdBy         String    @map("created_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  supplier Supplier           @relation(fields: [companyId, supplierId], references: [companyId, id], onDelete: Restrict)
+  branch   Branch             @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  lines    SupplierBillLine[]
+  payments SupplierPayment[]
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@unique([companyId, id])
+  @@index([supplierId])
+  @@map("supplier_bill")
+  @@schema("purchasing")
+}
+
+/// One stock receipt charged on the bill, at the amount the supplier billed (before tax).
+model SupplierBillLine {
+  billId       String  @map("bill_id") @db.Uuid
+  lineNo       Int     @map("line_no")
+  companyId    String  @map("company_id") @db.Uuid
+  movementId   String  @map("movement_id") @db.Uuid
+  receiptValue Decimal @map("receipt_value") @db.Decimal(14, 2)
+  amount       Decimal @db.Decimal(14, 2)
+  /// False once the bill is cancelled (the only change ever made to a line).
+  live         Boolean @default(true)
+
+  bill     SupplierBill  @relation(fields: [billId], references: [id], onDelete: Restrict)
+  movement StockMovement @relation(fields: [companyId, movementId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([billId, lineNo])
+  @@index([movementId])
+  @@map("supplier_bill_line")
+  @@schema("purchasing")
+}
+
+model SupplierPayment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  branchId       String   @map("branch_id") @db.Uuid
+  billId         String   @map("bill_id") @db.Uuid
+  number         String
+  /// cash | bank
+  method         String
+  amount         Decimal  @db.Decimal(14, 2)
+  reference      String?
+  idempotencyKey String   @map("idempotency_key")
+  journalId      String   @unique @map("journal_id") @db.Uuid
+  paidBy         String   @map("paid_by") @db.Uuid
+  paidAt         DateTime @default(now()) @map("paid_at") @db.Timestamptz(6)
+
+  bill SupplierBill @relation(fields: [billId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([billId])
+  @@map("supplier_payment")
+  @@schema("purchasing")
 }

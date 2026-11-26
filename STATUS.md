@@ -8,8 +8,55 @@
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
-| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts wait for D-06. |
-| 2, 4–7 | Not started. |
+| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts on jobs, quotes and invoices done (D-06). |
+| 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments. Not yet: purchase orders, returns, transfers. |
+| 4–7 | Not started. |
+
+## 2026-12-01: Suppliers, supplier bills and supplier payments (T-76)
+
+### Changes
+
+- **Suppliers** (`/suppliers`): name (and Arabic), phone, email, tax number, payment terms in days, active. Added and edited by company-wide purchasing managers (`purchasing.manage`). The list shows what is owed to each supplier and how much is overdue.
+- **Receipts name their supplier.** The "Receive stock" form has a supplier choice ("none" for opening stock). Older receipts have no supplier and can still be billed by any supplier, unticked by default.
+- **Supplier bills** (entered on the supplier page):
+  - tick the deliveries the supplier's invoice charges for and type the amount billed for each, before tax;
+  - the supplier's invoice number and date (not in the future), and a tax code from the accountant's tax set-up (rate on the invoice date; tax 2 decimals half up on the billed amount);
+  - a difference from the stock value needs a reason and posts to a purchase price difference account;
+  - posting: Dr goods received not invoiced (stock value), Dr/Cr price difference, Dr recoverable input tax, Cr supplier payables; number PB-yyyy-nnnnnn; due date = invoice date + the supplier's terms.
+- **Once only:** each delivery is on one live bill, and each supplier invoice number is entered once per supplier (database, also under concurrency); the same form submitted twice records one bill.
+- **Supplier payments** (bill page): cash or bank transfer (reference required), never more than owed (database, bill row locked), Dr payables / Cr cash or bank, number PV-yyyy-nnnnnn. The person who entered a bill does not pay it; the owner (`workshop.pricing.manage`) may. Permission `purchasing.pay`.
+- **Cancel** an unpaid bill with a reason: its journal is reversed and its deliveries can be billed again. Paid bills cannot be cancelled.
+- **Supplier bills list** (`/supplier-bills`): open or all, by due date, overdue flagged. Two ledger checks with their time: open bills = payables account balance, and deliveries not yet billed = goods received account balance.
+- **Posting accounts:** supplier payables, input tax (recoverable), purchase price differences.
+- **Permissions:** `purchasing.read`, `purchasing.manage`, `purchasing.pay` (added to the company administrator role). Menu group "Purchasing" (Suppliers, Supplier bills). English and Arabic.
+- **Migration `supplier_bills`:**
+  - schema `purchasing`: supplier, supplier_bill, supplier_bill_line, supplier_payment; the receipt's supplier; three posting accounts;
+  - checks (amounts add up, variance needs a reason, tax shape, cancel shape, terms 0–365, only receipts name a supplier), unique live receipt and invoice number;
+  - triggers: posted bills change only to record a cancellation (unpaid only); lines are written with their bill, for receipts of the same branch and supplier at their stock value, and only "live → not live" on cancellation; at commit the lines add up to the bill; payments never exceed the balance; payments and suppliers are never deleted.
+- **Assumptions (recorded, change on request):**
+  - a price difference goes to an expense account, not into stock value (simple and auditable under weighted average; the accountant may prefer otherwise);
+  - tax on a bill is computed from the rate, not typed from the paper invoice; a rounding difference on the supplier's paper cannot be entered yet;
+  - one bill covers whole deliveries (no part of a delivery);
+  - separation of duties: whoever entered a bill does not pay it, except the owner.
+- **Not yet:** purchase orders, purchase returns, supplier credit notes, bills for services or expenses (not stock), partial deliveries on a bill, supplier statements, foreign currency.
+
+### Evidence (2026-12-01, Linux Docker)
+
+- Unit tests (purchasing-math, 5): totals and tax half up (143.35 × 5 % = 7.17), journals for higher and lower bills balance, missing accounts refused, payment lines, due dates.
+- Integration (purchasing.int, 11):
+  - suppliers: branch-limited managers refused, invalid email and terms refused, duplicate names refused, never deleted;
+  - receipts record the supplier; unknown supplier refused;
+  - unbilled deliveries per branch include older ones without a supplier; other branches 404;
+  - no posting without payables; a difference needs a reason and an account; input tax needs its account;
+  - checks: wrong permission, other branch, another supplier's delivery, a delivery twice, none, a future date;
+  - bill 150.52: ledger 2200 Dr 141.00, 5100 Dr 2.35, 1450 Dr 7.17, 2100 Cr 150.52; due in 30 days; repeated form records once; the same delivery or invoice number refused; two bills for one delivery at once: one posts;
+  - payments: the bill's author refused, no permission refused, transfer without reference refused, more than owed refused ("150.52 still owed"), repeated form records once, Dr 2100 / Cr 1100; paid bills cannot be cancelled; the owner pays a bill they entered;
+  - cancel by reversal (2200 Cr 40.00 / 2100 Dr 40.00); the delivery billed again;
+  - reconciliation: open bills 40.00 = payables 40.00; unbilled deliveries = goods received balance;
+  - database refusals: changed bill, changed line, deleted payment, overpayment, a line for a billed delivery, a supplier on a non-receipt movement.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; browser end-to-end 47/47.
+- Integration on a fresh database: 233 of 234 passed across 20 suites. The one failure is `settings.int` "rates in effect never change". It happens only between 21:00 and 24:00 UTC: the database's dated-rate rule (T-68) uses the UTC date, while the shop's date in Qatar is already the next day. It is unrelated to this change; the application's own check still refuses (409). Suggested as a separate fix. `additions.int` failed once on a reused database (a notification read without ordering) and passed on a fresh one.
+- Browser check (new): payables and price difference accounts; supplier Gulf Parts with 30 days; a delivery of 5 litres at 10.00 from Gulf Parts (older deliveries without supplier shown unticked); bill GP-100 at 52.00 refused without a reason, then posted with "Price rise"; paid in cash; the bills list shows Paid and "Matches the ledger"; the supplier pages in Arabic on a phone without horizontal scroll.
 
 ## 2026-11-30: Parts on jobs, quotes and invoices (D-06 steps 2–3, T-75)
 

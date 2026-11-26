@@ -144,7 +144,7 @@ export class InventoryService {
       where: { partId, status: 'reserved' },
       _sum: { quantity: true },
     });
-    const [users, journals] = await Promise.all([
+    const [users, journals, suppliers] = await Promise.all([
       this.prisma.user.findMany({
         where: { id: { in: [...new Set(movements.map((m) => m.createdBy))] } },
         select: { id: true, displayName: true },
@@ -153,7 +153,22 @@ export class InventoryService {
         where: { id: { in: movements.map((m) => m.journalId) } },
         select: { id: true, number: true },
       }),
+      this.prisma.supplier.findMany({
+        where: {
+          companyId: scope.companyId,
+          id: { in: movements.map((m) => m.supplierId).filter((x): x is string => !!x) },
+        },
+        select: { id: true, name: true },
+      }),
     ]);
+    const canReceiveSomewhere = part.active && !!receive;
+    const supplierChoices = canReceiveSomewhere
+      ? await this.prisma.supplier.findMany({
+          where: { companyId: scope.companyId, active: true },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        })
+      : [];
     const has = (s: typeof receive, b: string) => !!s && (s.allBranches || s.branchIds.includes(b));
     const code = (b: string) => branches.find((x) => x.id === b)?.code ?? '—';
     return {
@@ -161,6 +176,7 @@ export class InventoryService {
       version: part.version,
       canEdit: !!receive?.allBranches,
       canSetPrice: await this.can(p, scope.companyId, 'workshop.pricing.manage'),
+      suppliers: supplierChoices,
       branches: branches.map((b) => {
         const s = stock.find((x) => x.branchId === b.id) ?? { onHand: new D(0), value: new D(0) };
         const avg = averageCost(s);
@@ -187,6 +203,7 @@ export class InventoryService {
         valueAfter: money(m.valueAfter),
         reference: m.reference,
         reason: m.reason,
+        supplierName: suppliers.find((x) => x.id === m.supplierId)?.name ?? null,
         journalNumber: journals.find((j) => j.id === m.journalId)?.number ?? '—',
         createdByName: users.find((u) => u.id === m.createdBy)?.displayName ?? '—',
         createdAt: m.createdAt.toISOString(),
@@ -282,7 +299,7 @@ export class InventoryService {
     scope: CompanyScope,
     p: Principal,
     partId: string,
-    a: { branchId: string; idempotencyKey: string },
+    a: { branchId: string; idempotencyKey: string; supplierId?: string | null },
     permission: string,
     ctx: AuditContext,
     plan: (level: StockLevel, acc: PostingAccounts) => MovementPlan,
@@ -311,7 +328,13 @@ export class InventoryService {
         await applyMovement(
           tx,
           { ...ctx, actorUserId: p.userId },
-          { companyId: scope.companyId, branchId: a.branchId, partId, idempotencyKey: a.idempotencyKey },
+          {
+            companyId: scope.companyId,
+            branchId: a.branchId,
+            partId,
+            idempotencyKey: a.idempotencyKey,
+            supplierId: a.supplierId ?? null,
+          },
           plan,
         );
       });
@@ -322,7 +345,20 @@ export class InventoryService {
     return this.get(scope, p, partId);
   }
 
-  receive(scope: CompanyScope, p: Principal, partId: string, input: ReceiveStockInput, ctx: AuditContext) {
+  async receive(
+    scope: CompanyScope,
+    p: Principal,
+    partId: string,
+    input: ReceiveStockInput,
+    ctx: AuditContext,
+  ) {
+    if (input.supplierId) {
+      const s = await this.prisma.supplier.findUnique({
+        where: { companyId_id: { companyId: scope.companyId, id: input.supplierId } },
+      });
+      if (!s) throw notFound('Supplier');
+      if (!s.active) throw unprocessable(`Supplier ${s.name} is inactive`);
+    }
     return this.move(scope, p, partId, input, 'inventory.manage', ctx, (level, acc) => {
       if (!acc.goodsReceived)
         throw unprocessable('The accountant must choose the goods received account first (Posting accounts)');

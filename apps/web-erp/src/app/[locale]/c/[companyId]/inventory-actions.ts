@@ -92,6 +92,7 @@ export async function partAction(
     if (op.kind === 'receive') {
       const v = validate(receiveStockSchema, {
         branchId: op.branchId,
+        supplierId: values.supplierId ? values.supplierId : null,
         quantity: values.quantity ?? '',
         unitCost: values.unitCost ?? '',
         reference: values.reference ?? '',

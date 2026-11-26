@@ -1176,6 +1176,8 @@ async function main() {
           'settings/pricing',
           'parts',
           'stock',
+          'suppliers',
+          'supplier-bills',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1546,6 +1548,96 @@ async function main() {
         await quote.getByRole('button', { name: 'Create quote' }).click();
         await quote.locator('[data-quote-line="2"]').getByText('50.00').waitFor(); // 4 × 12.50
         await shot('job-parts-en');
+      },
+    );
+
+    await check(
+      'Supplier bills: a supplier, a delivery from them, a bill with a price difference, paid; payables and goods received match the ledger',
+      async () => {
+        await page.goto(`${base()}/accounts`);
+        for (const [code, name, type] of [
+          ['2100', 'Supplier payables', 'liability'],
+          ['5100', 'Purchase price differences', 'expense'],
+        ]) {
+          await addAccount(code, name, type, 'posting');
+          await page.getByRole('cell', { name, exact: true }).waitFor();
+        }
+        await page.goto(`${base()}/settings/posting`);
+        const ps = page.getByRole('form', { name: 'Posting accounts' });
+        await ps
+          .locator('select[name=payablesAccountId]')
+          .selectOption({ label: '2100 — Supplier payables' });
+        await ps
+          .locator('select[name=priceVarianceAccountId]')
+          .selectOption({ label: '5100 — Purchase price differences' });
+        await ps.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        assert((await page.locator('select[name=payablesAccountId]').inputValue()) !== '', 'payables saved');
+
+        await page.goto(`${base()}/suppliers`);
+        await page.getByText('No suppliers yet.').waitFor();
+        const add = page.getByRole('form', { name: 'Add supplier' });
+        await add.getByLabel('Name', { exact: true }).fill('Gulf Parts');
+        await add.getByLabel('Payment terms (days)').fill('30');
+        await Promise.all([
+          page.waitForURL(/\/suppliers\/[0-9a-f-]{36}$/),
+          add.getByRole('button', { name: 'Add supplier' }).click(),
+        ]);
+        const supplierUrl = page.url();
+
+        await page.goto(`${base()}/parts?q=oil`);
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'OIL-5W30' }).click(),
+        ]);
+        const f = page.getByRole('form', { name: 'Receive stock DOH' });
+        await f.locator('select[name=supplierId]').selectOption({ label: 'Gulf Parts' });
+        await f.getByLabel(/^Quantity/).fill('5');
+        await f.getByLabel(/^Unit cost/).fill('10');
+        await f.getByLabel('Delivery note / supplier invoice no.').fill('DN-601');
+        await f.getByRole('button', { name: 'Receive stock' }).click();
+        await page
+          .locator('[data-movement]')
+          .first()
+          .getByText(/Gulf Parts · DN-601/)
+          .waitFor();
+
+        await page.goto(supplierUrl);
+        const bill = page.getByRole('form', { name: 'Enter a supplier bill' });
+        const row = bill.locator('tr[data-unbilled]').filter({ hasText: 'DN-601' });
+        assert(await row.getByRole('checkbox').isChecked(), 'delivery from this supplier is ticked');
+        const older = bill.locator('tr[data-unbilled]').filter({ hasText: 'DN-501' });
+        assert(
+          !(await older.getByRole('checkbox').isChecked()),
+          'older delivery without supplier is not ticked',
+        );
+        await bill.getByLabel('Supplier invoice no.').fill('GP-100');
+        await bill.getByLabel('Tax').selectOption('');
+        await row.getByRole('textbox').fill('52.00');
+        await bill.getByRole('button', { name: 'Post bill' }).click();
+        await bill.getByText(/2.00 more than the receipts' value; give the reason/).waitFor();
+        await bill.getByLabel('Supplier invoice no.').fill('GP-100');
+        await bill.getByLabel('Tax').selectOption('');
+        await row.getByRole('checkbox').check();
+        await row.getByRole('textbox').fill('52.00');
+        await bill.getByLabel('Reason for any difference').fill('Price rise');
+        await Promise.all([
+          page.waitForURL(/\/supplier-bills\/[0-9a-f-]{36}$/),
+          bill.getByRole('button', { name: 'Post bill' }).click(),
+        ]);
+        await page.locator('[data-bill-total="52.00"]').waitFor();
+        await page.getByText('Open', { exact: true }).first().waitFor();
+        await shot('supplier-bill-en');
+        const pay = page.getByRole('form', { name: 'Pay supplier' });
+        await pay.getByLabel('Method').selectOption('cash');
+        await pay.getByRole('button', { name: 'Pay supplier' }).click();
+        await page.locator('[data-supplier-payment]').first().waitFor();
+        await pay.waitFor({ state: 'detached' }); // nothing left to pay
+
+        await page.goto(`${base()}/supplier-bills?status=all`);
+        await page.locator('tr[data-bill]').filter({ hasText: 'GP-100' }).getByText('Paid').waitFor();
+        await page.locator('[data-reconciled=true]').waitFor();
+        await page.getByText('Matches the ledger').waitFor();
       },
     );
 

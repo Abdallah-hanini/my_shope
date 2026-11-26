@@ -47,6 +47,8 @@ export type UpdatePartInput = z.infer<typeof updatePartSchema>;
 /** Goods received at a branch at a cost (supplier delivery or opening stock). */
 export const receiveStockSchema = z.object({
   branchId: z.string().uuid(),
+  /** The supplier who delivered (T-76); none for opening stock. Bills match receipts by supplier. */
+  supplierId: z.string().uuid().nullable().optional(),
   quantity: quantitySchema,
   unitCost: unitCostSchema,
   reference: z.string().trim().min(1, 'give the supplier delivery note or invoice number').max(80),
