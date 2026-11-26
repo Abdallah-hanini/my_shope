@@ -48,6 +48,9 @@ export type Pricing = Schemas['PricingDto'];
 export type CompanyProfile = Schemas['CompanyProfileDto'];
 export type JobQuotes = Schemas['JobQuotesDto'];
 export type Quote = Schemas['QuoteDto'];
+export type JobBilling = Schemas['JobBillingDto'];
+export type Invoice = Schemas['InvoiceDto'];
+export type PostingSettings = Schemas['PostingSettingsDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

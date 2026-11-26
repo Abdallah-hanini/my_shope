@@ -5601,6 +5601,396 @@
           "workshop"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/posting-settings": {
+      "get": {
+        "operationId": "getPostingSettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accounts invoices and payments post to",
+        "tags": [
+          "billing"
+        ]
+      },
+      "put": {
+        "operationId": "setPostingSettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPostingSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/billing": {
+      "get": {
+        "operationId": "getJobBilling",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobBillingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invoices, credit notes, payments and handover clearance",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/invoices": {
+      "post": {
+        "operationId": "createInvoice",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobBillingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invoice the approved quote and post it to the ledger",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}": {
+      "get": {
+        "operationId": "getInvoice",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}/payments": {
+      "post": {
+        "operationId": "recordPayment",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobBillingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cash, card or bank transfer against the invoice",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}/credit-note": {
+      "post": {
+        "operationId": "creditInvoice",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditNoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobBillingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an unpaid invoice with a credit note (reversing journal)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/release-unpaid": {
+      "post": {
+        "operationId": "releaseUnpaid",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseUnpaidDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobBillingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The owner lets the car leave before the invoice is paid",
+        "tags": [
+          "billing"
+        ]
+      }
     }
   },
   "info": {
@@ -8292,7 +8682,11 @@
               "bay",
               "quote_issued",
               "quote_approved",
-              "quote_declined"
+              "quote_declined",
+              "invoice_posted",
+              "credit_note_posted",
+              "payment_received",
+              "unpaid_release"
             ]
           },
           "fromStatus": {
@@ -10573,6 +10967,463 @@
         "required": [
           "decision",
           "version"
+        ]
+      },
+      "PostingSettingsDto": {
+        "type": "object",
+        "properties": {
+          "labourRevenueAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "receivableAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "cashAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "cardAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "bankAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "version": {
+            "type": "number",
+            "description": "0 until first saved"
+          },
+          "canManage": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "canManage"
+        ]
+      },
+      "SetPostingSettingsDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "labourRevenueAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivableAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cashAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "InvoiceLineDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lineNo",
+          "description",
+          "hours",
+          "rate",
+          "amount"
+        ]
+      },
+      "PaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "RC-2026-000001"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "card",
+              "bank"
+            ]
+          },
+          "amount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivedByName": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "journalNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "method",
+          "amount",
+          "receivedByName",
+          "receivedAt",
+          "journalNumber"
+        ]
+      },
+      "InvoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "credit_note"
+            ]
+          },
+          "number": {
+            "type": "string",
+            "example": "INV-2026-000001"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "example": "2026-11-29"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "quoteId": {
+            "type": "string"
+          },
+          "quoteNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtotal": {
+            "type": "string"
+          },
+          "discountAmount": {
+            "type": "string"
+          },
+          "netAmount": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "credited": {
+            "type": "boolean",
+            "description": "Invoice cancelled by a credit note"
+          },
+          "creditOfNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Credit note: the invoice number it cancels"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "balance": {
+            "type": "string",
+            "description": "Total minus payments (0 for credit notes)"
+          },
+          "journalId": {
+            "type": "string"
+          },
+          "journalNumber": {
+            "type": "string"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            }
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentDto"
+            }
+          },
+          "actions": {
+            "description": "pay, credit",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "number",
+          "invoiceDate",
+          "currency",
+          "customerName",
+          "quoteId",
+          "subtotal",
+          "discountAmount",
+          "netAmount",
+          "taxAmount",
+          "total",
+          "pricesIncludeTax",
+          "credited",
+          "balance",
+          "journalId",
+          "journalNumber",
+          "createdByName",
+          "createdAt",
+          "lines",
+          "payments",
+          "actions"
+        ]
+      },
+      "UnpaidReleaseDto": {
+        "type": "object",
+        "properties": {
+          "byName": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "byName",
+          "at",
+          "reason"
+        ]
+      },
+      "JobBillingDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "documents": {
+            "description": "Invoices and credit notes, newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceDto"
+            }
+          },
+          "approvedQuoteId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The latest quote the customer approved"
+          },
+          "approvedQuoteNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvedQuoteTotal": {
+            "type": "string",
+            "nullable": true
+          },
+          "canInvoice": {
+            "type": "boolean",
+            "description": "The caller can invoice the approved quote now"
+          },
+          "missingAccounts": {
+            "description": "Posting settings still missing (labourRevenue, receivable, cash, card, bank)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clearedForDelivery": {
+            "type": "boolean",
+            "description": "Paid in full, or released by the owner: the car may leave"
+          },
+          "unpaidRelease": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnpaidReleaseDto"
+              }
+            ]
+          },
+          "canReleaseUnpaid": {
+            "type": "boolean",
+            "description": "The caller (owner) can let the car leave unpaid"
+          }
+        },
+        "required": [
+          "jobId",
+          "currency",
+          "documents",
+          "canInvoice",
+          "missingAccounts",
+          "clearedForDelivery",
+          "canReleaseUnpaid"
+        ]
+      },
+      "CreateInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "description": "The approved quote to invoice"
+          }
+        },
+        "required": [
+          "quoteId"
+        ]
+      },
+      "RecordPaymentDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "card",
+              "bank"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.00"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Required for card and bank"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "A new UUID per payment form; repeats return the same payment"
+          }
+        },
+        "required": [
+          "method",
+          "amount",
+          "idempotencyKey"
+        ]
+      },
+      "CreditNoteDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ReleaseUnpaidDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "reason"
         ]
       },
       "ProblemDetailsDto": {

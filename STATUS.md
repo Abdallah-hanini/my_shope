@@ -8,8 +8,65 @@
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
-| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings and priced quotes done; invoices next. Parts wait for D-06. |
+| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
+
+## 2026-11-29: Invoices, payments and handover (T-72; D-05 step 3 of 3)
+
+### Decisions (owner, 2026-11-29)
+
+- **Payment methods:** cash, card, bank transfer, and on account (pay later).
+- **Handover:** a car leaves only when its invoice is paid, unless the owner allows it with a reason.
+- **Invoicing:** invoices are made from the approved quote.
+- **Corrections:** by credit note.
+
+### Changes
+
+- **Posting accounts** (Organization → Posting accounts, for the accountant): labour revenue, customer receivable, cash, card clearing and bank. Account types are checked, and nothing posts until they are set.
+- **Invoice** ("Invoice and payment" on the job card, for a cashier with the new `billing.invoice.manage`):
+  - made from the latest approved quote once the job passed the quality check (one live invoice per job);
+  - numbered INV-yyyy-nnnnnn and posted in the same transaction (Dr receivable = total; Cr revenue = total − tax; Cr the tax code's payable account = tax), in an open fiscal period;
+  - recorded in the timeline and audit trail.
+- **Payments:**
+  - cash, card (slip reference) or bank transfer (reference), numbered RC-yyyy-nnnnnn and posted (Dr cash, card clearing or bank; Cr receivable);
+  - never more than owed (API, and a database trigger with the invoice locked);
+  - a repeated submit of the same form records once (idempotency key);
+  - "on account" leaves the balance open.
+- **Credit note:** CN-yyyy-nnnnnn cancels an unpaid invoice in full by reversing its journal; the quote can then be invoiced again. Paid invoices cannot be credited yet (refunds are not supported).
+- **Handover:** "Deliver" is refused while money is owed ("INV-… still has 403.75 QAR to pay"), unless the owner released the car with a reason. A database trigger enforces the same rule.
+- **Printed invoice or credit note** with the letterhead and tax number, lines, discount, tax, total, payments and balance.
+- **Migration `invoices_payments`:**
+  - invoice, invoice line, payment and posting settings tables; journal sources "invoice" and "payment"; the unpaid-release fields on the job;
+  - checks for amounts, the credit-note shape, payment references and one live invoice per job;
+  - triggers making invoices immutable (except being credited), lines and payments immutable, credit notes valid, payments within the balance, and delivery only when paid or released;
+  - the new permission for company administrators.
+- **Test changes:**
+  - The browser test now closes December (not November) in its period check, so documents dated today post into an open period.
+  - The workshop integration test now has the owner release the car before delivery, since that job has no invoice.
+
+### Evidence (2026-11-29, Linux Docker)
+
+- Unit tests: billing journals 3 (invoice with and without tax, balanced; refused tax without an account; payment; credit-note reversal; balance); validation 89.
+- Integration (billing.int, 8):
+  - posting accounts: required, typed, accountant only;
+  - an invoice of 315.00 posting 1200 Dr 315.00, 4000 Cr 300.00, 2100 Cr 15.00, with only one live invoice;
+  - delivery refused while owed (API and database);
+  - card without a reference refused; overpayment refused; a repeated form records once; 100 cash + 215 bank = paid; receivable credited 315; delivery then allowed;
+  - paid invoice cannot be credited; two simultaneous full payments: one recorded;
+  - credit note CN-…-000001 as a reversal journal, then re-invoicing;
+  - owner-only release with a reason, after which the car leaves with 315.00 on account;
+  - immutability (API and database); branch scope.
+- Browser end-to-end 45/45. The new check:
+  - Sara (not on the job) passes the quality check;
+  - the accountant adds accounts and sets the posting accounts;
+  - INV-2026-000001 for 403.75 QAR from Q-2026-000001; delivery is refused with the amount owed;
+  - a card payment without a reference is refused, then 100.00 by card and 303.75 cash: "Paid — the car may leave";
+  - the printed invoice shows balance 0.00 (PDF checked by eye); the car is delivered; the handover sheet shows "Passed · Sara Cashier".
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 208/208 across 16 suites on a fresh database; browser end-to-end 45/45.
+
+### Open
+
+- Refunds and partial credit notes, customer statements and receivable ageing, the cash drawer and day closing, and card terminal integration.
 
 ## 2026-11-29: Priced quotes on job cards (WMS-005, WEB-017/018; D-05 step 2 of 3)
 

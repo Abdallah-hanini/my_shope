@@ -335,6 +335,20 @@ describe('job card lifecycle', () => {
       odometerOut: 100,
     }).expect(422);
     expect(low.body.detail).toMatch(/120500/);
+    // T-72: no invoice yet, so the car may only leave if the owner releases it (billing.int covers payment).
+    const unpaid = await act(tok.advisor!, ids.job!, 'deliver', {
+      version: j.version,
+      deliveredToName: 'Khalid',
+      odometerOut: 120512,
+    }).expect(422);
+    expect(unpaid.body.detail).toMatch(/Invoice the job/);
+    await api(app, tok.admin)
+      .post(`${base()}/jobs/${ids.job}/release-unpaid`, {
+        version: j.version,
+        reason: 'Warranty work, no charge',
+      })
+      .expect(200);
+    j = await job(ids.job!);
     j = (
       await act(tok.advisor!, ids.job!, 'deliver', {
         version: j.version,
@@ -365,6 +379,7 @@ describe('job card lifecycle', () => {
       'task_done',
       'qc',
       'ready',
+      'unpaid_release',
       'delivered',
       'note',
     ]);

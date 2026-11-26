@@ -242,6 +242,8 @@ enum PeriodStatus {
 enum JournalSource {
   manual
   reversal
+  invoice
+  payment
 
   @@schema("accounting")
 }
@@ -500,6 +502,10 @@ model JobCard {
   inspectedBy             String?   @map("inspected_by") @db.Uuid
   /// The bay the car is on now (WEB-022); cleared on delivery or cancellation.
   bayId                   String?   @map("bay_id") @db.Uuid
+  /// The owner let the car leave before its invoice was paid (T-72).
+  unpaidReleaseBy         String?   @map("unpaid_release_by") @db.Uuid
+  unpaidReleaseAt         DateTime? @map("unpaid_release_at") @db.Timestamptz(6)
+  unpaidReleaseReason     String?   @map("unpaid_release_reason")
   version                 Int       @default(1)
   createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -516,6 +522,7 @@ model JobCard {
   timeEntries     TaskTimeEntry[]
   additions       JobAddition[]
   quotes          Quote[]
+  invoices        Invoice[]
   bay             Bay?             @relation(fields: [bayId], references: [id], onDelete: Restrict)
 
   @@unique([companyId, id])
@@ -904,8 +911,9 @@ model Quote {
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   version            Int       @default(1)
 
-  job   JobCard     @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
-  lines QuoteLine[]
+  job      JobCard     @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+  lines    QuoteLine[]
+  invoices Invoice[]
 
   @@unique([jobId, revision])
   @@unique([companyId, number])
@@ -932,5 +940,104 @@ model QuoteLine {
   @@id([quoteId, lineNo])
   @@unique([quoteId, taskId])
   @@map("quote_line")
+  @@schema("workshop")
+}
+
+/// The accountant's posting accounts for workshop invoices and payments (T-72).
+model PostingSettings {
+  companyId              String  @id @map("company_id") @db.Uuid
+  labourRevenueAccountId String? @map("labour_revenue_account_id") @db.Uuid
+  receivableAccountId    String? @map("receivable_account_id") @db.Uuid
+  cashAccountId          String? @map("cash_account_id") @db.Uuid
+  cardAccountId          String? @map("card_account_id") @db.Uuid
+  bankAccountId          String? @map("bank_account_id") @db.Uuid
+  version                Int     @default(1)
+
+  @@map("posting_settings")
+  @@schema("accounting")
+}
+
+/// A posted workshop invoice (from an approved quote) or credit note (reversing an invoice in
+/// full). Never changed once posted, except that an invoice records its credit note.
+model Invoice {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String   @map("company_id") @db.Uuid
+  branchId         String   @map("branch_id") @db.Uuid
+  jobId            String   @map("job_id") @db.Uuid
+  quoteId          String   @map("quote_id") @db.Uuid
+  /// invoice | credit_note
+  kind             String
+  number           String
+  invoiceDate      DateTime @map("invoice_date") @db.Date
+  currency         String   @db.Char(3)
+  customerId       String   @map("customer_id") @db.Uuid
+  customerName     String   @map("customer_name")
+  subtotal         Decimal  @db.Decimal(14, 2)
+  discountAmount   Decimal  @map("discount_amount") @db.Decimal(14, 2)
+  netAmount        Decimal  @map("net_amount") @db.Decimal(14, 2)
+  taxAmount        Decimal  @map("tax_amount") @db.Decimal(14, 2)
+  total            Decimal  @db.Decimal(14, 2)
+  taxCode          String?  @map("tax_code")
+  taxPct           Decimal? @map("tax_pct") @db.Decimal(7, 4)
+  pricesIncludeTax Boolean  @map("prices_include_tax")
+  journalId        String   @unique @map("journal_id") @db.Uuid
+  /// Invoice: cancelled by a credit note (the only change ever made to a posted invoice).
+  credited         Boolean  @default(false)
+  /// Credit note: the invoice it cancels, and why.
+  creditOfId       String?  @unique @map("credit_of_id") @db.Uuid
+  reason           String?
+  createdBy        String   @map("created_by") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  job      JobCard       @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+  quote    Quote         @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  creditOf Invoice?      @relation("credit", fields: [creditOfId], references: [id], onDelete: Restrict)
+  creditBy Invoice?      @relation("credit")
+  lines    InvoiceLine[]
+  payments Payment[]
+
+  @@unique([companyId, number])
+  @@index([jobId])
+  @@map("invoice")
+  @@schema("workshop")
+}
+
+model InvoiceLine {
+  invoiceId   String  @map("invoice_id") @db.Uuid
+  lineNo      Int     @map("line_no")
+  description String
+  hours       Decimal @db.Decimal(5, 2)
+  rate        Decimal @db.Decimal(12, 2)
+  amount      Decimal @db.Decimal(14, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@id([invoiceId, lineNo])
+  @@map("invoice_line")
+  @@schema("workshop")
+}
+
+/// Money received against an invoice; posted, never changed.
+model Payment {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  branchId       String   @map("branch_id") @db.Uuid
+  invoiceId      String   @map("invoice_id") @db.Uuid
+  number         String
+  /// cash | card | bank
+  method         String
+  amount         Decimal  @db.Decimal(14, 2)
+  reference      String?
+  idempotencyKey String   @map("idempotency_key")
+  journalId      String   @unique @map("journal_id") @db.Uuid
+  receivedBy     String   @map("received_by") @db.Uuid
+  receivedAt     DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([invoiceId])
+  @@map("payment")
   @@schema("workshop")
 }

@@ -96,3 +96,13 @@ Code: `apps/api/src/quotes/quote-math.ts` (unit-tested). The database also check
 | Tax (prices exclude tax) | Net × rate ÷ 100 ; 2 decimals, half up ; total = net + tax |
 | Tax (prices include tax) | Net × rate ÷ (100 + rate) ; 2 decimals, half up ; total = net |
 | No default tax | Tax 0 ; total = net |
+
+## Invoice and payment postings (T-72)
+
+| Document | Debit | Credit |
+|---|---|---|
+| Invoice | Customer receivable: total | Labour revenue: total − tax; tax payable (tax code's account): tax |
+| Payment | Cash, card clearing or bank: amount | Customer receivable: amount |
+| Credit note | The invoice journal's lines with debit and credit swapped (a reversal journal) | |
+
+Invoice balance = total − Σ payments (0 for a cancelled invoice). Every posting uses the document date in the company time zone and needs an open fiscal period.

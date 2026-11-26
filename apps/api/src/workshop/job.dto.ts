@@ -114,6 +114,10 @@ export class JobEventDto {
       'quote_issued',
       'quote_approved',
       'quote_declined',
+      'invoice_posted',
+      'credit_note_posted',
+      'payment_received',
+      'unpaid_release',
     ],
   })
   kind!: string;

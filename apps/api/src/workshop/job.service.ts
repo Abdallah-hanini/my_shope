@@ -591,6 +591,20 @@ export class JobService {
       if (input.odometerOut < job.odometerIn) {
         throw unprocessable(`The odometer cannot be lower than at check-in (${job.odometerIn})`);
       }
+      // T-72: the car leaves when its invoice is paid in full, or when the owner released it.
+      if (!job.unpaidReleaseBy) {
+        const inv = await tx.invoice.findFirst({
+          where: { jobId: id, kind: 'invoice', credited: false },
+          include: { payments: { select: { amount: true } } },
+        });
+        const owed = inv ? inv.payments.reduce((b, x) => b.minus(x.amount), inv.total) : null;
+        if (!owed || owed.greaterThan(0))
+          throw unprocessable(
+            inv
+              ? `${inv.number} still has ${owed!.toFixed(2)} ${inv.currency} to pay; take the payment or ask the owner to release the car`
+              : 'Invoice the job and take the payment first, or ask the owner to release the car',
+          );
+      }
       await tx.jobCard.update({
         where: { id },
         data: {

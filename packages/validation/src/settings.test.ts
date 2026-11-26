@@ -1,4 +1,5 @@
 import {
+  recordPaymentSchema,
   updateQuoteSchema,
   addTaxRateSchema,
   companyProfileSchema,
@@ -64,5 +65,31 @@ describe('quote changes', () => {
         lines: [{ taskId: u, overrideAmount: '100', overrideReason: 'Fixed price' }],
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('payments', () => {
+  const key = '00000000-0000-4000-8000-000000000009';
+  it('card and bank payments need a reference; amounts are positive with 2 decimals', () => {
+    expect(
+      recordPaymentSchema.safeParse({ method: 'cash', amount: '100', idempotencyKey: key }).success,
+    ).toBe(true);
+    expect(
+      recordPaymentSchema.safeParse({ method: 'card', amount: '100', idempotencyKey: key }).success,
+    ).toBe(false);
+    expect(
+      recordPaymentSchema.safeParse({
+        method: 'bank',
+        amount: '100',
+        reference: 'TRX-1',
+        idempotencyKey: key,
+      }).success,
+    ).toBe(true);
+    expect(recordPaymentSchema.safeParse({ method: 'cash', amount: '0', idempotencyKey: key }).success).toBe(
+      false,
+    );
+    expect(
+      recordPaymentSchema.safeParse({ method: 'cheque', amount: '1', idempotencyKey: key }).success,
+    ).toBe(false);
   });
 });

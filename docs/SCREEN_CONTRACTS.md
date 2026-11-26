@@ -134,6 +134,17 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
   - Issue quote, Discard draft, Print quote. The customer's decision (approved: who and how; declined: reason) is recorded, and earlier revisions are kept in a history.
 - **Rules:** T-71. **Tests:** quotes.int (6); e2e.
 
+## Invoice and payment (WEB-029, T-72)
+- **Location:** the "Invoice and payment" card on the job card; `/[locale]/c/[id]/jobs/[jobId]/invoices/[invoiceId]/print`; `/[locale]/c/[id]/settings/posting`.
+- **Behaviour:**
+  - The handover status is shown ("Paid — the car may leave", "x still to pay", "Released by the owner").
+  - "Invoice quote Q-… (amount)" invoices the latest approved quote, and a note appears when posting accounts are missing.
+  - Each invoice shows its balance, journal number and payments, with Record payment (cash, card or bank transfer; reference required for card and bank; the amount defaults to the balance) and Issue credit note (unpaid invoices only).
+  - The owner can let the car leave unpaid (with a reason).
+  - Deliver is refused with the amount still owed.
+  - The printed invoice or credit note shows the letterhead with the tax number, lines, discount, tax, total, payments and balance.
+- **Tests:** billing.int (8); e2e (QC by a second person, posting accounts, invoice, refusal, card and cash, print, delivery, handover sheet).
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

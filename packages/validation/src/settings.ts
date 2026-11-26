@@ -141,3 +141,44 @@ export const quoteDecisionSchema = z.discriminatedUnion('decision', [
   }),
 ]);
 export type QuoteDecisionInput = z.infer<typeof quoteDecisionSchema>;
+
+// ── invoices and payments (step 3, T-72) ─────────────────────────────────────
+
+/** The accountant's posting accounts for workshop invoices and payments. */
+export const postingSettingsSchema = z.object({
+  version,
+  labourRevenueAccountId: z.string().uuid().nullable(),
+  receivableAccountId: z.string().uuid().nullable(),
+  cashAccountId: z.string().uuid().nullable(),
+  cardAccountId: z.string().uuid().nullable(),
+  bankAccountId: z.string().uuid().nullable(),
+});
+export type PostingSettingsInput = z.infer<typeof postingSettingsSchema>;
+
+export const createInvoiceSchema = z.object({ quoteId: z.string().uuid() });
+export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;
+
+export const PAYMENT_METHODS = ['cash', 'card', 'bank'] as const;
+export const recordPaymentSchema = z
+  .object({
+    method: z.enum(PAYMENT_METHODS),
+    amount: moneySchema,
+    reference: optionalText(80),
+    /** One per submitted form, so a double click records one payment. */
+    idempotencyKey: z.string().uuid(),
+  })
+  .refine((v) => v.method === 'cash' || !!v.reference, {
+    message: 'give the card slip or transfer reference',
+    path: ['reference'],
+  });
+export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;
+
+export const creditNoteSchema = z.object({ reason: z.string().trim().min(3).max(500) });
+export type CreditNoteInput = z.infer<typeof creditNoteSchema>;
+
+/** The owner lets a car leave before its invoice is paid (recorded with the reason). */
+export const releaseUnpaidSchema = z.object({
+  version: version.min(1),
+  reason: z.string().trim().min(3).max(500),
+});
+export type ReleaseUnpaidInput = z.infer<typeof releaseUnpaidSchema>;

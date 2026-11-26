@@ -1523,6 +1523,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/posting-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts invoices and payments post to */
+        get: operations["getPostingSettings"];
+        put: operations["setPostingSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Invoices, credit notes, payments and handover clearance */
+        get: operations["getJobBilling"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invoice the approved quote and post it to the ledger */
+        post: operations["createInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInvoice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cash, card or bank transfer against the invoice */
+        post: operations["recordPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/invoices/{invoiceId}/credit-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an unpaid invoice with a credit note (reversing journal) */
+        post: operations["creditInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/release-unpaid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The owner lets the car leave before the invoice is paid */
+        post: operations["releaseUnpaid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2320,7 +2438,7 @@ export interface components {
             occurredAt: string;
             actorName: string;
             /** @enum {string} */
-            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay" | "quote_issued" | "quote_approved" | "quote_declined";
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay" | "quote_issued" | "quote_approved" | "quote_declined" | "invoice_posted" | "credit_note_posted" | "payment_received" | "unpaid_release";
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
@@ -3011,6 +3129,127 @@ export interface components {
             /** @enum {string} */
             authorizedVia?: "in_person" | "phone" | "written";
             reason?: string;
+        };
+        PostingSettingsDto: {
+            labourRevenueAccount?: components["schemas"]["AccountRefDto"] | null;
+            receivableAccount?: components["schemas"]["AccountRefDto"] | null;
+            cashAccount?: components["schemas"]["AccountRefDto"] | null;
+            cardAccount?: components["schemas"]["AccountRefDto"] | null;
+            bankAccount?: components["schemas"]["AccountRefDto"] | null;
+            /** @description 0 until first saved */
+            version: number;
+            canManage: boolean;
+        };
+        SetPostingSettingsDto: {
+            version: number;
+            labourRevenueAccountId?: string | null;
+            receivableAccountId?: string | null;
+            cashAccountId?: string | null;
+            cardAccountId?: string | null;
+            bankAccountId?: string | null;
+        };
+        InvoiceLineDto: {
+            lineNo: number;
+            description: string;
+            hours: string;
+            rate: string;
+            amount: string;
+        };
+        PaymentDto: {
+            id: string;
+            /** @example RC-2026-000001 */
+            number: string;
+            /** @enum {string} */
+            method: "cash" | "card" | "bank";
+            amount: string;
+            reference?: string | null;
+            receivedByName: string;
+            /** Format: date-time */
+            receivedAt: string;
+            journalNumber: string;
+        };
+        InvoiceDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "invoice" | "credit_note";
+            /** @example INV-2026-000001 */
+            number: string;
+            /** @example 2026-11-29 */
+            invoiceDate: string;
+            currency: string;
+            customerName: string;
+            quoteId: string;
+            quoteNumber?: string | null;
+            subtotal: string;
+            discountAmount: string;
+            netAmount: string;
+            taxAmount: string;
+            total: string;
+            taxCode?: string | null;
+            taxPct?: string | null;
+            pricesIncludeTax: boolean;
+            /** @description Invoice cancelled by a credit note */
+            credited: boolean;
+            /** @description Credit note: the invoice number it cancels */
+            creditOfNumber?: string | null;
+            reason?: string | null;
+            /** @description Total minus payments (0 for credit notes) */
+            balance: string;
+            journalId: string;
+            journalNumber: string;
+            createdByName: string;
+            /** Format: date-time */
+            createdAt: string;
+            lines: components["schemas"]["InvoiceLineDto"][];
+            payments: components["schemas"]["PaymentDto"][];
+            /** @description pay, credit */
+            actions: string[];
+        };
+        UnpaidReleaseDto: {
+            byName: string;
+            /** Format: date-time */
+            at: string;
+            reason: string;
+        };
+        JobBillingDto: {
+            jobId: string;
+            currency: string;
+            /** @description Invoices and credit notes, newest first */
+            documents: components["schemas"]["InvoiceDto"][];
+            /** @description The latest quote the customer approved */
+            approvedQuoteId?: string | null;
+            approvedQuoteNumber?: string | null;
+            approvedQuoteTotal?: string | null;
+            /** @description The caller can invoice the approved quote now */
+            canInvoice: boolean;
+            /** @description Posting settings still missing (labourRevenue, receivable, cash, card, bank) */
+            missingAccounts: string[];
+            /** @description Paid in full, or released by the owner: the car may leave */
+            clearedForDelivery: boolean;
+            unpaidRelease?: components["schemas"]["UnpaidReleaseDto"] | null;
+            /** @description The caller (owner) can let the car leave unpaid */
+            canReleaseUnpaid: boolean;
+        };
+        CreateInvoiceDto: {
+            /** @description The approved quote to invoice */
+            quoteId: string;
+        };
+        RecordPaymentDto: {
+            /** @enum {string} */
+            method: "cash" | "card" | "bank";
+            /** @example 100.00 */
+            amount: string;
+            /** @description Required for card and bank */
+            reference?: string | null;
+            /** @description A new UUID per payment form; repeats return the same payment */
+            idempotencyKey: string;
+        };
+        CreditNoteDto: {
+            reason: string;
+        };
+        ReleaseUnpaidDto: {
+            version: number;
+            reason: string;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -5817,6 +6056,200 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    getPostingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingSettingsDto"];
+                };
+            };
+        };
+    };
+    setPostingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPostingSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingSettingsDto"];
+                };
+            };
+        };
+    };
+    getJobBilling: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobBillingDto"];
+                };
+            };
+        };
+    };
+    createInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInvoiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobBillingDto"];
+                };
+            };
+        };
+    };
+    getInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceDto"];
+                };
+            };
+        };
+    };
+    recordPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobBillingDto"];
+                };
+            };
+        };
+    };
+    creditInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditNoteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobBillingDto"];
+                };
+            };
+        };
+    };
+    releaseUnpaid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseUnpaidDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobBillingDto"];
                 };
             };
         };

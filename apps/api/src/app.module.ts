@@ -23,6 +23,7 @@ import { WorkshopModule } from './workshop/workshop.module';
 import { SearchModule } from './search/search.module';
 import { SettingsModule } from './settings/settings.module';
 import { QuoteModule } from './quotes/quote.module';
+import { BillingModule } from './billing/billing.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
@@ -68,6 +69,7 @@ export class AppModule {
         WorkshopModule,
         SettingsModule,
         QuoteModule,
+        BillingModule,
       ],
       providers: [
         { provide: API_ENV, useValue: env },

@@ -41,7 +41,7 @@ Counts are summarised at the end.
 | WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Partial — status, promised time, overdue, notifications | job details, board | workshop.int |
 | WEB-027 | Outsourced repair services | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-028 | Final inspection | WMS-001…014, BRD-02 | 3 | Implemented — pass/fail with note, reopen tasks; inspector ≠ technician | job details | workshop.int; e2e |
-| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Partial — hand-over with receiver and odometer, printable handover sheet; no invoice/payment yet (D-05) | job details | workshop.int |
+| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Implemented — handover only when paid or released by the owner; invoice, payments, credit notes, printed invoice and handover sheet | job details | workshop.int |
 | WEB-030 | Job profitability analysis | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-031 | Warranty management | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 

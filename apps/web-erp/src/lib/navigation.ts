@@ -77,6 +77,7 @@ export function companyNavigation(
                 icon: 'Building2' as const,
               },
               { href: `${base}/settings/tax`, label: t('nav.tax'), icon: 'Percent' as const },
+              { href: `${base}/settings/posting`, label: t('nav.posting'), icon: 'BookOpen' as const },
             ]
           : []),
         ...(can('workshop.job.read')

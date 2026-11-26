@@ -340,8 +340,9 @@ async function main() {
     });
 
     await check('Close a period; posting into it is then refused with a clear message', async () => {
+      // December is closed (not the current month), so invoices dated today can still post.
       await page.goto(`${base()}/periods`);
-      const item = page.locator('li', { has: page.getByRole('heading', { name: '2026-11' }) });
+      const item = page.locator('li', { has: page.getByRole('heading', { name: '2026-12' }) });
       await item.getByText('Close period').first().click();
       await item.getByLabel('Reason').fill('Month end');
       await Promise.all([
@@ -349,10 +350,10 @@ async function main() {
         item.getByRole('button', { name: 'Close period' }).click(),
       ]);
       await page
-        .locator('li', { has: page.getByRole('heading', { name: '2026-11' }) })
+        .locator('li', { has: page.getByRole('heading', { name: '2026-12' }) })
         .getByText('Closed', { exact: true })
         .waitFor();
-      await fillJournal('5.00', '5.00', '2026-11-20');
+      await fillJournal('5.00', '5.00', '2026-12-20');
       await page.getByRole('button', { name: 'Post journal' }).click();
       // Scoped to forms: Next.js adds an empty route announcer with role=alert to every page.
       const alert = page.locator('form [role=alert]');
@@ -1333,6 +1334,105 @@ async function main() {
       await page.getByRole('link', { name: 'E2E Owner' }).click();
       await page.getByText('To change your own password or authenticator').waitFor();
     });
+
+    await check(
+      'Billing: a second person passes QC, the accountant’s posting accounts, invoice from the approved quote, no handover while owed, card and cash payments, printed invoice, delivery',
+      async () => {
+        // Sara (not on the job) is made an inspector for a moment and passes the quality check.
+        await page.goto(`${WEB}${staffProfile}`);
+        const access = page.locator('#access-title').locator('xpath=../..');
+        await access.getByLabel('Role').selectOption({ label: 'Company administrator' });
+        await access.getByRole('button', { name: 'Give a role' }).click();
+        await access.getByText('Company administrator').first().waitFor();
+        await staffPage.goto(jobUrl);
+        const qc = staffPage.getByRole('heading', { name: 'Quality check', level: 2 }).locator('xpath=..');
+        await qc.getByRole('button', { name: 'Quality check' }).click();
+        await staffPage.locator('main').getByText('Ready', { exact: true }).first().waitFor();
+        const item = access.locator('li', { hasText: 'Company administrator' });
+        await page.goto(`${WEB}${staffProfile}`);
+        await page
+          .locator('#access-title')
+          .locator('xpath=../..')
+          .locator('li', { hasText: 'Company administrator' })
+          .getByRole('button', { name: 'Remove' })
+          .click();
+        await item.waitFor({ state: 'detached' });
+
+        // The accountant's chart additions and posting accounts.
+        await page.goto(`${base()}/accounts`);
+        for (const [code, name, type] of [
+          ['1150', 'Card clearing', 'asset'],
+          ['1200', 'Customer receivable', 'asset'],
+          ['1300', 'Bank', 'asset'],
+          ['4000', 'Labour revenue', 'revenue'],
+        ]) {
+          await addAccount(code, name, type, 'posting');
+          await page.getByRole('cell', { name, exact: true }).waitFor();
+        }
+        await page.goto(`${base()}/settings/posting`);
+        const ps = page.getByRole('form', { name: 'Posting accounts' });
+        await ps
+          .locator('select[name=labourRevenueAccountId]')
+          .selectOption({ label: '4000 — Labour revenue' });
+        await ps
+          .locator('select[name=receivableAccountId]')
+          .selectOption({ label: '1200 — Customer receivable' });
+        await ps.locator('select[name=cashAccountId]').selectOption({ label: '1100 — Cash' });
+        await ps.locator('select[name=cardAccountId]').selectOption({ label: '1150 — Card clearing' });
+        await ps.locator('select[name=bankAccountId]').selectOption({ label: '1300 — Bank' });
+        await ps.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        assert((await page.locator('select[name=receivableAccountId]').inputValue()) !== '', 'posting saved');
+
+        // Invoice the approved quote; the car may not leave while money is owed.
+        await page.goto(jobUrl);
+        const bill = page.locator('section[aria-labelledby=billing-title]');
+        await bill.getByRole('button', { name: 'Invoice quote Q-2026-000001 (403.75 QAR)' }).click();
+        const inv = bill.locator('section[data-invoice="INV-2026-000001"]');
+        await inv.locator('[data-balance]').getByText('403.75 QAR').waitFor();
+        const del = page.getByRole('heading', { name: 'Deliver to customer', level: 2 }).locator('xpath=..');
+        await del.getByRole('button', { name: 'Deliver to customer' }).click();
+        await del.getByText(/INV-2026-000001 still has 403.75 QAR to pay/).waitFor();
+        const pay = () => page.getByRole('form', { name: 'Record payment INV-2026-000001' });
+        await pay().getByLabel('Method').selectOption('card');
+        await pay()
+          .getByLabel(/^Amount/)
+          .fill('100');
+        await pay().getByRole('button', { name: 'Record payment' }).click();
+        await pay().getByText('give the card slip or transfer reference').waitFor();
+        await pay().getByLabel('Method').selectOption('card');
+        await pay()
+          .getByLabel(/^Amount/)
+          .fill('100');
+        await pay().getByLabel('Card slip / transfer ref.').fill('SLIP-4411');
+        await pay().getByRole('button', { name: 'Record payment' }).click();
+        await inv.locator('[data-balance]').getByText('303.75 QAR').waitFor();
+        await pay().getByRole('button', { name: 'Record payment' }).click(); // cash, the balance
+        await bill.locator('[data-clearance]').getByText('Paid — the car may leave').waitFor();
+        await shot('billing-paid-en');
+        await Promise.all([
+          page.waitForURL(/\/invoices\/[0-9a-f-]{36}\/print$/),
+          inv.getByRole('link', { name: 'Print invoice' }).click(),
+        ]);
+        const sheet = page.locator('article[data-sheet=invoice]');
+        await sheet.getByText('INV-2026-000001', { exact: true }).waitFor();
+        assert((await sheet.locator('[data-print-balance]').innerText()).includes('0.00'), 'printed balance');
+        if (shots) {
+          await page.emulateMedia({ media: 'print' });
+          await page.pdf({ path: join(shots, 'invoice-en.pdf'), format: 'A4', printBackground: true });
+          await page.emulateMedia({ media: 'screen' });
+        }
+        await page.goto(jobUrl);
+        const del2 = page.getByRole('heading', { name: 'Deliver to customer', level: 2 }).locator('xpath=..');
+        await del2.getByRole('button', { name: 'Deliver to customer' }).click();
+        await page.locator('main').getByText('Delivered', { exact: true }).first().waitFor();
+        await page.goto(`${jobUrl}/print?doc=handover`);
+        await page
+          .locator('article[data-sheet=handover]')
+          .getByText(/Passed · Sara Cashier/)
+          .waitFor();
+      },
+    );
 
     await check(
       'Deactivate a staff member: access stops at once and the account cannot sign in',
