@@ -1534,6 +1534,57 @@
           "reporting"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/search": {
+      "get": {
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Per record type, 1–20 (default 5)",
+            "schema": {}
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "2–100 characters; matched as \"contains\", Arabic variants unified",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find journals, accounts, branches, fiscal periods and people the caller may see",
+        "tags": [
+          "search"
+        ]
+      }
     }
   },
   "info": {
@@ -3238,6 +3289,97 @@
           "lineCount",
           "pageOpening",
           "lines"
+        ]
+      },
+      "SearchHitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Journal number, account or branch code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Description, name, period name or person name"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true,
+            "description": "journal: total; account: type; user: email; period: status"
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "journal: posting date; period: start date"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Status where the record has one"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "SearchGroupDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "journal",
+              "account",
+              "branch",
+              "period",
+              "user"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHitDto"
+            }
+          },
+          "more": {
+            "type": "boolean",
+            "description": "More matches exist than were returned"
+          }
+        },
+        "required": [
+          "type",
+          "items",
+          "more"
+        ]
+      },
+      "SearchResultDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The query as matched (trimmed, spaces collapsed)"
+          },
+          "groups": {
+            "description": "Only the record types the caller may read, in a fixed order; empty groups included",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchGroupDto"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "groups"
         ]
       },
       "ProblemDetailsDto": {

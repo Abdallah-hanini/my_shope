@@ -30,7 +30,13 @@ export function Breadcrumbs({
 }) {
   const t = createTranslator(locale);
   const path = usePathname();
-  const section = sectionBase && path !== sectionBase ? sectionFor(groups, path) : undefined;
+  const section =
+    sectionBase && path !== sectionBase
+      ? (sectionFor(groups, path, sectionBase) ??
+        (path.startsWith(`${sectionBase}/search`)
+          ? { href: `${sectionBase}/search`, label: t('search.title') }
+          : undefined))
+      : undefined;
   const all = section ? [...trail, section] : trail;
   return (
     <nav aria-label={t('nav.breadcrumb')} className="hidden min-w-0 flex-1 md:block">

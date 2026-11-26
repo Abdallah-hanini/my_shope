@@ -66,13 +66,17 @@ export function companyNavigation(
   return groups.filter((g) => g.items.length);
 }
 
-/** Section crumb for the current path (longest matching navigation item). */
+/**
+ * Section crumb for the current path (longest matching navigation item). `homeHref` (the company
+ * home) only matches itself, so pages outside the menu do not borrow the dashboard's name.
+ */
 export function sectionFor(
   groups: SidebarGroup[],
   path: string,
+  homeHref?: string,
 ): { href: string; label: string } | undefined {
   const items = groups.flatMap((g) => g.items);
   return items
-    .filter((i) => path === i.href || path.startsWith(`${i.href}/`))
+    .filter((i) => path === i.href || (i.href !== homeHref && path.startsWith(`${i.href}/`)))
     .sort((a, b) => b.href.length - a.href.length)[0];
 }

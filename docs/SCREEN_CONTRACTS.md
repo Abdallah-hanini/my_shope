@@ -90,6 +90,15 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Planned:** comparison column, CSV/Excel/PDF export through the export centre with audit (WEB-205).
 - **Tests:** reporting.int (hand-calculated Q1, carry-forward, header roll-up, zero accounts, branch TB, reconciliation with the dashboard) and e2e.
 
+## WEB-237 Global search
+- **Route:** `/[locale]/c/[id]/search?q=` (any member). API `GET /companies/{id}/search?q=&limit=`.
+- **Entry:** header search box on screens ≥ 1024 px (`/` or Ctrl/⌘+K focuses it); a search icon on smaller screens. A plain GET form that works without JavaScript.
+- **Shows:** one card per record type with matches, with counts ("20+" when more exist). Each hit shows its code or number, name (Arabic name in Arabic), and context: journal date, total and reversal badge; account type or header; period dates and status; person email and deactivated badge. Exact-spelling matches are highlighted.
+- **Links:** journal → detail; posting account → general ledger (or the chart of accounts without journal access); branch → branches; period → periods; person → profile.
+- **Rules:** 2–100 characters; "contains" match; Arabic spelling variants unified; `%` and `_` matched literally. Only types the role can read, with branch scope (T-40).
+- **States:** empty query (autofocus), too short, no results, API error.
+- **Tests:** search.int (8) and e2e.
+
 ## WEB-224 User management
 - **Routes:** `/[locale]/c/[id]/users` and `/users/[userId]`. Needs `iam.assignment.read`; adding, resetting and deactivating need `iam.user.manage`; giving and removing roles need `iam.assignment.manage`.
 - **API:** `GET/POST /companies/{id}/users`, `GET /users/{userId}`, `POST /users/{userId}/reset-password`, `POST /users/{userId}/status`, `POST/DELETE /role-assignments`.

@@ -25,6 +25,7 @@ export type StaffMember = Schemas['StaffMemberDto'];
 export type StaffCreated = Schemas['StaffCreatedDto'];
 export type TrialBalance = Schemas['TrialBalanceDto'];
 export type GeneralLedger = Schemas['GeneralLedgerDto'];
+export type SearchResult = Schemas['SearchResultDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

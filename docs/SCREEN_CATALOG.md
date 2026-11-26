@@ -304,7 +304,7 @@ Counts are summarised at the end.
 | WEB-234 | Data import and export | ADM-009 | 5 | Planned | — | — |
 | WEB-235 | Branding and localization | ADM-006 | 1 | Planned | — | — |
 | WEB-236 | System health | ARCH-11 | 0 | Partial — status panel on home | /[locale] | smoke test |
-| WEB-237 | Global search | ADM-010 | 2 | Next | — | — |
+| WEB-237 | Global search | ADM-010 | 2 | Implemented — journals, accounts, branches, fiscal periods, people; permission/branch scoped; Arabic variants; header box with "/" shortcut | /[locale]/c/[id]/search | search.int (8); e2e "Global search" (2 checks) + staff check |
 
 ## CUS mobile application
 
@@ -463,8 +463,8 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 12 |
-| Next | 1 |
+| Implemented | 13 |
+| Next | 0 |
 | Partial | 6 |
 | Planned | 289 |
 | Postponed | 70 |

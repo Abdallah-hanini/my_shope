@@ -16,6 +16,7 @@ export type {
   ProblemDetails,
   Role,
   RoleAssignment,
+  SearchResult,
   StaffCreated,
   StaffMember,
   TrialBalance,

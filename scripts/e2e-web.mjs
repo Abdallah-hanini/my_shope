@@ -459,6 +459,58 @@ async function main() {
     );
 
     await check(
+      'Global search: "/" focuses the header box; results grouped by type link to records',
+      async () => {
+        await page.goto(base());
+        await page.locator('main').click({ position: { x: 5, y: 5 } });
+        await page.keyboard.press('/');
+        assert(
+          await page.locator('#global-search').evaluate((el) => el === document.activeElement),
+          'not focused',
+        );
+        await page.keyboard.type('cash');
+        await Promise.all([page.waitForURL(/\/search\?q=cash$/), page.keyboard.press('Enter')]);
+        await page.getByRole('heading', { name: 'Results for “cash”' }).waitFor();
+        const crumb = page.getByRole('navigation', { name: 'Breadcrumb' }).locator('[aria-current=page]');
+        assert((await crumb.innerText()) === 'Search', `breadcrumb: ${await crumb.innerText()}`);
+        const accounts = page.locator('#results-account-title').locator('xpath=../..');
+        const link = accounts.getByRole('link', { name: /1100\s*Cash/ });
+        assert(
+          /\/ledger\?account=/.test(await link.getAttribute('href')),
+          'account does not open its ledger',
+        );
+        await shot('search-en');
+        await page.locator('#search-q').fill('JV-2026-000002');
+        await Promise.all([
+          page.waitForURL(/q=JV-2026-000002/),
+          page.getByRole('button', { name: 'Search', exact: true }).click(),
+        ]);
+        const journals = page.locator('#results-journal-title').locator('xpath=../..');
+        await journals.getByText('Reversal', { exact: true }).waitFor();
+        await Promise.all([
+          page.waitForURL(/\/journals\/[0-9a-f-]{36}$/),
+          journals.getByRole('link').first().click(),
+        ]);
+        await page.getByRole('heading', { name: /JV-2026-000002/ }).waitFor();
+      },
+    );
+
+    await check(
+      'Global search tolerates Arabic spelling variants and says when nothing matches',
+      async () => {
+        // The branch is named "ورشة الدوحة"; searching with ه instead of ة still finds it.
+        await page.goto(`${base()}/search?q=${encodeURIComponent('ورشه')}`);
+        await page
+          .locator('#results-branch-title')
+          .locator('xpath=../..')
+          .getByText('DOH', { exact: true })
+          .waitFor();
+        await page.goto(`${base()}/search?q=zzqx`);
+        await page.getByText('Nothing matches “zzqx”.').waitFor();
+      },
+    );
+
+    await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
         await page.setViewportSize({ width: 390, height: 844 });
@@ -471,6 +523,7 @@ async function main() {
           'audit',
           `trial-balance?${nov}`,
           'ledger',
+          'search?q=cash',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);
@@ -577,6 +630,9 @@ async function main() {
       assert((await nav.getByRole('link', { name: 'Users' }).count()) === 0, 'Users link shown');
       assert((await nav.getByRole('link', { name: 'Branches' }).count()) === 0, 'Branches link shown');
       await nav.getByRole('link', { name: 'General ledger' }).waitFor();
+      // Search respects the role: branches and people are not searchable for this staff member.
+      await staffPage.goto(`${base()}/search?q=Doha`);
+      await staffPage.getByText('Nothing matches “Doha”.').waitFor();
       assert(
         (await nav.getByRole('link', { name: 'Trial balance' }).count()) === 0,
         'Trial balance link shown',

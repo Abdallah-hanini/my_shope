@@ -160,5 +160,5 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | ADM-007 | Audit | 1 | Done (API + web, verified) | Append-only audit with redaction, list API with branch filter; `platform.audit_event`; integration; web screens + `scripts/e2e-web.mjs` |
 | ADM-008 | Notification settings | 5 | Not started | — |
 | ADM-009 | Import/export | 5 | Not started | — |
-| ADM-010 | Global search | 2 | Not started | — |
+| ADM-010 | Global search | 2 | Done for current modules (journals, accounts, branches, fiscal periods, people) | `apps/api/src/search`, migration `global_search`; `test/search.int.test.ts` (8); web `/search` + header box; e2e. New modules add their record types |
 | ADM-011 | Role-specific dashboard | 5 | Not started | — |

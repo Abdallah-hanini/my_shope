@@ -6,11 +6,35 @@
 |---|---|
 | 0 Foundation | **Approved by the owner on 2026-11-25.** |
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, outbox relay (P1-11), maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
-| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). Next: global search (WEB-237). |
+| AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). All "Next" catalog items are now implemented. |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
 | 2–7 | Not started. |
 
-## 2026-11-26: AUTO360 UI/UX increment 3 (trial balance, general ledger)
+## 2026-11-26: AUTO360 UI/UX increment 4 (global search)
+
+### Changes
+
+- **API:** `GET /companies/{id}/search?q=&limit=` covers journals (number, description), accounts (code, name, Arabic name), branches, fiscal periods and people.
+  - Each record type requires its list permission and applies the same branch scope. Types the caller cannot read are omitted. Outsiders get 404.
+  - Matching is "contains", case-insensitive and Arabic-variant tolerant (ة/ه, أ/إ/آ/ا, ى/ي, tatweel and diacritics), with LIKE wildcards escaped. Code and number prefixes rank first.
+- **Migration `global_search`:** function `reporting.search_normalize` (immutable) and trigram indexes on journal number and description. EXPLAIN confirms both indexes serve the search query.
+- **Web:**
+  - Header search box with the `/` and Ctrl/⌘+K shortcuts; an icon on smaller screens.
+  - Results page grouped by type, with highlighted matches and links to each record (an account opens its general ledger).
+  - English and Arabic, phone layout.
+- **Fix:** pages outside the menu (such as search) showed "Executive dashboard" in the breadcrumb, because the company home prefix-matched every path. The home now matches only itself.
+
+### Evidence (2026-11-26, Linux Docker)
+
+- Unit tests: validation 66, API 64, web 28 (new navigation tests).
+- Integration on a fresh database: 108/108, including 8 search tests: per-type permission, branch scope for journals, branches and people; Arabic variants; literal % and _; ranking; limit and "more"; validation; 404 for outsiders.
+- Browser end-to-end: 33/33. New checks: "/" focuses the header box; results grouped by type with correct links and breadcrumb; journal-number search opens the journal; "ورشه" finds "ورشة الدوحة"; no-results message; the journal-only staff member cannot find branches or people; Arabic phone layout of the results page.
+
+### Not done / open
+
+- No type-ahead dropdown yet (T-39). Search does not cover journal line amounts.
+
+ (trial balance, general ledger)
 
 ### Changes
 

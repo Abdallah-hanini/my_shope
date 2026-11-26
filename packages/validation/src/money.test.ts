@@ -133,6 +133,13 @@ describe('reporting schemas', () => {
     expect(r.monthsBetween('2025-11', '2026-02')).toBe(4);
   });
 
+  it('validates search queries', () => {
+    expect(r.searchQuerySchema.parse({ q: '  cash   box ' })).toEqual({ q: 'cash box', limit: 5 });
+    expect(r.searchQuerySchema.safeParse({ q: ' a ' }).success).toBe(false);
+    expect(r.searchQuerySchema.safeParse({ q: 'x'.repeat(101) }).success).toBe(false);
+    expect(r.searchQuerySchema.safeParse({ q: 'cash', limit: '21' }).success).toBe(false);
+  });
+
   it('validates trial balance and general ledger queries', () => {
     const tb = r.trialBalanceQuerySchema.safeParse({ from: '2026-01-01', to: '2026-12-31' });
     expect(tb.success && tb.data.includeZero).toBe(false);

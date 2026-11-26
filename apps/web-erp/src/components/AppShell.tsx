@@ -4,6 +4,7 @@ import { Suspense, type ReactNode } from 'react';
 import { sidebarCollapsed, themePreference } from '@/lib/preferences';
 import { currentPath } from '@/lib/session';
 import { Breadcrumbs, LanguageSwitch, type Crumb } from './shell/HeaderLinks';
+import { HeaderSearch } from './shell/HeaderSearch';
 import { CompanySwitcher, ProfileMenu } from './shell/Menus';
 import { DesktopSidebar, MobileNav, type SidebarGroup } from './shell/Sidebar';
 
@@ -21,6 +22,7 @@ export async function AppShell({
   groups = [],
   crumbs = [],
   sectionBase,
+  searchHref,
   companies = [],
   currentCompany,
   canCreateCompany = false,
@@ -34,6 +36,8 @@ export async function AppShell({
   crumbs?: Crumb[];
   /** Company home path; the current section crumb is then derived from the URL. */
   sectionBase?: string;
+  /** Company search page; shows the header search when set. */
+  searchHref?: string;
   companies?: { id: string; name: string; code: string }[];
   currentCompany?: { id: string; name: string };
   canCreateCompany?: boolean;
@@ -77,6 +81,11 @@ export async function AppShell({
             <Link href={titleHref}>{title}</Link>
           </div>
           <div className="ms-auto flex items-center gap-2">
+            {searchHref ? (
+              <Suspense fallback={null}>
+                <HeaderSearch locale={locale} action={searchHref} />
+              </Suspense>
+            ) : null}
             {user ? (
               <span className="hidden sm:block">
                 <CompanySwitcher

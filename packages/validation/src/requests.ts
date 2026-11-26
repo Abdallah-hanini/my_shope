@@ -213,6 +213,16 @@ export const generalLedgerQuerySchema = ledgerRange
   .refine(...rangeBounded);
 export type GeneralLedgerQuery = z.infer<typeof generalLedgerQuerySchema>;
 
+/** WEB-237 global search. Whitespace is collapsed; at least 2 characters after trimming. */
+export const searchQuerySchema = z.object({
+  q: z
+    .string()
+    .transform((v) => v.trim().replace(/\s+/g, ' '))
+    .pipe(z.string().min(2, 'type at least 2 characters').max(100)),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+export type SearchQuery = z.infer<typeof searchQuerySchema>;
+
 /** Inclusive number of calendar months between two YYYY-MM values. */
 export function monthsBetween(from: string, to: string): number {
   const [fy, fm] = from.split('-').map(Number) as [number, number];

@@ -428,6 +428,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find journals, accounts, branches, fiscal periods and people the caller may see */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -943,6 +960,36 @@ export interface components {
             lines: components["schemas"]["GeneralLedgerLineDto"][];
             /** @description Pass as "cursor" for the next page */
             nextCursor?: string | null;
+        };
+        SearchHitDto: {
+            id: string;
+            /** @description Journal number, account or branch code */
+            code?: string | null;
+            /** @description Description, name, period name or person name */
+            name: string;
+            nameAr?: string | null;
+            /** @description journal: total; account: type; user: email; period: status */
+            detail?: string | null;
+            /**
+             * Format: date
+             * @description journal: posting date; period: start date
+             */
+            date?: string | null;
+            /** @description Status where the record has one */
+            status?: string | null;
+        };
+        SearchGroupDto: {
+            /** @enum {string} */
+            type: "journal" | "account" | "branch" | "period" | "user";
+            items: components["schemas"]["SearchHitDto"][];
+            /** @description More matches exist than were returned */
+            more: boolean;
+        };
+        SearchResultDto: {
+            /** @description The query as matched (trimmed, spaces collapsed) */
+            query: string;
+            /** @description Only the record types the caller may read, in a fixed order; empty groups included */
+            groups: components["schemas"]["SearchGroupDto"][];
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -1784,6 +1831,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GeneralLedgerDto"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query: {
+                /** @description Per record type, 1–20 (default 5) */
+                limit?: unknown;
+                /** @description 2–100 characters; matched as "contains", Arabic variants unified */
+                q: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResultDto"];
                 };
             };
         };
