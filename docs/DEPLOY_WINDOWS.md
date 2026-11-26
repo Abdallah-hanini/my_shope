@@ -100,5 +100,14 @@ Everything entered after that backup is lost.
 
 ## What is not done yet
 
-- Web screens available now: companies, branches, chart of accounts, fiscal periods, journals (entry, list, detail, reversal), users, roles, the permission matrix and the audit trail. Password recovery by email is not available (no mail server decided); an administrator resets a password from the user's profile instead.
+- **Available now:**
+  - Workshop: job cards, appointments, bays, labour time, additional work, priced quotes, and printed sheets and quotes.
+  - Customers and vehicles.
+  - Accounting: chart of accounts, journals, ledger, trial balance and periods.
+  - Settings: tax set-up, labour rates and company profile.
+  - Administration: users, roles, the audit trail, exports and notifications.
+- **Not yet:**
+  - invoices and payments (waiting for the accountant's account choices);
+  - parts and stock (D-06);
+  - password recovery by email (no mail server decided). An administrator resets a password from the user's profile instead.
 - Customer-facing access from the internet is postponed (owner decision). Do not forward router ports to this PC.
