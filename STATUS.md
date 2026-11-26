@@ -8,9 +8,53 @@
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
-| 2–7 | Not started. |
+| 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
+| 2, 4–7 | Not started. |
 
-## 2026-11-26: AUTO360 UI/UX increment 6 (notification inbox, outbox dispatcher P1-11)
+## 2026-11-26: Workshop job cards, first slice (Phase 3: WMS-001/006/010/011)
+
+### Changes
+
+- **Data (migration `workshop_job_cards`):**
+  - schemas `crm` (customer, vehicle) and `workshop` (job_card, job_task, job_event);
+  - database checks for statuses, fuel level, odometer, authorisation required after draft, delivery and cancellation details, and task completion;
+  - the timeline is append-only (trigger); delivered and cancelled jobs cannot be changed (trigger);
+  - company administrators receive the six new permissions.
+- **Permissions:** `crm.customer.read/manage`, `workshop.job.read/manage/work/qc`. Jobs are branch-scoped.
+- **Lifecycle (T-51…T-53):**
+  - draft → approved (customer authorisation recorded) → assigned (every task has a technician of the branch) → in progress → quality check → ready → delivered;
+  - a failed check moves to rework and reopens the chosen tasks; cancel with a reason;
+  - each step is checked for status, permission, ownership (technicians complete their own tasks) and version, and writes a timeline event, audit and outbox event in one transaction;
+  - the inspector cannot be a technician on the job.
+- **Notifications:** technician assigned to a task; rework for its technicians; job ready for the person who opened it.
+- **Search:** job cards (number, plate), vehicles (plate also without spaces, VIN, make and model) and customers (name, phone).
+- **Web:**
+  - Workshop menu: Job cards (board by status and list), New job card (check-in with task rows), job details (tasks with assignment and "Mark done", one panel per allowed step, timeline);
+  - Vehicles (registry, profile with service history, owner transfer, "Check in");
+  - Customers (list, detail with vehicles).
+  - English and Arabic, phone layout.
+
+### Evidence (2026-11-26, Linux Docker)
+
+- Unit tests: lifecycle rules 5, validation (plates, VIN, job and QC schemas) 73, web helpers (time zone) 35.
+- Integration (workshop.int, 16), including:
+  - customers and vehicles: normalised unique plates, VIN check, audited owner transfer, version conflicts;
+  - the full lifecycle with an advisor, two technicians, an inspector and a technician from another branch, including refusals (403/409/422), and two simultaneous "start" requests producing one change;
+  - the inspector-not-on-job rule; QC failure reopening a task; delivery odometer check; closed-job immutability (database trigger); authorisation required after draft and an append-only timeline (database);
+  - branch isolation, service history, notifications, plate search without spaces;
+  - new administrators receiving the permissions.
+- Browser end-to-end (new checks):
+  - register a customer and vehicle (plate normalised), check in with two tasks, record authorisation, assign both tasks, start, mark done, send to quality check;
+  - the person who did the work sees "Waiting for the quality check by an inspector", not the inspection form;
+  - timeline order; board column "Quality check"; plate search; Arabic phone layout of the workshop pages.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 152/152 across 8 suites on a fresh database; browser end-to-end 38/38.
+
+### Not done / open
+
+- Prices, quotations and approval of a quoted amount (WMS-005), parts reservation and issue (WMS-008), invoices and payment: need **D-05 (tax)** and **D-06 (costing)**.
+- Photos and inspection checklist at check-in (WEB-015), appointments (WEB-010/011), labour time clocking (WEB-023), extra work requests (WEB-025), bays (WEB-022).
+
+ (notification inbox, outbox dispatcher P1-11)
 
 ### Changes
 

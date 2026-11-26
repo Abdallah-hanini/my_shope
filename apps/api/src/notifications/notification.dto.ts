@@ -8,6 +8,9 @@ export const NOTIFICATION_KINDS = [
   'period_closed',
   'export_ready',
   'export_failed',
+  'job_assigned',
+  'job_rework',
+  'job_ready',
 ] as const;
 
 export class NotificationDto {

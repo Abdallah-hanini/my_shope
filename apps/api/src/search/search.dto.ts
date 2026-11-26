@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export const SEARCH_TYPES = ['journal', 'account', 'branch', 'period', 'user'] as const;
+export const SEARCH_TYPES = [
+  'job',
+  'vehicle',
+  'customer',
+  'journal',
+  'account',
+  'branch',
+  'period',
+  'user',
+] as const;
 export type SearchType = (typeof SEARCH_TYPES)[number];
 
 export class SearchHitDto {
@@ -16,7 +25,8 @@ export class SearchHitDto {
   @ApiPropertyOptional({
     nullable: true,
     type: String,
-    description: 'journal: total; account: type; user: email; period: status',
+    description:
+      'job: plate and vehicle; vehicle: make and model; customer: phone; journal: total; account: type; user: email; period: end date',
   })
   detail!: string | null;
   @ApiPropertyOptional({

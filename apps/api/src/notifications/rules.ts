@@ -11,7 +11,10 @@ export interface NotificationDraft {
     | 'role_changed'
     | 'period_closed'
     | 'export_ready'
-    | 'export_failed';
+    | 'export_failed'
+    | 'job_assigned'
+    | 'job_rework'
+    | 'job_ready';
   params: Record<string, string | null>;
   /** Path inside the company area (checked by the database), or null. */
   link: string | null;
@@ -155,7 +158,79 @@ export const RULES: Record<string, Rule> = {
       },
     ];
   },
+
+  'workshop.task.assigned': async (tx, e) => {
+    const p = e.payload as { jobId?: string; taskId?: string; technicianId?: string };
+    if (!p.jobId || !p.taskId || !p.technicianId)
+      throw new Error('assignment event without job, task or technician');
+    if (p.technicianId === e.actorUserId) return [];
+    const job = await jobSummary(tx, p.jobId);
+    const task = await tx.jobTask.findUnique({ where: { id: p.taskId }, select: { description: true } });
+    if (!(await canSee(tx, p.technicianId, e.companyId, 'workshop.job.read', job.branchId))) return [];
+    return [
+      {
+        userId: p.technicianId,
+        kind: 'job_assigned',
+        params: {
+          number: job.number,
+          plate: job.plate,
+          task: task?.description ?? null,
+          actor: await actorName(tx, e.actorUserId),
+        },
+        link: `jobs/${p.jobId}`,
+      },
+    ];
+  },
+
+  'workshop.job.rework': async (tx, e) => {
+    const p = e.payload as { jobId?: string; technicianIds?: string[] };
+    if (!p.jobId) throw new Error('rework event without jobId');
+    const job = await jobSummary(tx, p.jobId);
+    const out: NotificationDraft[] = [];
+    for (const userId of p.technicianIds ?? []) {
+      if (
+        userId === e.actorUserId ||
+        !(await canSee(tx, userId, e.companyId, 'workshop.job.read', job.branchId))
+      )
+        continue;
+      out.push({
+        userId,
+        kind: 'job_rework',
+        params: { number: job.number, plate: job.plate },
+        link: `jobs/${p.jobId}`,
+      });
+    }
+    return out;
+  },
+
+  'workshop.job.ready': async (tx, e) => {
+    const p = e.payload as { jobId?: string };
+    if (!p.jobId) throw new Error('ready event without jobId');
+    const job = await jobSummary(tx, p.jobId);
+    // The person who opened the job (the service advisor) calls the customer.
+    if (
+      job.createdBy === e.actorUserId ||
+      !(await canSee(tx, job.createdBy, e.companyId, 'workshop.job.read', job.branchId))
+    )
+      return [];
+    return [
+      {
+        userId: job.createdBy,
+        kind: 'job_ready',
+        params: { number: job.number, plate: job.plate },
+        link: `jobs/${p.jobId}`,
+      },
+    ];
+  },
 };
+
+async function jobSummary(tx: Tx, jobId: string) {
+  const j = await tx.jobCard.findUniqueOrThrow({
+    where: { id: jobId },
+    select: { number: true, branchId: true, createdBy: true, vehicle: { select: { plate: true } } },
+  });
+  return { number: j.number, branchId: j.branchId, createdBy: j.createdBy, plate: j.vehicle.plate };
+}
 
 async function roleAssignmentNotice(
   tx: Tx,

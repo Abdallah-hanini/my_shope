@@ -51,17 +51,17 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 
 | ID | Capability | Phase | Status | Evidence |
 |---|---|---|---|---|
-| WMS-001 | Customer and vehicle registry | 3 | Not started | — |
+| WMS-001 | Customer and vehicle registry | 3 | Done (first slice): customers, vehicles (plate/VIN unique, ownership transfer audited), service history | `apps/api/src/crm`, migration `workshop_job_cards`; workshop.int; e2e |
 | WMS-002 | Service scheduling and capacity | 3 | Not started | — |
 | WMS-003 | Check-in inspection/photos | 3 | Not started | — |
 | WMS-004 | Diagnostics and fault codes | 3 | Not started | — |
 | WMS-005 | Versioned estimates and customer approval | 3 | Not started | — |
-| WMS-006 | Job cards and assignments | 3 | Not started | — |
+| WMS-006 | Job cards and assignments | 3 | Done (first slice, no prices/parts): check-in, tasks, technician assignment per branch, board and list | `apps/api/src/workshop`; workshop.int (16); e2e |
 | WMS-007 | Labor time and costs | 3 | Not started | — |
 | WMS-008 | Reserve/issue/return parts | 3 | Not started | — |
 | WMS-009 | Additional approvals | 3 | Not started | — |
-| WMS-010 | Repair status and ETA | 3 | Not started | — |
-| WMS-011 | QC/rework | 3 | Not started | — |
+| WMS-010 | Repair status and ETA | 3 | Done: lifecycle statuses, promised time, overdue flag, timeline, notifications | `workshop/lifecycle.ts`, job timeline (append-only) |
+| WMS-011 | QC/rework | 3 | Done: inspector ≠ technician on the job; failed check reopens chosen tasks; rework count | `lifecycle.ts` permits('qc'); workshop.int |
 | WMS-012 | Invoice/delivery | 3 | Not started | — |
 | WMS-013 | Service history/warranty | 3 | Not started | — |
 | WMS-014 | Outsourced services and fleet jobs | 3 | Not started | — |
@@ -131,8 +131,8 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | HR-011 | End-of-service | 6 (blocked: payroll law) | Not started | — |
 | HR-012 | Self-service | 6 | Not started | — |
 | HR-013 | Payroll approvals | 6 | Not started | — |
-| CRM-001 | Individual/corporate contacts | 6 | Not started | — |
-| CRM-002 | Customer 360 and multiple vehicles | 6 | Not started | — |
+| CRM-001 | Individual/corporate contacts | 6 | Partial: customer registry (individual/company, phone, email) | `apps/api/src/crm` |
+| CRM-002 | Customer 360 and multiple vehicles | 6 | Partial: customer with vehicles; vehicle service history | `apps/web-erp/.../customers`, `vehicles` |
 | CRM-003 | Communications | 6 (blocked: messaging vendor) | Not started | — |
 | CRM-004 | Leads/opportunities | 6 | Not started | — |
 | CRM-005 | Followups | 6 | Not started | — |

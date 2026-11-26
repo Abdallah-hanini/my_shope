@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting"]
+  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting", "crm", "workshop"]
 }
 
 enum RecordStatus {
@@ -41,6 +41,9 @@ model Company {
   journalLines    JournalLine[]
   exportJobs      ExportJob[]
   notifications   Notification[]
+  customers       Customer[]
+  vehicles        Vehicle[]
+  jobCards        JobCard[]
 
   @@map("company")
   @@schema("org")
@@ -60,6 +63,7 @@ model Branch {
   company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   roleAssignments RoleAssignment[]
   journals        Journal[]
+  jobCards        JobCard[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -391,4 +395,142 @@ model Notification {
   @@index([userId, companyId, createdAt(sort: Desc), id(sort: Desc)])
   @@map("notification")
   @@schema("platform")
+}
+
+// ─────────────────────────── crm (WMS-001, CRM-001/002) ──────────────────────────
+
+model Customer {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String       @map("company_id") @db.Uuid
+  kind      String       @default("individual")
+  name      String
+  nameAr    String?      @map("name_ar")
+  phone     String
+  email     String?
+  notes     String?
+  status    RecordStatus @default(active)
+  version   Int          @default(1)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  vehicles Vehicle[]
+  jobCards JobCard[]
+
+  @@unique([companyId, id])
+  @@index([companyId, phone])
+  @@map("customer")
+  @@schema("crm")
+}
+
+/// A vehicle and its current owner. Plate and VIN are unique within the company.
+model Vehicle {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId  String       @map("company_id") @db.Uuid
+  customerId String       @map("customer_id") @db.Uuid
+  plate      String
+  vin        String?
+  make       String
+  model      String
+  year       Int?
+  color      String?
+  status     RecordStatus @default(active)
+  version    Int          @default(1)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer Customer  @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  jobCards JobCard[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, plate])
+  @@unique([companyId, vin])
+  @@map("vehicle")
+  @@schema("crm")
+}
+
+// ─────────────────────────── workshop (WMS-006/010/011) ──────────────────────────
+
+/// A repair job for one vehicle at one branch. Status changes only through JobService, which
+/// checks the transition, the actor's permission and the version, and writes a JobEvent.
+model JobCard {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId               String    @map("company_id") @db.Uuid
+  branchId                String    @map("branch_id") @db.Uuid
+  number                  String
+  customerId              String    @map("customer_id") @db.Uuid
+  vehicleId               String    @map("vehicle_id") @db.Uuid
+  status                  String    @default("draft")
+  complaint               String
+  odometerIn              Int       @map("odometer_in")
+  fuelLevel               String    @map("fuel_level")
+  promisedAt              DateTime? @map("promised_at") @db.Timestamptz(6)
+  authorizedByName        String?   @map("authorized_by_name")
+  authorizedVia           String?   @map("authorized_via")
+  authorizedAt            DateTime? @map("authorized_at") @db.Timestamptz(6)
+  authorizationRecordedBy String?   @map("authorization_recorded_by") @db.Uuid
+  reworkCount             Int       @default(0) @map("rework_count")
+  deliveredToName         String?   @map("delivered_to_name")
+  deliveredAt             DateTime? @map("delivered_at") @db.Timestamptz(6)
+  odometerOut             Int?      @map("odometer_out")
+  cancelledReason         String?   @map("cancelled_reason")
+  createdBy               String    @map("created_by") @db.Uuid
+  version                 Int       @default(1)
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch   Branch     @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+  customer Customer   @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  vehicle  Vehicle    @relation(fields: [companyId, vehicleId], references: [companyId, id], onDelete: Restrict)
+  tasks    JobTask[]
+  events   JobEvent[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@index([companyId, status, createdAt(sort: Desc)])
+  @@index([companyId, vehicleId, createdAt(sort: Desc)])
+  @@map("job_card")
+  @@schema("workshop")
+}
+
+model JobTask {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
+  jobId          String    @map("job_id") @db.Uuid
+  lineNo         Int       @map("line_no")
+  description    String
+  estimatedHours Decimal   @map("estimated_hours") @db.Decimal(5, 2)
+  technicianId   String?   @map("technician_id") @db.Uuid
+  status         String    @default("open")
+  doneAt         DateTime? @map("done_at") @db.Timestamptz(6)
+  doneBy         String?   @map("done_by") @db.Uuid
+
+  job JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Cascade)
+
+  @@unique([jobId, lineNo])
+  @@index([companyId, technicianId])
+  @@map("job_task")
+  @@schema("workshop")
+}
+
+/// Append-only job timeline (status changes, assignments, QC results, notes).
+model JobEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  jobId       String   @map("job_id") @db.Uuid
+  occurredAt  DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  actorUserId String   @map("actor_user_id") @db.Uuid
+  kind        String
+  fromStatus  String?  @map("from_status")
+  toStatus    String?  @map("to_status")
+  note        String?
+  data        Json?
+
+  job JobCard @relation(fields: [companyId, jobId], references: [companyId, id], onDelete: Restrict)
+
+  @@index([jobId, occurredAt])
+  @@map("job_event")
+  @@schema("workshop")
 }

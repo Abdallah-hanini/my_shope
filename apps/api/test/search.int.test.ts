@@ -132,7 +132,16 @@ afterAll(async () => {
 describe('global search', () => {
   it('finds each record type the caller may read, in a fixed order', async () => {
     const r = await search('cash');
-    expect(r.groups.map((g) => g.type)).toEqual(['journal', 'account', 'branch', 'period', 'user']);
+    expect(r.groups.map((g) => g.type)).toEqual([
+      'job',
+      'vehicle',
+      'customer',
+      'journal',
+      'account',
+      'branch',
+      'period',
+      'user',
+    ]);
     expect(names(r, 'journal')).toHaveLength(1);
     expect(group(r, 'journal')!.items[0]).toMatchObject({ id: ids.J_CO, name: 'Cash count adjustment' });
     expect(names(r, 'account')).toEqual(['11', '1100']);

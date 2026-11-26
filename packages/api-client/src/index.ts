@@ -6,11 +6,15 @@ export type {
   AuditEvent,
   Branch,
   Company,
+  Customer,
+  CustomerDetail,
   ExportJob,
   FinancialSummary,
   FiscalPeriod,
   GeneralLedger,
   HealthReport,
+  JobCard,
+  JobListItem,
   Journal,
   LivenessReport,
   Me,
@@ -22,7 +26,9 @@ export type {
   SearchResult,
   StaffCreated,
   StaffMember,
+  Technician,
   TrialBalance,
+  Vehicle,
 } from '@erp/contracts';
 
 /** Thrown for any non-2xx response. Carries the RFC 9457 body when the server sent one. */

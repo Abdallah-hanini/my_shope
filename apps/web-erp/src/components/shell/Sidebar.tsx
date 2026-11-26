@@ -7,7 +7,9 @@ import {
   BookText,
   Building2,
   CalendarRange,
+  Car,
   CarFront,
+  Contact,
   FileDown,
   Grid3x3,
   KeyRound,
@@ -19,6 +21,7 @@ import {
   Scale,
   ShieldCheck,
   Users,
+  Wrench,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -49,6 +52,9 @@ const icons = {
   Users,
   KeyRound,
   Grid3x3,
+  Wrench,
+  Car,
+  Contact,
 } as const;
 
 function isActive(path: string, href: string, exact: boolean) {

@@ -20,6 +20,20 @@ export function companyNavigation(
       ],
     },
     {
+      label: t('nav.groupWorkshop'),
+      items: [
+        ...(can('workshop.job.read')
+          ? [{ href: `${base}/jobs`, label: t('nav.jobs'), icon: 'Wrench' as const }]
+          : []),
+        ...(can('crm.customer.read')
+          ? [
+              { href: `${base}/vehicles`, label: t('nav.vehicles'), icon: 'Car' as const },
+              { href: `${base}/customers`, label: t('nav.customers'), icon: 'Contact' as const },
+            ]
+          : []),
+      ],
+    },
+    {
       label: t('nav.groupFinance'),
       items: [
         ...(can('accounting.journal.read')

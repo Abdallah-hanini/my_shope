@@ -20,6 +20,12 @@ export const COMPANY_PERMISSIONS = [
   'accounting.journal.post',
   'accounting.journal.reverse',
   'reports.financial.read',
+  'crm.customer.read',
+  'crm.customer.manage',
+  'workshop.job.read',
+  'workshop.job.manage',
+  'workshop.job.work',
+  'workshop.job.qc',
 ] as const;
 
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];
@@ -40,6 +46,11 @@ export const PERMISSION_GROUPS: { id: string; permissions: CompanyPermission[] }
     ],
   },
   { id: 'reporting', permissions: ['reports.financial.read'] },
+  { id: 'customers', permissions: ['crm.customer.read', 'crm.customer.manage'] },
+  {
+    id: 'workshop',
+    permissions: ['workshop.job.read', 'workshop.job.manage', 'workshop.job.work', 'workshop.job.qc'],
+  },
   {
     id: 'access',
     permissions: [

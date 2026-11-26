@@ -6,6 +6,10 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
 /[locale]                                   Home: sign-in, company picker, system status
 /[locale]/companies/new                     New company (platform administrator)
 /[locale]/c/[companyId]                     Executive overview (reports.financial.read) or area links
+  Workshop
+    /jobs                                   Repair board (open jobs by status) · ?view=list · /jobs/new?vehicle= (check-in) · /jobs/[id]
+    /vehicles                               Vehicle registry → /vehicles/[id] (profile, service history, check in)
+    /customers                              Customers → /customers/[id] (vehicles, add vehicle)
   Finance
     /journals                               Journal list  → /journals/[id] (detail, reverse) · /journals/new
     /accounts                               Chart of accounts (create)

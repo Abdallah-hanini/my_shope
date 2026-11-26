@@ -25,6 +25,8 @@ export function renderNotification(n: NotificationLike, locale: Locale): string 
     role,
     branch: p.branch ?? t('common.allBranches'),
     period: p.period ?? '—',
+    plate: p.plate ?? '—',
+    task: p.task ?? '—',
     exportKind: p.exportKind ? t(`export.kind.${p.exportKind}` as MessageKey) : '—',
     fileName: p.fileName ?? '—',
     error: p.error ?? t('error.title'),

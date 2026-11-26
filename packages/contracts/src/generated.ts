@@ -561,6 +561,309 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers by name (200); q matches name, phone or email */
+        get: operations["listCustomers"];
+        put?: never;
+        post: operations["createCustomer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/customers/{customerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCustomer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateCustomer"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vehicles by plate (200); q matches plate, VIN, make, model or owner */
+        get: operations["listVehicles"];
+        put?: never;
+        post: operations["createVehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/vehicles/{vehicleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getVehicle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateVehicle"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job cards in the caller’s branches; view=open (default) for the board */
+        get: operations["listJobs"];
+        put?: never;
+        /** Vehicle check-in: open a job card (workshop.job.manage on the branch) */
+        post: operations["createJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/vehicles/{vehicleId}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Service history of a vehicle (jobs the caller may see) */
+        get: operations["listVehicleJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft (details and tasks) */
+        patch: operations["updateJobDraft"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/technicians": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** People who may work on this job (managers only) */
+        get: operations["listJobTechnicians"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the customer’s authorisation (draft → approved/assigned) */
+        post: operations["authorizeJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set or clear the technician of a task */
+        post: operations["assignJobTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/tasks/{taskId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a task done (its technician or a manager) */
+        post: operations["completeJobTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** assigned → in progress */
+        post: operations["startJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/submit-qc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** All tasks done → quality check */
+        post: operations["submitJobForQc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/qc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pass → ready; fail → rework of chosen tasks (inspector not on the job) */
+        post: operations["recordJobQc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ready → delivered (hand-over) */
+        post: operations["deliverJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/promise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set or clear the promised time (ETA) */
+        post: operations["setJobPromise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addJobNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1092,7 +1395,7 @@ export interface components {
             /** @description Description, name, period name or person name */
             name: string;
             nameAr?: string | null;
-            /** @description journal: total; account: type; user: email; period: status */
+            /** @description job: plate and vehicle; vehicle: make and model; customer: phone; journal: total; account: type; user: email; period: end date */
             detail?: string | null;
             /**
              * Format: date
@@ -1104,7 +1407,7 @@ export interface components {
         };
         SearchGroupDto: {
             /** @enum {string} */
-            type: "journal" | "account" | "branch" | "period" | "user";
+            type: "job" | "vehicle" | "customer" | "journal" | "account" | "branch" | "period" | "user";
             items: components["schemas"]["SearchHitDto"][];
             /** @description More matches exist than were returned */
             more: boolean;
@@ -1162,7 +1465,7 @@ export interface components {
         NotificationDto: {
             id: string;
             /** @enum {string} */
-            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed";
+            kind: "journal_reversed" | "role_granted" | "role_revoked" | "role_changed" | "period_closed" | "export_ready" | "export_failed" | "job_assigned" | "job_rework" | "job_ready";
             /** @description Values for the message text, by kind (e.g. number, reversalNumber, role, roleAr, branch, period, actor, exportKind, fileName, error) */
             params: {
                 [key: string]: string | null;
@@ -1182,6 +1485,258 @@ export interface components {
         };
         UnreadCountDto: {
             unreadCount: number;
+        };
+        CustomerDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "individual" | "company";
+            name: string;
+            nameAr?: string | null;
+            phone: string;
+            email?: string | null;
+            notes?: string | null;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+            vehicleCount: number;
+        };
+        VehicleDto: {
+            id: string;
+            customerId: string;
+            customerName: string;
+            plate: string;
+            vin?: string | null;
+            make: string;
+            model: string;
+            year?: number | null;
+            color?: string | null;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+        };
+        CustomerDetailDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "individual" | "company";
+            name: string;
+            nameAr?: string | null;
+            phone: string;
+            email?: string | null;
+            notes?: string | null;
+            /** @enum {string} */
+            status: "active" | "inactive";
+            version: number;
+            vehicleCount: number;
+            vehicles: components["schemas"]["VehicleDto"][];
+        };
+        CreateCustomerDto: {
+            /** @enum {string} */
+            kind?: "individual" | "company";
+            name: string;
+            nameAr?: string | null;
+            phone: string;
+            email?: string | null;
+            notes?: string | null;
+        };
+        UpdateCustomerDto: {
+            /** @enum {string} */
+            kind?: "individual" | "company";
+            name: string;
+            nameAr?: string | null;
+            phone: string;
+            email?: string | null;
+            notes?: string | null;
+            version: number;
+        };
+        CreateVehicleDto: {
+            customerId: string;
+            plate: string;
+            /** @description 17 characters, no I/O/Q */
+            vin?: string | null;
+            make: string;
+            model: string;
+            year?: number | null;
+            color?: string | null;
+        };
+        UpdateVehicleDto: {
+            customerId: string;
+            plate: string;
+            /** @description 17 characters, no I/O/Q */
+            vin?: string | null;
+            make: string;
+            model: string;
+            year?: number | null;
+            color?: string | null;
+            /** @description A different customerId records a change of owner */
+            version: number;
+        };
+        JobListItemDto: {
+            id: string;
+            number: string;
+            /** @enum {string} */
+            status: "draft" | "approved" | "assigned" | "in_progress" | "rework" | "qc" | "ready" | "delivered" | "cancelled";
+            branchId: string;
+            branchCode: string;
+            plate: string;
+            vehicleName: string;
+            customerName: string;
+            /** Format: date-time */
+            promisedAt?: string | null;
+            /** @description Promised time has passed and the job is not ready, delivered or cancelled */
+            overdue: boolean;
+            technicianNames: string[];
+            tasksDone: number;
+            tasksTotal: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        JobTaskInputDto: {
+            description: string;
+            /** @example 1.5 */
+            estimatedHours: string;
+        };
+        CreateJobDto: {
+            branchId: string;
+            vehicleId: string;
+            complaint: string;
+            odometerIn: number;
+            /** @enum {string} */
+            fuelLevel: "empty" | "quarter" | "half" | "three_quarters" | "full";
+            /** Format: date-time */
+            promisedAt?: string | null;
+            tasks: components["schemas"]["JobTaskInputDto"][];
+        };
+        JobPartyDto: {
+            id: string;
+            name: string;
+            nameAr?: string | null;
+            phone: string;
+        };
+        JobVehicleDto: {
+            id: string;
+            plate: string;
+            make: string;
+            model: string;
+            year?: number | null;
+        };
+        JobTaskDto: {
+            id: string;
+            lineNo: number;
+            description: string;
+            /** @example 1.50 */
+            estimatedHours: string;
+            technicianId?: string | null;
+            technicianName?: string | null;
+            /** @enum {string} */
+            status: "open" | "done";
+            /** Format: date-time */
+            doneAt?: string | null;
+            /** @description The caller can mark this task done now */
+            canComplete: boolean;
+        };
+        JobEventDto: {
+            id: string;
+            /** Format: date-time */
+            occurredAt: string;
+            actorName: string;
+            /** @enum {string} */
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated";
+            fromStatus?: string | null;
+            toStatus?: string | null;
+            note?: string | null;
+        };
+        JobCardDto: {
+            id: string;
+            number: string;
+            /** @enum {string} */
+            status: "draft" | "approved" | "assigned" | "in_progress" | "rework" | "qc" | "ready" | "delivered" | "cancelled";
+            branchId: string;
+            branchCode: string;
+            customer: components["schemas"]["JobPartyDto"];
+            vehicle: components["schemas"]["JobVehicleDto"];
+            complaint: string;
+            odometerIn: number;
+            /** @enum {string} */
+            fuelLevel: "empty" | "quarter" | "half" | "three_quarters" | "full";
+            /** Format: date-time */
+            promisedAt?: string | null;
+            overdue: boolean;
+            authorizedByName?: string | null;
+            /** @enum {string|null} */
+            authorizedVia?: "in_person" | "phone" | "written" | null;
+            /** Format: date-time */
+            authorizedAt?: string | null;
+            reworkCount: number;
+            deliveredToName?: string | null;
+            /** Format: date-time */
+            deliveredAt?: string | null;
+            odometerOut?: number | null;
+            cancelledReason?: string | null;
+            createdByName: string;
+            /** Format: date-time */
+            createdAt: string;
+            version: number;
+            /** @example 3.50 */
+            estimatedHours: string;
+            tasks: components["schemas"]["JobTaskDto"][];
+            /** @description Timeline, oldest first */
+            events: components["schemas"]["JobEventDto"][];
+            /** @description What the caller can do now (edit, authorize, assign, start, submitQc, qc, deliver, cancel, promise, note); the server checks again */
+            actions: string[];
+        };
+        TechnicianDto: {
+            id: string;
+            displayName: string;
+        };
+        UpdateJobDraftDto: {
+            complaint: string;
+            odometerIn: number;
+            fuelLevel: string;
+            /** Format: date-time */
+            promisedAt?: string | null;
+            tasks: components["schemas"]["JobTaskInputDto"][];
+            version: number;
+        };
+        AuthorizeJobDto: {
+            version: number;
+            /** @description The person who authorised the work */
+            authorizedByName: string;
+            /** @enum {string} */
+            authorizedVia: "in_person" | "phone" | "written";
+        };
+        AssignTaskDto: {
+            version: number;
+            /** @description null removes the technician */
+            technicianId?: string | null;
+        };
+        JobVersionDto: {
+            version: number;
+        };
+        QcResultDto: {
+            /** @enum {string} */
+            result: "pass" | "fail";
+            version: number;
+            /** @description Required when failing */
+            note?: string;
+            /** @description Tasks to redo (fail only, at least one) */
+            reopenTaskIds?: string[];
+        };
+        DeliverJobDto: {
+            version: number;
+            deliveredToName: string;
+            odometerOut: number;
+        };
+        CancelJobDto: {
+            version: number;
+            reason: string;
+        };
+        PromiseJobDto: {
+            version: number;
+            /** Format: date-time */
+            promisedAt?: string | null;
+        };
+        JobNoteDto: {
+            note: string;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -2232,6 +2787,605 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NotificationDto"];
+                };
+            };
+        };
+    };
+    listCustomers: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDto"][];
+                };
+            };
+        };
+    };
+    createCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCustomerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDto"];
+                };
+            };
+        };
+    };
+    getCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customerId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailDto"];
+                };
+            };
+        };
+    };
+    updateCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customerId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCustomerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDto"];
+                };
+            };
+        };
+    };
+    listVehicles: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleDto"][];
+                };
+            };
+        };
+    };
+    createVehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVehicleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleDto"];
+                };
+            };
+        };
+    };
+    getVehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleDto"];
+                };
+            };
+        };
+    };
+    updateVehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVehicleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleDto"];
+                };
+            };
+        };
+    };
+    listJobs: {
+        parameters: {
+            query?: {
+                /** @description 1–200, default 200 */
+                limit?: unknown;
+                branchId?: unknown;
+                status?: "draft" | "approved" | "assigned" | "in_progress" | "rework" | "qc" | "ready" | "delivered" | "cancelled";
+                /** @description open (default) = before delivery or cancellation */
+                view?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobListItemDto"][];
+                };
+            };
+        };
+    };
+    createJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJobDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    listVehicleJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicleId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobListItemDto"][];
+                };
+            };
+        };
+    };
+    getJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    updateJobDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateJobDraftDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    listJobTechnicians: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianDto"][];
+                };
+            };
+        };
+    };
+    authorizeJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizeJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    assignJobTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                taskId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignTaskDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    completeJobTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                taskId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    startJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    submitJobForQc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    recordJobQc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QcResultDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    deliverJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliverJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    cancelJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    setJobPromise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromiseJobDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
+                };
+            };
+        };
+    };
+    addJobNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobNoteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCardDto"];
                 };
             };
         };

@@ -57,6 +57,12 @@ export default async function SearchPage({
 
   const href = (type: Group['type'], h: Hit): string => {
     switch (type) {
+      case 'job':
+        return `${base}/jobs/${h.id}`;
+      case 'vehicle':
+        return `${base}/vehicles/${h.id}`;
+      case 'customer':
+        return `${base}/customers/${h.id}`;
       case 'journal':
         return `${base}/journals/${h.id}`;
       case 'account':
@@ -184,6 +190,20 @@ function HitDetail({ type, hit, locale }: { type: Group['type']; hit: Hit; local
           <Badge tone={hit.status === 'open' ? 'success' : 'neutral'}>
             {hit.status === 'open' ? t('period.open') : t('period.closed')}
           </Badge>
+        </span>
+      );
+    case 'job':
+      return (
+        <span className={`${muted} flex flex-wrap items-center gap-2`}>
+          <Ltr>{hit.detail}</Ltr>
+          <Badge>{t(`job.status.${hit.status}` as MessageKey)}</Badge>
+        </span>
+      );
+    case 'vehicle':
+    case 'customer':
+      return (
+        <span className={muted}>
+          <Ltr>{hit.detail}</Ltr>
         </span>
       );
     case 'user':

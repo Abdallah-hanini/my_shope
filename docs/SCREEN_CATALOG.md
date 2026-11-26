@@ -21,27 +21,27 @@ Counts are summarised at the end.
 | ID | View | Requirements | Phase | Status | Route / location | Evidence |
 |---|---|---|---|---|---|---|
 | WEB-008 | Workshop overview | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-009 | Live repair Kanban board | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-009 | Live repair Kanban board | WMS-001…014, BRD-02 | 3 | Implemented — open jobs by status, overdue badge, tasks progress | /[locale]/c/[id]/jobs | e2e "board" |
 | WEB-010 | Appointment calendar | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-011 | Create service appointment | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-012 | Vehicle registry | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-013 | Vehicle profile and service history | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-012 | Vehicle registry | WMS-001…014, BRD-02 | 3 | Implemented — search by plate/VIN/make/model/owner | /[locale]/c/[id]/vehicles | workshop.int; e2e |
+| WEB-013 | Vehicle profile and service history | WMS-001…014, BRD-02 | 3 | Implemented — profile, owner transfer, job history | /[locale]/c/[id]/vehicles/[vehicleId] | workshop.int; e2e |
+| WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Partial — complaint, odometer, fuel, promised time, tasks; no photos/inspection | /[locale]/c/[id]/jobs/new | e2e "check-in" |
 | WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-016 | Diagnosis and fault codes | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-017 | Create repair quotation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-018 | Quotation details and approval history | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-019 | Job card management | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-020 | Job card details | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-021 | Technician assignment | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-019 | Job card management | WMS-001…014, BRD-02 | 3 | Implemented — list view | /[locale]/c/[id]/jobs?view=list | workshop.int |
+| WEB-020 | Job card details | WMS-001…014, BRD-02 | 3 | Partial — details, tasks, steps, timeline, notes; no quotation/parts/invoice (D-05, D-06) | /[locale]/c/[id]/jobs/[jobId] | workshop.int (16); e2e |
+| WEB-021 | Technician assignment | WMS-001…014, BRD-02 | 3 | Implemented — per task, only technicians of the branch | job details | workshop.int; e2e |
 | WEB-022 | Workshop bay allocation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-023 | Labor time tracking | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-024 | Spare parts reservation and issuance | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-025 | Additional repair requests | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Partial — status, promised time, overdue, notifications | job details, board | workshop.int |
 | WEB-027 | Outsourced repair services | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-028 | Final inspection | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-028 | Final inspection | WMS-001…014, BRD-02 | 3 | Implemented — pass/fail with note, reopen tasks; inspector ≠ technician | job details | workshop.int; e2e |
+| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Partial — hand-over with receiver and odometer; no invoice/payment yet (D-05) | job details | workshop.int |
 | WEB-030 | Job profitability analysis | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-031 | Warranty management | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 14 |
+| Implemented | 20 |
 | Next | 0 |
-| Partial | 6 |
-| Planned | 288 |
+| Partial | 10 |
+| Planned | 278 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

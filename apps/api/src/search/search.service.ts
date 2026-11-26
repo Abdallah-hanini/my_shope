@@ -12,6 +12,9 @@ import type { SearchGroupDto, SearchHitDto, SearchResultDto, SearchType } from '
 
 /** Which permission makes each record type searchable (the same one its list screen needs). */
 const PERMISSION: Record<SearchType, string> = {
+  job: 'workshop.job.read',
+  vehicle: 'crm.customer.read',
+  customer: 'crm.customer.read',
   journal: 'accounting.journal.read',
   account: 'accounting.account.read',
   branch: 'org.branch.read',
@@ -48,6 +51,87 @@ export class SearchService {
     const take = q.limit + 1;
 
     const runners: Record<SearchType, (branchFilter: Prisma.Sql) => Promise<SearchHitDto[]>> = {
+      job: async (bf) => {
+        const rows = await this.prisma.$queryRaw<
+          {
+            id: string;
+            number: string;
+            complaint: string;
+            status: string;
+            plate: string;
+            make: string;
+            model: string;
+            created_at: Date;
+          }[]
+        >`
+          SELECT j.id, j.number, j.complaint, j.status, v.plate, v.make, v.model, j.created_at
+            FROM workshop.job_card j
+            JOIN crm.vehicle v ON v.id = j.vehicle_id AND v.company_id = j.company_id
+           WHERE j.company_id = ${companyId}::uuid ${bf}
+             AND (${match(Prisma.sql`j.number`)} OR ${match(Prisma.sql`v.plate`)} OR ${match(Prisma.sql`replace(v.plate, ' ', '')`)})
+           ORDER BY ${starts(Prisma.sql`j.number`)} DESC, j.created_at DESC
+           LIMIT ${take}`;
+        return rows.map((r) => ({
+          id: r.id,
+          code: r.number,
+          name: r.complaint,
+          nameAr: null,
+          detail: `${r.plate} · ${r.make} ${r.model}`,
+          date: isoDate(r.created_at),
+          status: r.status,
+        }));
+      },
+      vehicle: async () => {
+        const rows = await this.prisma.$queryRaw<
+          {
+            id: string;
+            plate: string;
+            vin: string | null;
+            make: string;
+            model: string;
+            status: string;
+            owner: string;
+          }[]
+        >`
+          SELECT v.id, v.plate, v.vin, v.make, v.model, v.status::text AS status, c.name AS owner
+            FROM crm.vehicle v
+            JOIN crm.customer c ON c.id = v.customer_id AND c.company_id = v.company_id
+           WHERE v.company_id = ${companyId}::uuid
+             AND (${match(Prisma.sql`v.plate`)} OR ${match(Prisma.sql`replace(v.plate, ' ', '')`)}
+                  OR ${match(Prisma.sql`coalesce(v.vin, '')`)} OR ${match(Prisma.sql`v.make || ' ' || v.model`)})
+           ORDER BY ${starts(Prisma.sql`v.plate`)} DESC, v.plate
+           LIMIT ${take}`;
+        return rows.map((r) => ({
+          id: r.id,
+          code: r.plate,
+          name: `${r.make} ${r.model}`,
+          nameAr: null,
+          detail: r.owner,
+          date: null,
+          status: r.status,
+        }));
+      },
+      customer: async () => {
+        const rows = await this.prisma.$queryRaw<
+          { id: string; name: string; name_ar: string | null; phone: string; status: string }[]
+        >`
+          SELECT id, name, name_ar, phone, status::text AS status
+            FROM crm.customer
+           WHERE company_id = ${companyId}::uuid
+             AND (${match(Prisma.sql`name`)} OR ${match(Prisma.sql`coalesce(name_ar, '')`)}
+                  OR ${match(Prisma.sql`phone`)} OR ${match(Prisma.sql`replace(phone, ' ', '')`)})
+           ORDER BY ${starts(Prisma.sql`name`)} DESC, name
+           LIMIT ${take}`;
+        return rows.map((r) => ({
+          id: r.id,
+          code: null,
+          name: r.name,
+          nameAr: r.name_ar,
+          detail: r.phone,
+          date: null,
+          status: r.status,
+        }));
+      },
       journal: async (bf) => {
         const rows = await this.prisma.$queryRaw<
           {
@@ -169,6 +253,9 @@ export class SearchService {
 
     // Column holding the branch for each type's scope filter; null = not branch-scoped.
     const branchColumn: Record<SearchType, Prisma.Sql | null> = {
+      job: Prisma.sql`j.branch_id`,
+      vehicle: null,
+      customer: null,
       journal: Prisma.sql`branch_id`,
       account: null,
       branch: Prisma.sql`id`,

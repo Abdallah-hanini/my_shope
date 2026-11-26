@@ -1,0 +1,86 @@
+import { OPEN_JOB_STATUSES, type JobStatus } from '@erp/validation';
+
+/**
+ * Job card lifecycle (SRS: draft → approved → assigned → in progress → QC → ready → delivered;
+ * failed QC → rework; cancellation). Pure rules; JobService enforces them with the database.
+ */
+export type JobAction =
+  | 'edit'
+  | 'authorize'
+  | 'assign'
+  | 'start'
+  | 'completeTask'
+  | 'submitQc'
+  | 'qc'
+  | 'deliver'
+  | 'cancel'
+  | 'promise'
+  | 'note';
+
+/** Statuses in which each action is possible (permissions are checked separately). */
+export const ACTION_STATUSES: Record<JobAction, readonly JobStatus[]> = {
+  edit: ['draft'],
+  authorize: ['draft'],
+  assign: ['draft', 'approved', 'assigned', 'in_progress', 'rework'],
+  start: ['assigned'],
+  completeTask: ['in_progress', 'rework'],
+  submitQc: ['in_progress', 'rework'],
+  qc: ['qc'],
+  deliver: ['ready'],
+  cancel: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
+  promise: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready'],
+  note: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready', 'delivered', 'cancelled'],
+};
+
+export const OPEN_STATUSES: readonly JobStatus[] = OPEN_JOB_STATUSES;
+
+export function allowedInStatus(action: JobAction, status: JobStatus): boolean {
+  return ACTION_STATUSES[action].includes(status);
+}
+
+/** After a technician assignment changes: approved ⇄ assigned depending on whether every task has one. */
+export function statusAfterAssignment(status: JobStatus, allTasksAssigned: boolean): JobStatus {
+  if (status === 'approved' && allTasksAssigned) return 'assigned';
+  if (status === 'assigned' && !allTasksAssigned) return 'approved';
+  return status;
+}
+
+/** Who may act, given the actor's capabilities on the job's branch and their role on the job. */
+export interface Actor {
+  manage: boolean;
+  work: boolean;
+  qc: boolean;
+  /** The actor is the technician of at least one task on this job. */
+  onJob: boolean;
+  /** The actor is the technician of the task concerned (completeTask). */
+  onTask?: boolean;
+}
+
+export function permits(action: JobAction, a: Actor): boolean {
+  switch (action) {
+    case 'edit':
+    case 'authorize':
+    case 'assign':
+    case 'deliver':
+    case 'cancel':
+    case 'promise':
+      return a.manage;
+    case 'start':
+    case 'submitQc':
+      return a.manage || (a.work && a.onJob);
+    case 'completeTask':
+      return a.manage || (a.work && !!a.onTask);
+    case 'qc':
+      // Segregation of duties: nobody inspects work they did on this job.
+      return a.qc && !a.onJob;
+    case 'note':
+      return a.manage || a.work || a.qc;
+  }
+}
+
+/** Actions the actor can take now (for the client to show; the server checks again). */
+export function availableActions(status: JobStatus, a: Actor): JobAction[] {
+  return (Object.keys(ACTION_STATUSES) as JobAction[]).filter(
+    (k) => k !== 'completeTask' && allowedInStatus(k, status) && permits(k, a),
+  );
+}

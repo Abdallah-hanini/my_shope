@@ -638,6 +638,107 @@ async function main() {
       },
     );
 
+    let jobUrl = '';
+    await check(
+      'Workshop: customer and vehicle, check-in with tasks, authorise, assign, work, send to QC',
+      async () => {
+        await page.goto(`${base()}/customers`);
+        await page.locator('#cust-name').fill('Khalid Al-Marri');
+        await page.locator('#cust-nameAr').fill('خالد المري');
+        await page.locator('#cust-phone').fill('+974 5555 0101');
+        await Promise.all([
+          page.waitForURL(/\/customers\/[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'New customer' }).click(),
+        ]);
+        await page.locator('#veh-plate').fill('123  456');
+        await page.locator('#veh-make').fill('Toyota');
+        await page.locator('#veh-model').fill('Land Cruiser');
+        await page.locator('#veh-year').fill('2019');
+        await Promise.all([
+          page.waitForURL(/\/vehicles\/[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Add vehicle' }).click(),
+        ]);
+        await page.getByRole('heading', { name: '123 456' }).waitFor(); // plate normalised by the server
+        await Promise.all([
+          page.waitForURL(/\/jobs\/new\?vehicle=/),
+          page.getByRole('link', { name: 'Check in (new job card)' }).click(),
+        ]);
+        await page.locator('#job-odometer').fill('120500');
+        await page.locator('#job-complaint').fill('Brakes squeal when cold');
+        await page.locator('input[name=taskDescription]').first().fill('Replace front brake pads');
+        await page.locator('input[name=taskHours]').first().fill('1.5');
+        await page.getByRole('button', { name: 'Add task' }).click();
+        await page.locator('input[name=taskDescription]').nth(1).fill('Road test');
+        await page.locator('input[name=taskHours]').nth(1).fill('0.5');
+        await Promise.all([
+          page.waitForURL(/\/jobs\/[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Open job card' }).click(),
+        ]);
+        jobUrl = page.url();
+        await page.getByRole('heading', { name: 'JC-2026-000001' }).waitFor();
+        await page.locator('main').getByText('Draft', { exact: true }).first().waitFor();
+        assert((await page.locator('tfoot').innerText()).includes('2.00'), 'estimated total');
+        const step = async (name) => {
+          await page.getByRole('button', { name, exact: true }).first().click();
+          await page.waitForLoadState('networkidle');
+        };
+        await step('Record authorisation');
+        await page.locator('main').getByText('Approved', { exact: true }).first().waitFor();
+        for (const n of [1, 2]) {
+          await page.getByLabel(`Technician ${n}`).selectOption({ label: 'E2E Owner' });
+          await page
+            .getByRole('form', { name: `Assign ${n}` })
+            .getByRole('button', { name: 'Assign' })
+            .click();
+          await page.waitForLoadState('networkidle');
+          // Wait for the server's confirmation (a timeline entry) before the next step.
+          await page
+            .locator('#timeline-title')
+            .locator('xpath=../..')
+            .getByText('Technician assigned')
+            .nth(n - 1)
+            .waitFor();
+        }
+        await page.locator('main').getByText('Assigned', { exact: true }).first().waitFor();
+        await step('Start work');
+        for (const n of [1, 2]) {
+          await page
+            .getByRole('form', { name: `Mark done ${n}` })
+            .getByRole('button', { name: 'Mark done' })
+            .click();
+          await page.locator(`tr[data-task="${n}"]`).getByText('Done', { exact: true }).waitFor();
+        }
+        await step('Send to quality check');
+        await page.locator('main').getByText('Quality check', { exact: true }).first().waitFor();
+        // Segregation of duties: the person who did the work is not offered the inspection.
+        assert(
+          (await page.getByRole('heading', { name: 'Quality check', level: 2 }).count()) === 0,
+          'QC offered to the technician',
+        );
+        await page.getByText('Waiting for the quality check by an inspector').waitFor();
+        const timeline = await page.locator('#timeline-title').locator('xpath=../..').innerText();
+        assert(
+          /Job card opened[\s\S]*Approved[\s\S]*In progress[\s\S]*Task done[\s\S]*Quality check/.test(
+            timeline,
+          ),
+          timeline,
+        );
+        await shot('job-card-en');
+      },
+    );
+
+    await check('Workshop: the board shows the job under Quality check; plate search finds it', async () => {
+      await page.goto(`${base()}/jobs`);
+      const col = page
+        .getByRole('listitem')
+        .filter({ has: page.getByRole('heading', { name: 'Quality check' }) });
+      await col.locator('a[data-job="JC-2026-000001"]').waitFor();
+      await shot('job-board-en');
+      await page.goto(`${base()}/search?q=123456`);
+      await page.locator('#results-job-title').locator('xpath=../..').getByText('JC-2026-000001').waitFor();
+      await page.locator('#results-vehicle-title').locator('xpath=../..').getByText('123 456').waitFor();
+    });
+
     await check(
       'Arabic pages are right-to-left with translated navigation, and fit a phone screen',
       async () => {
@@ -654,6 +755,10 @@ async function main() {
           'search?q=cash',
           'exports',
           'notifications',
+          'jobs',
+          'vehicles',
+          'customers',
+          'jobs/new',
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);

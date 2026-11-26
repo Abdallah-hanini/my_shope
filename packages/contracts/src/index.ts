@@ -29,6 +29,12 @@ export type SearchResult = Schemas['SearchResultDto'];
 export type ExportJob = Schemas['ExportJobDto'];
 export type Notification = Schemas['NotificationDto'];
 export type NotificationPage = Schemas['NotificationPageDto'];
+export type Customer = Schemas['CustomerDto'];
+export type CustomerDetail = Schemas['CustomerDetailDto'];
+export type Vehicle = Schemas['VehicleDto'];
+export type JobCard = Schemas['JobCardDto'];
+export type JobListItem = Schemas['JobListItemDto'];
+export type Technician = Schemas['TechnicianDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

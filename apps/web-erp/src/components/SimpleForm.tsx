@@ -9,7 +9,7 @@ import { Field, inputClass } from './ui';
 export interface FieldSpec {
   name: string;
   label: string;
-  type?: 'text' | 'date' | 'select' | 'textarea';
+  type?: 'text' | 'date' | 'select' | 'textarea' | 'number' | 'datetime-local' | 'email' | 'tel';
   required?: boolean;
   hint?: string;
   defaultValue?: string;

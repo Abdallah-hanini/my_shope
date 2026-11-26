@@ -1,0 +1,353 @@
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  assignTaskSchema,
+  authorizeJobSchema,
+  cancelJobSchema,
+  createJobSchema,
+  deliverJobSchema,
+  jobListQuerySchema,
+  jobNoteSchema,
+  jobVersionSchema,
+  promiseJobSchema,
+  qcResultSchema,
+  updateJobDraftSchema,
+  type AssignTaskInput,
+  type AuthorizeJobInput,
+  type CancelJobInput,
+  type CreateJobInput,
+  type DeliverJobInput,
+  type JobListQuery,
+  type JobNoteInput,
+  type JobVersionInput,
+  type PromiseJobInput,
+  type QcResultInput,
+  type UpdateJobDraftInput,
+} from '@erp/validation';
+import { CurrentPrincipal, CurrentScope, RequestId, RequirePermission } from '../auth/decorators';
+import type { CompanyScope, Principal } from '../auth/principal';
+import { ZodPipe } from '../common/zod.pipe';
+import {
+  AssignTaskDto,
+  AuthorizeJobDto,
+  CancelJobDto,
+  CreateJobDto,
+  DeliverJobDto,
+  JobCardDto,
+  JobListItemDto,
+  JobNoteDto,
+  JobVersionDto,
+  PromiseJobDto,
+  QcResultDto,
+  TechnicianDto,
+  UpdateJobDraftDto,
+} from './job.dto';
+import { JobService } from './job.service';
+
+const id404 = new ParseUUIDPipe({ errorHttpStatusCode: 404 });
+const ctxOf = (p: Principal, requestId?: string) => ({ actorUserId: p.userId, requestId });
+
+/**
+ * Workshop job cards. Every route needs workshop.job.read (and gives the branch scope); each
+ * change also needs the permission the lifecycle requires (manage, work or qc) on the job's branch.
+ */
+@ApiTags('workshop')
+@ApiBearerAuth()
+@ApiParam({ name: 'companyId', format: 'uuid' })
+@Controller({ path: 'companies/:companyId' })
+export class JobController {
+  constructor(private readonly jobs: JobService) {}
+
+  @Get('jobs')
+  @RequirePermission('workshop.job.read')
+  @ApiOperation({
+    operationId: 'listJobs',
+    summary: 'Job cards in the caller’s branches; view=open (default) for the board',
+  })
+  @ApiQuery({
+    name: 'view',
+    required: false,
+    enum: ['open', 'all'],
+    description: 'open (default) = before delivery or cancellation',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['draft', 'approved', 'assigned', 'in_progress', 'rework', 'qc', 'ready', 'delivered', 'cancelled'],
+  })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiQuery({ name: 'limit', required: false, description: '1–200, default 200' })
+  @ApiOkResponse({ type: [JobListItemDto] })
+  list(
+    @CurrentScope() scope: CompanyScope,
+    @Query(new ZodPipe(jobListQuerySchema)) q: JobListQuery,
+  ): Promise<JobListItemDto[]> {
+    return this.jobs.list(scope, q);
+  }
+
+  @Get('vehicles/:vehicleId/jobs')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'vehicleId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'listVehicleJobs',
+    summary: 'Service history of a vehicle (jobs the caller may see)',
+  })
+  @ApiOkResponse({ type: [JobListItemDto] })
+  vehicleJobs(
+    @CurrentScope() scope: CompanyScope,
+    @Param('vehicleId', id404) vehicleId: string,
+  ): Promise<JobListItemDto[]> {
+    return this.jobs.forVehicle(scope, vehicleId);
+  }
+
+  @Post('jobs')
+  @RequirePermission('workshop.job.read')
+  @ApiOperation({
+    operationId: 'createJob',
+    summary: 'Vehicle check-in: open a job card (workshop.job.manage on the branch)',
+  })
+  @ApiBody({ type: CreateJobDto })
+  @ApiCreatedResponse({ type: JobCardDto })
+  create(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Body(new ZodPipe(createJobSchema)) body: CreateJobInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.create(scope, p, body, ctxOf(p, rid));
+  }
+
+  @Get('jobs/:jobId')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'getJob' })
+  @ApiOkResponse({ type: JobCardDto })
+  get(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.get(scope, p, id);
+  }
+
+  @Get('jobs/:jobId/technicians')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'listJobTechnicians',
+    summary: 'People who may work on this job (managers only)',
+  })
+  @ApiOkResponse({ type: [TechnicianDto] })
+  technicians(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+  ): Promise<TechnicianDto[]> {
+    return this.jobs.technicians(scope, p, id);
+  }
+
+  @Patch('jobs/:jobId')
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'updateJobDraft', summary: 'Edit a draft (details and tasks)' })
+  @ApiBody({ type: UpdateJobDraftDto })
+  @ApiOkResponse({ type: JobCardDto })
+  update(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(updateJobDraftSchema)) body: UpdateJobDraftInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.updateDraft(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/authorize')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'authorizeJob',
+    summary: 'Record the customer’s authorisation (draft → approved/assigned)',
+  })
+  @ApiBody({ type: AuthorizeJobDto })
+  @ApiOkResponse({ type: JobCardDto })
+  authorize(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(authorizeJobSchema)) body: AuthorizeJobInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.authorize(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/tasks/:taskId/assign')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'taskId', format: 'uuid' })
+  @ApiOperation({ operationId: 'assignJobTask', summary: 'Set or clear the technician of a task' })
+  @ApiBody({ type: AssignTaskDto })
+  @ApiOkResponse({ type: JobCardDto })
+  assign(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Param('taskId', id404) taskId: string,
+    @Body(new ZodPipe(assignTaskSchema)) body: AssignTaskInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.assignTask(scope, p, id, taskId, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/tasks/:taskId/complete')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiParam({ name: 'taskId', format: 'uuid' })
+  @ApiOperation({ operationId: 'completeJobTask', summary: 'Mark a task done (its technician or a manager)' })
+  @ApiBody({ type: JobVersionDto })
+  @ApiOkResponse({ type: JobCardDto })
+  complete(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Param('taskId', id404) taskId: string,
+    @Body(new ZodPipe(jobVersionSchema)) body: JobVersionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.completeTask(scope, p, id, taskId, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/start')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'startJob', summary: 'assigned → in progress' })
+  @ApiBody({ type: JobVersionDto })
+  @ApiOkResponse({ type: JobCardDto })
+  start(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(jobVersionSchema)) body: JobVersionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.start(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/submit-qc')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'submitJobForQc', summary: 'All tasks done → quality check' })
+  @ApiBody({ type: JobVersionDto })
+  @ApiOkResponse({ type: JobCardDto })
+  submitQc(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(jobVersionSchema)) body: JobVersionInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.submitQc(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/qc')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({
+    operationId: 'recordJobQc',
+    summary: 'Pass → ready; fail → rework of chosen tasks (inspector not on the job)',
+  })
+  @ApiBody({ type: QcResultDto })
+  @ApiOkResponse({ type: JobCardDto })
+  qc(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(qcResultSchema)) body: QcResultInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.qc(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/deliver')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'deliverJob', summary: 'ready → delivered (hand-over)' })
+  @ApiBody({ type: DeliverJobDto })
+  @ApiOkResponse({ type: JobCardDto })
+  deliver(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(deliverJobSchema)) body: DeliverJobInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.deliver(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/cancel')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'cancelJob' })
+  @ApiBody({ type: CancelJobDto })
+  @ApiOkResponse({ type: JobCardDto })
+  cancel(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(cancelJobSchema)) body: CancelJobInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.cancel(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/promise')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'setJobPromise', summary: 'Set or clear the promised time (ETA)' })
+  @ApiBody({ type: PromiseJobDto })
+  @ApiOkResponse({ type: JobCardDto })
+  promise(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(promiseJobSchema)) body: PromiseJobInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.promise(scope, p, id, body, ctxOf(p, rid));
+  }
+
+  @Post('jobs/:jobId/notes')
+  @HttpCode(200)
+  @RequirePermission('workshop.job.read')
+  @ApiParam({ name: 'jobId', format: 'uuid' })
+  @ApiOperation({ operationId: 'addJobNote' })
+  @ApiBody({ type: JobNoteDto })
+  @ApiOkResponse({ type: JobCardDto })
+  note(
+    @CurrentScope() scope: CompanyScope,
+    @CurrentPrincipal() p: Principal,
+    @Param('jobId', id404) id: string,
+    @Body(new ZodPipe(jobNoteSchema)) body: JobNoteInput,
+    @RequestId() rid?: string,
+  ): Promise<JobCardDto> {
+    return this.jobs.addNote(scope, p, id, body, ctxOf(p, rid));
+  }
+}
