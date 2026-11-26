@@ -822,6 +822,78 @@ async function main() {
       },
     );
 
+    await check(
+      'Job card printout: check-in sheet with inspection, photos and agreed work; prints without the app',
+      async () => {
+        await page.goto(jobUrl);
+        await Promise.all([
+          page.waitForURL(/\/print$/),
+          page.getByRole('link', { name: 'Print check-in sheet' }).click(),
+        ]);
+        const sheet = page.locator('article[data-sheet=checkin]');
+        await sheet.getByRole('heading', { name: 'Vehicle check-in sheet' }).waitFor();
+        const text = await sheet.innerText();
+        for (const s of [
+          'JC-2026-000001',
+          '123 456',
+          'Khalid Al-Marri',
+          'Brakes squeal when cold',
+          'Customer signature',
+        ])
+          assert(text.includes(s), `sheet lacks ${s}`);
+        assert(
+          /Needs attention\s*Scratch on rear bumper/.test(
+            await sheet.locator('tr[data-print-item=body]').innerText(),
+          ),
+          'inspection',
+        );
+        assert(
+          (await sheet.locator('tr[data-print-task="3"]').innerText()).includes('(from additional work 1)'),
+          'addition task',
+        );
+        await page.waitForFunction(() => {
+          const el = document.querySelector('article[data-sheet=checkin] img');
+          return el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0;
+        });
+        // The handover sheet waits for the quality check.
+        assert(
+          (await page.getByRole('link', { name: 'Vehicle handover sheet' }).count()) === 0,
+          'handover offered',
+        );
+        await page.goto(`${page.url()}?doc=handover`);
+        await page.getByText('The handover sheet is available once the job is ready or delivered.').waitFor();
+        await page.goBack();
+        await sheet.waitFor();
+        await shot('job-checkin-sheet-en');
+        await page.emulateMedia({ media: 'print' });
+        assert(
+          !(await page.getByRole('navigation', { name: 'Main navigation' }).first().isVisible()),
+          'sidebar printed',
+        );
+        assert(!(await page.getByRole('button', { name: 'Print' }).isVisible()), 'print button printed');
+        assert(await sheet.isVisible(), 'sheet not printed');
+        if (shots)
+          await page.pdf({
+            path: join(shots, 'job-checkin-sheet-en.pdf'),
+            format: 'A4',
+            printBackground: true,
+          });
+        await page.emulateMedia({ media: 'screen' });
+        await page.goto(page.url().replace('/en/', '/ar/'));
+        assert((await page.getAttribute('html', 'dir')) === 'rtl', 'arabic sheet not rtl');
+        await page.getByRole('heading', { name: 'نموذج استلام المركبة' }).waitFor();
+        if (shots) {
+          await page.emulateMedia({ media: 'print' });
+          await page.pdf({
+            path: join(shots, 'job-checkin-sheet-ar.pdf'),
+            format: 'A4',
+            printBackground: true,
+          });
+          await page.emulateMedia({ media: 'screen' });
+        }
+      },
+    );
+
     await check('Labour time report: per technician, with entries and completed tasks', async () => {
       await page.goto(`${base()}/labour-time`);
       const row = page.locator('tr[data-technician="E2E Owner"]');
@@ -934,6 +1006,7 @@ async function main() {
           'appointments',
           'labour-time',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
+          `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
           await page.goto(`${WEB}/ar/c/${companyId}/${path}`);
           assert((await page.getAttribute('html', 'dir')) === 'rtl', `${path}: not rtl`);

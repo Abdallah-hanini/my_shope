@@ -80,7 +80,21 @@ export default async function JobPage({
 
   return (
     <>
-      <PageHeader title={j.number}>
+      <PageHeader
+        title={j.number}
+        actions={
+          <span className="flex flex-wrap gap-2 print:hidden">
+            <Link className={buttonSecondary} href={`${base}/jobs/${j.id}/print`}>
+              {t('print.checkinLink')}
+            </Link>
+            {j.status === 'ready' || j.status === 'delivered' ? (
+              <Link className={buttonSecondary} href={`${base}/jobs/${j.id}/print?doc=handover`}>
+                {t('print.handoverLink')}
+              </Link>
+            ) : null}
+          </span>
+        }
+      >
         <span className="inline-flex flex-wrap items-center gap-2">
           <JobStatus status={j.status} locale={locale} />
           {j.overdue ? <Badge tone="danger">{t('job.overdue')}</Badge> : null}

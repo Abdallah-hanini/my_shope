@@ -144,4 +144,14 @@ html[dir='rtl'] body {
   a {
     text-decoration: none;
   }
+  /* Printed sheets (job card) carry their own header with the company name. */
+  main:has([data-sheet]) > p.print\:block {
+    display: none;
+  }
+}
+
+/* A4 with margins, so nothing touches the paper edge (either reading direction). */
+@page {
+  size: A4;
+  margin: 12mm;
 }

@@ -91,6 +91,13 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Rules:** T-65, enforced by the server and the database.
 - **Tests:** additions.int (7); e2e.
 
+## Job card printouts (WEB-015 check-in, WEB-029 delivery)
+- **Route:** `/[locale]/c/[id]/jobs/[jobId]/print?doc=checkin|handover`, linked from the job card header. A Print button opens the browser dialog (print, or Save as PDF).
+- **Check-in sheet:** company and branch, job number and date, customer, vehicle (plate, model, odometer, fuel), complaint, the full inspection checklist with notes, photo thumbnails, the customer's authorisation and promised time, the agreed tasks with hours (additional work marked), and customer and workshop signature lines.
+- **Handover sheet:** available only when the job is ready or delivered. It shows the work done and its status, the latest passed quality check with the inspector, recommended work the customer declined, and who received the car and when.
+- **Print rules:** A4 with 12 mm margins, light colours, no app menu, header or buttons. The language follows the page (Arabic sheets are right-to-left). No prices or legal terms (T-66).
+- **Tests:** web unit tests for the handover facts; e2e (content, print media, PDF, Arabic, phone width).
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

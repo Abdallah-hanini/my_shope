@@ -27,7 +27,7 @@ Counts are summarised at the end.
 | WEB-012 | Vehicle registry | WMS-001…014, BRD-02 | 3 | Implemented — search by plate/VIN/make/model/owner | /[locale]/c/[id]/vehicles | workshop.int; e2e |
 | WEB-013 | Vehicle profile and service history | WMS-001…014, BRD-02 | 3 | Implemented — profile, owner transfer, job history | /[locale]/c/[id]/vehicles/[vehicleId] | workshop.int; e2e |
 | WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Implemented — complaint, odometer, fuel, promised time, tasks, then inspection and photos (WEB-015) | /[locale]/c/[id]/jobs/new | e2e "check-in" |
-| WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Implemented — checklist with notes, photos by area with caption, thumbnails | job details (#inspection, #photos) | checkin.int; e2e |
+| WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Implemented — checklist with notes, photos by area with caption, thumbnails, printable check-in sheet | job details (#inspection, #photos), /jobs/[id]/print | checkin.int; e2e |
 | WEB-016 | Diagnosis and fault codes | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-017 | Create repair quotation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-018 | Quotation details and approval history | WMS-001…014, BRD-02 | 3 | Planned | — | — |
@@ -41,7 +41,7 @@ Counts are summarised at the end.
 | WEB-026 | Repair progress and ETA | WMS-001…014, BRD-02 | 3 | Partial — status, promised time, overdue, notifications | job details, board | workshop.int |
 | WEB-027 | Outsourced repair services | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-028 | Final inspection | WMS-001…014, BRD-02 | 3 | Implemented — pass/fail with note, reopen tasks; inspector ≠ technician | job details | workshop.int; e2e |
-| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Partial — hand-over with receiver and odometer; no invoice/payment yet (D-05) | job details | workshop.int |
+| WEB-029 | Vehicle delivery | WMS-001…014, BRD-02 | 3 | Partial — hand-over with receiver and odometer, printable handover sheet; no invoice/payment yet (D-05) | job details | workshop.int |
 | WEB-030 | Job profitability analysis | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 | WEB-031 | Warranty management | WMS-001…014, BRD-02 | 3 | Planned | — | — |
 

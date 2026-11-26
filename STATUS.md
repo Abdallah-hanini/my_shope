@@ -11,6 +11,38 @@
 | 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
 | 2, 4–7 | Not started. |
 
+## 2026-11-28: Job card printouts (check-in and handover sheets)
+
+### Changes
+
+- **Check-in sheet** ("Print check-in sheet" on every job card), for the customer to sign at the counter. It contains:
+  - company and branch, job number and date;
+  - customer and vehicle, with odometer and fuel;
+  - the complaint, the full inspection checklist with notes, and photo thumbnails;
+  - the customer's authorisation and promised time;
+  - the agreed tasks with hours, with additional work marked;
+  - signature lines for the customer and the workshop.
+- **Handover sheet** ("Print handover sheet", once the job is ready or delivered). It shows the work done, the latest passed quality check and the inspector, recommended work the customer declined, and who received the car and when.
+- **Printing:** the browser's print dialog (print or Save as PDF). A4 with 12 mm margins, light colours, no app menu or buttons. The sheet is in the page's language; Arabic is right-to-left. The new page margins also improve the trial balance printout.
+- **Deliberately not on the sheets (T-66):** terms and conditions or other legal wording (the owner's text is needed) and prices (D-05). The statements above the signatures are factual only.
+- No API or database change: the sheets are built from the job card the API already returns, so they show the same permissions and data.
+
+### Evidence (2026-11-28, Linux Docker)
+
+- Web unit tests 35, including the handover facts: when the sheet is available, the latest passed check, and declined but not withdrawn recommendations.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 182/182 on a fresh database; browser end-to-end 41/41.
+- The new end-to-end check covers:
+  - the sheet's content (inspection note, photo loaded, the task from additional work, signatures);
+  - the handover sheet not offered before the quality check;
+  - print media hides the app;
+  - A4 PDFs in English and Arabic, which I checked by eye;
+  - no horizontal scroll on an Arabic phone.
+
+### Open
+
+- The owner's terms and conditions for the check-in sheet, if wanted.
+- Prices on the sheets after D-05.
+
 ## 2026-11-28: Additional work approval (WMS-009, WEB-025)
 
 ### Changes
