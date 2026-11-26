@@ -29,8 +29,8 @@ Counts are summarised at the end.
 | WEB-014 | Vehicle check-in | WMS-001…014, BRD-02 | 3 | Implemented — complaint, odometer, fuel, promised time, tasks, then inspection and photos (WEB-015) | /[locale]/c/[id]/jobs/new | e2e "check-in" |
 | WEB-015 | Initial inspection and photographs | WMS-001…014, BRD-02 | 3 | Implemented — checklist with notes, photos by area with caption, thumbnails, printable check-in sheet | job details (#inspection, #photos), /jobs/[id]/print | checkin.int; e2e |
 | WEB-016 | Diagnosis and fault codes | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-017 | Create repair quotation | WMS-001…014, BRD-02 | 3 | Planned | — | — |
-| WEB-018 | Quotation details and approval history | WMS-001…014, BRD-02 | 3 | Planned | — | — |
+| WEB-017 | Create repair quotation | WMS-001…014, BRD-02 | 3 | Implemented — draft from tasks, price changes, discount, issue (labour only until D-06) | job details (Quote card) | quotes.int; e2e |
+| WEB-018 | Quotation details and approval history | WMS-001…014, BRD-02 | 3 | Implemented — revisions, discount approval, customer decision, printed quotation | job details; /jobs/[id]/quotes/[quoteId]/print | quotes.int; e2e |
 | WEB-019 | Job card management | WMS-001…014, BRD-02 | 3 | Implemented — list view | /[locale]/c/[id]/jobs?view=list | workshop.int |
 | WEB-020 | Job card details | WMS-001…014, BRD-02 | 3 | Partial — details, tasks, steps, timeline, notes; no quotation/parts/invoice (D-05, D-06) | /[locale]/c/[id]/jobs/[jobId] | workshop.int (16); e2e |
 | WEB-021 | Technician assignment | WMS-001…014, BRD-02 | 3 | Implemented — per task, only technicians of the branch | job details | workshop.int; e2e |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 28 |
+| Implemented | 30 |
 | Next | 0 |
 | Partial | 9 |
-| Planned | 271 |
+| Planned | 269 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

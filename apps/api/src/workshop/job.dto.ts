@@ -111,6 +111,9 @@ export class JobEventDto {
       'addition_declined',
       'addition_withdrawn',
       'bay',
+      'quote_issued',
+      'quote_approved',
+      'quote_declined',
     ],
   })
   kind!: string;

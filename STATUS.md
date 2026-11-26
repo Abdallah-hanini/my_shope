@@ -8,8 +8,44 @@
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
-| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings done; quotes next. Parts wait for D-06. |
+| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings and priced quotes done; invoices next. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
+
+## 2026-11-29: Priced quotes on job cards (WMS-005, WEB-017/018; D-05 step 2 of 3)
+
+### Changes
+
+- **Quote card on the job card (T-71):**
+  - "Create quote" makes a draft from the job's tasks. Each line is hours × the branch labour rate. Managers can set a price per line or a discount %, each with a reason.
+  - Tax comes from the accountant's default tax at its rate on the quote date, added or included according to the price basis.
+  - Totals are calculated in the API with decimal arithmetic and checked by the database.
+- **Discounts above the managers' limit** need the owner's approval (`workshop.pricing.manage`), never by the person who set the discount (API and database). The quote cannot be issued until then.
+- **Issue:**
+  - re-prices with today's settings, numbers the quote (Q-2026-000001) and freezes it, so totals, rates and tax can no longer change (database);
+  - an older undecided quote becomes "Replaced";
+  - the timeline records "Quote issued" with the number and total.
+- **Customer decision:** approved (who and how) or declined (reason), recorded by a manager and added to the timeline. New revisions start from the previous price changes and discount; the discount needs approval again if it is above the limit.
+- **Printed quotation** (A4, the page's language): letterhead, customer and vehicle, lines, discount, tax and total, the approval if given, and signature lines. No legal wording.
+- **Shared letterhead component** for job sheets and quotes, which now also prints the tax registration number when set.
+- **Migration `quotes`:** quote and quote line tables. Checks cover consistent totals, line amounts, reasons, a complete issued or approved quote, and no self-approved discount. There is one draft and one open quote per job; issued quotes cannot change except for the decision, and nothing issued is deleted.
+- **Not included:** parts lines (D-06), and linking a quote to job authorisation. Invoices in step 3 will use the latest approved quote.
+
+### Evidence (2026-11-29, Linux Docker)
+
+- Unit tests: quote arithmetic 3 (overrides, discount then tax half up, tax added or included, no tax); validation 88.
+- Integration (quotes.int, 6):
+  - no labour rate refused; technicians cannot quote; a draft at 300.00 + 5 % = 315.00 with the test tax; one draft per job;
+  - reasons required; 275.00 − 13.75 + 13.06 = 274.31; stale versions refused;
+  - a 15 % discount blocked until approved; the advisor cannot approve; the owner cannot approve their own 20 %; the owner approves the advisor's 15 %; database refusal of self-approval;
+  - issue numbers Q-yyyy-000001 and freezes the quote (database refuses changes and deletes); the timeline entry;
+  - revision 2 replaces revision 1; the customer's approval; no second decision;
+  - discard; branch scope; no quotes on a cancelled job.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 200/200 across 15 suites on a fresh database; browser end-to-end 44/44.
+- The new end-to-end check runs on job JC-2026-000001:
+  - 3 h × 150 = 450.00;
+  - the owner's own 15 % discount needs approval, and they are not offered to approve it, so issuing is refused;
+  - 5 % with road test set to 50.00 = 403.75;
+  - issue Q-2026-000001, print it (PDF checked by eye), and record the customer's approval in the timeline.
 
 ## 2026-11-28: D-05 decided; tax, pricing and letterhead settings (step 1 of 3)
 

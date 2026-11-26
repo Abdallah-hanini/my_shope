@@ -1052,6 +1052,61 @@ async function main() {
     );
 
     await check(
+      'Quote: priced from the labour rate, owner-only discount above the limit, price change, issue, print, customer approval',
+      async () => {
+        await page.goto(jobUrl);
+        const card = page.locator('section[aria-labelledby=quote-title]');
+        await card.getByRole('button', { name: 'Create quote' }).click();
+        await card.locator('[data-quote=draft]').waitFor();
+        await card.locator('[data-quote-total]').getByText('450.00 QAR').waitFor(); // 3 h × 150
+        const edit = page.getByRole('form', { name: 'Edit quote' });
+        await edit.getByLabel('Discount (%)').fill('15');
+        await edit.getByLabel('Reason for the discount').fill('Fleet customer');
+        await edit.getByRole('button', { name: 'Save changes' }).click();
+        await card.getByText(/above the managers’ limit of 10 %/).waitFor();
+        // The owner set it, so the owner cannot approve it either.
+        assert(
+          (await card.getByRole('button', { name: 'Approve discount' }).count()) === 0,
+          'self-approval offered',
+        );
+        await card.getByRole('button', { name: 'Issue quote' }).click();
+        await card.getByText(/the owner must approve it first/).waitFor();
+        const edit2 = page.getByRole('form', { name: 'Edit quote' });
+        await edit2.getByLabel('Discount (%)').fill('5');
+        await edit2.getByLabel('Set price 2').fill('50');
+        await edit2.getByLabel('Why this price 2').fill('Short test drive');
+        await edit2.getByRole('button', { name: 'Save changes' }).click();
+        await card.locator('[data-quote-total]').getByText('403.75 QAR').waitFor(); // (450 − 75 + 50) − 5 %
+        await card.getByRole('button', { name: 'Issue quote' }).click();
+        await card.getByText('Waiting for the customer', { exact: true }).waitFor();
+        await card.getByText('Q-2026-000001').waitFor();
+        await shot('quote-issued-en');
+        await Promise.all([
+          page.waitForURL(/\/quotes\/[0-9a-f-]{36}\/print$/),
+          card.getByRole('link', { name: 'Print quote' }).click(),
+        ]);
+        const sheet = page.locator('article[data-sheet=quote]');
+        await sheet.getByText('Q-2026-000001', { exact: true }).waitFor();
+        await sheet.locator('[data-letterhead]').getByText('1234567').waitFor();
+        assert((await sheet.locator('[data-print-totals]').innerText()).includes('403.75'), 'printed total');
+        if (shots) {
+          await page.emulateMedia({ media: 'print' });
+          await page.pdf({ path: join(shots, 'quote-en.pdf'), format: 'A4', printBackground: true });
+          await page.emulateMedia({ media: 'screen' });
+        }
+        await page.goto(jobUrl);
+        const decide = page.getByRole('form', { name: 'Record the customer’s decision' });
+        await decide.getByRole('button', { name: 'Save decision' }).click();
+        await card.getByText('Approved by the customer', { exact: true }).first().waitFor();
+        await page
+          .locator('#timeline-title')
+          .locator('xpath=../..')
+          .getByText('Quote approved by the customer')
+          .waitFor();
+      },
+    );
+
+    await check(
       'Bays: set up bays, put a car on a bay, refuse to deactivate it, move the car from the job card',
       async () => {
         await page.goto(`${base()}/bays`);

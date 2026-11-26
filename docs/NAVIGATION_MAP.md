@@ -11,6 +11,7 @@ Navigation is filtered by role on the server (`apps/web-erp/src/lib/navigation.t
     /appointments?branch=&date=             Appointment calendar (day view) → /appointments/new?branch=&start= · /appointments/[id] · /appointments/settings?branch= (hours)
     /jobs/[id]/print?doc=checkin|handover  Printable check-in / handover sheet (from the job card)
     /bays?branch=                           Bay board: car on each bay, jobs waiting, bay set-up (managers)
+    /jobs/[id]/quotes/[quoteId]/print       Printed quotation (issued revisions)
     /settings/company                       Letterhead (CR no., address, phone, logo)
     /settings/tax                           Tax set-up (accountant)
     /settings/pricing                       Labour rates per branch, managers' discount limit

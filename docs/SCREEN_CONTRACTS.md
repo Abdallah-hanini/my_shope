@@ -125,6 +125,15 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Route:** `/[locale]/c/[id]/settings/company`.
 - **Behaviour:** CR number, address in English and Arabic, phone, and logo (upload or remove). These are printed on the job sheets, and on quotes and invoices when those exist. Rules: T-70.
 
+## WEB-017 / WEB-018 Quotation
+- **Location:** the "Quote" card on the job card, and `/[locale]/c/[id]/jobs/[jobId]/quotes/[quoteId]/print`. **Requirement:** WMS-005.
+- **Behaviour:**
+  - Create a quote (or a new revision). The draft table shows each task with hours, rate and amount. Managers can set a price per line (with a reason) and a discount % (with a reason).
+  - Totals show the subtotal, discount, tax (code and %, or "No tax") and total.
+  - When a discount is above the limit, a note explains this and the owner sees "Approve discount" (never for their own discount).
+  - Issue quote, Discard draft, Print quote. The customer's decision (approved: who and how; declined: reason) is recorded, and earlier revisions are kept in a history.
+- **Rules:** T-71. **Tests:** quotes.int (6); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

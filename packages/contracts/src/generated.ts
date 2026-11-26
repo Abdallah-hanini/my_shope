@@ -1420,6 +1420,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/jobs/{jobId}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All quote revisions of a job, newest first */
+        get: operations["getJobQuotes"];
+        put?: never;
+        /** Start a draft quote (the next revision) priced from the tasks */
+        post: operations["createQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/quotes/{quoteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Draft: discount and per-task price changes (with reasons) */
+        patch: operations["updateQuote"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/approve-discount": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Owner approves a discount above the managers’ limit */
+        post: operations["approveQuoteDiscount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Number and freeze the draft for the customer */
+        post: operations["issueQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the customer’s approval or refusal of an issued quote */
+        post: operations["decideQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete a draft (issued quotes stay on record) */
+        post: operations["discardQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2217,7 +2320,7 @@ export interface components {
             occurredAt: string;
             actorName: string;
             /** @enum {string} */
-            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay";
+            kind: "created" | "status" | "assignment" | "task_done" | "task_reopened" | "qc_pass" | "qc_fail" | "note" | "updated" | "inspection" | "photo_added" | "photo_removed" | "addition_proposed" | "addition_approved" | "addition_declined" | "addition_withdrawn" | "bay" | "quote_issued" | "quote_approved" | "quote_declined";
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
@@ -2813,6 +2916,101 @@ export interface components {
             address?: string | null;
             addressAr?: string | null;
             phone?: string | null;
+        };
+        QuoteLineDto: {
+            lineNo: number;
+            taskId: string;
+            description: string;
+            /** @example 1.50 */
+            hours: string;
+            /**
+             * @description Labour rate per hour used
+             * @example 150.00
+             */
+            rate: string;
+            /** @description Price set by hand instead of hours × rate */
+            overrideAmount?: string | null;
+            overrideReason?: string | null;
+            /** @example 225.00 */
+            amount: string;
+        };
+        QuoteDto: {
+            id: string;
+            revision: number;
+            /** @example Q-2026-000001 */
+            number?: string | null;
+            /** @enum {string} */
+            status: "draft" | "issued" | "approved" | "declined" | "superseded";
+            /** @example QAR */
+            currency: string;
+            /** @example 2026-11-29 */
+            quoteDate?: string | null;
+            /** @example 5.0000 */
+            discountPct: string;
+            discountReason?: string | null;
+            discountSetByName?: string | null;
+            /** @description The discount is above the managers’ limit and not yet approved */
+            discountNeedsApproval: boolean;
+            discountApprovedByName?: string | null;
+            /** @description null = no tax */
+            taxCode?: string | null;
+            taxPct?: string | null;
+            pricesIncludeTax: boolean;
+            subtotal: string;
+            discountAmount: string;
+            netAmount: string;
+            taxAmount: string;
+            total: string;
+            lines: components["schemas"]["QuoteLineDto"][];
+            /** Format: date-time */
+            issuedAt?: string | null;
+            issuedByName?: string | null;
+            /** Format: date-time */
+            decidedAt?: string | null;
+            decidedByName?: string | null;
+            authorizedByName?: string | null;
+            /** @enum {string|null} */
+            authorizedVia?: "in_person" | "phone" | "written" | null;
+            declineReason?: string | null;
+            version: number;
+            /** @description What the caller can do now (edit, discard, approveDiscount, issue, decide) */
+            actions: string[];
+        };
+        JobQuotesDto: {
+            jobId: string;
+            currency: string;
+            /** @description Branch labour rate today */
+            labourRate?: string | null;
+            /** @example 10.0000 */
+            managerDiscountLimitPct: string;
+            /** @description Newest revision first */
+            quotes: components["schemas"]["QuoteDto"][];
+            /** @description The caller can start a new draft now */
+            canCreate: boolean;
+        };
+        QuoteLineChangeDto: {
+            taskId: string;
+            overrideAmount?: string | null;
+            overrideReason?: string | null;
+        };
+        UpdateQuoteDto: {
+            version: number;
+            /** @example 5 */
+            discountPct: string;
+            discountReason?: string | null;
+            lines: components["schemas"]["QuoteLineChangeDto"][];
+        };
+        QuoteVersionDto: {
+            version: number;
+        };
+        QuoteDecisionDto: {
+            /** @enum {string} */
+            decision: "approve" | "decline";
+            version: number;
+            authorizedByName?: string;
+            /** @enum {string} */
+            authorizedVia?: "in_person" | "phone" | "written";
+            reason?: string;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -5445,6 +5643,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyProfileDto"];
+                };
+            };
+        };
+    };
+    getJobQuotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    createQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jobId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    updateQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quoteId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateQuoteDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    approveQuoteDiscount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quoteId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    issueQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quoteId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    decideQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quoteId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteDecisionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
+                };
+            };
+        };
+    };
+    discardQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quoteId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQuotesDto"];
                 };
             };
         };

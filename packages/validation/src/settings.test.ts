@@ -1,4 +1,5 @@
 import {
+  updateQuoteSchema,
   addTaxRateSchema,
   companyProfileSchema,
   createTaxCodeSchema,
@@ -32,5 +33,36 @@ describe('tax and pricing settings', () => {
       address: null,
     });
     expect(companyProfileSchema.safeParse({ version: 1, phone: 'call us' }).success).toBe(false);
+  });
+});
+
+describe('quote changes', () => {
+  const u = '00000000-0000-4000-8000-000000000001';
+  it('a discount or a changed price needs a reason', () => {
+    const ok = updateQuoteSchema.safeParse({ version: 1, discountPct: '0', lines: [] });
+    expect(ok.success).toBe(true);
+    expect(updateQuoteSchema.safeParse({ version: 1, discountPct: '5', lines: [] }).success).toBe(false);
+    expect(
+      updateQuoteSchema.safeParse({
+        version: 1,
+        discountPct: '5',
+        discountReason: 'Loyal customer',
+        lines: [],
+      }).success,
+    ).toBe(true);
+    expect(
+      updateQuoteSchema.safeParse({
+        version: 1,
+        discountPct: '0',
+        lines: [{ taskId: u, overrideAmount: '100', overrideReason: '' }],
+      }).success,
+    ).toBe(false);
+    expect(
+      updateQuoteSchema.safeParse({
+        version: 1,
+        discountPct: '0',
+        lines: [{ taskId: u, overrideAmount: '100', overrideReason: 'Fixed price' }],
+      }).success,
+    ).toBe(true);
   });
 });

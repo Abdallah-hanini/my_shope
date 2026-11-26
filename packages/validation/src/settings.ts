@@ -87,3 +87,57 @@ export type CompanyProfileInput = z.infer<typeof companyProfileSchema>;
 
 /** Logo upload limit (re-encoded by the server to PNG, at most 600 × 300). */
 export const LOGO_LIMITS = { maxBytes: 2 * 1024 * 1024, maxWidth: 600, maxHeight: 300 } as const;
+
+// ── quotes (WMS-005, T-71) ───────────────────────────────────────────────────
+
+/** Draft changes: discount and per-task price overrides (each with a reason). */
+export const updateQuoteSchema = z
+  .object({
+    version: version.min(1),
+    discountPct: percentSchema,
+    discountReason: optionalText(300),
+    lines: z
+      .array(
+        z.object({
+          taskId: z.string().uuid(),
+          overrideAmount: z
+            .string()
+            .trim()
+            .regex(/^\d{1,10}(\.\d{1,2})?$/, 'an amount, e.g. 150 or 150.50')
+            .nullable(),
+          overrideReason: optionalText(300),
+        }),
+      )
+      .max(100),
+  })
+  .superRefine((v, ctx) => {
+    if (Number(v.discountPct) > 0 && !v.discountReason)
+      ctx.addIssue({ code: 'custom', path: ['discountReason'], message: 'give a reason for the discount' });
+    v.lines.forEach((l, i) => {
+      if (l.overrideAmount !== null && !l.overrideReason)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['lines', i, 'overrideReason'],
+          message: 'give a reason for the price change',
+        });
+    });
+  });
+export type UpdateQuoteInput = z.infer<typeof updateQuoteSchema>;
+
+export const quoteVersionSchema = z.object({ version: version.min(1) });
+export type QuoteVersionInput = z.infer<typeof quoteVersionSchema>;
+
+export const quoteDecisionSchema = z.discriminatedUnion('decision', [
+  z.object({
+    decision: z.literal('approve'),
+    version: version.min(1),
+    authorizedByName: z.string().trim().min(1).max(200),
+    authorizedVia: z.enum(['in_person', 'phone', 'written']),
+  }),
+  z.object({
+    decision: z.literal('decline'),
+    version: version.min(1),
+    reason: z.string().trim().min(3).max(500),
+  }),
+]);
+export type QuoteDecisionInput = z.infer<typeof quoteDecisionSchema>;

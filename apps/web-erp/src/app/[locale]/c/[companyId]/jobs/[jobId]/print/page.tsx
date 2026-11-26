@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { PrintButton } from '@/components/PrintButton';
+import { Letterhead } from '@/components/print/Letterhead';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { buttonGhost, Ltr } from '@/components/ui';
 import { attempt } from '@/lib/api';
@@ -49,12 +50,10 @@ export default async function JobPrintPage({
     unwrap(await api.GET('/api/v1/companies/{companyId}/profile', { params: { path: { companyId } } })),
   );
   const letter = profile.ok ? profile.data : null;
-  const address = letter ? (locale === 'ar' && letter.addressAr ? letter.addressAr : letter.address) : null;
   const base = `/${locale}/c/${companyId}/jobs/${j.id}`;
   const tz = company.timezone;
   const when = (iso: string | null | undefined) => (iso ? formatDateTime(locale, iso, tz) : '—');
   const handoverReady = handoverFacts(j).available;
-  const companyName = locale === 'ar' && company.legalNameAr ? company.legalNameAr : company.legalName;
 
   return (
     <>
@@ -95,33 +94,13 @@ export default async function JobPrintPage({
           className="mx-auto max-w-[210mm] bg-white p-8 text-[13px] leading-relaxed text-[#101828] shadow-[var(--shadow-card)] print:max-w-none print:p-0 print:shadow-none"
         >
           <header className="mb-5 flex items-start justify-between gap-4 border-b-2 border-[#101828] pb-3">
-            <div className="flex items-start gap-3" data-letterhead>
-              {letter?.logoVersion ? (
-                // eslint-disable-next-line @next/next/no-img-element -- served by our own route with the session
-                <img
-                  src={`/${locale}/c/${companyId}/settings/logo?v=${letter.logoVersion}`}
-                  alt=""
-                  className="max-h-16 w-auto"
-                />
-              ) : null}
-              <div className="text-xs">
-                <p className="text-base font-bold">{companyName}</p>
-                {address ? <p className="whitespace-pre-line">{address}</p> : null}
-                {letter?.phone ? (
-                  <p>
-                    {t('cust.phone')}: <Ltr>{letter.phone}</Ltr>
-                  </p>
-                ) : null}
-                {letter?.crNumber ? (
-                  <p>
-                    {t('settings.crNumber')}: <Ltr>{letter.crNumber}</Ltr>
-                  </p>
-                ) : null}
-                <p>
-                  {t('job.branch')}: {j.branchCode}
-                </p>
-              </div>
-            </div>
+            <Letterhead
+              company={company}
+              profile={letter}
+              locale={locale}
+              companyId={companyId}
+              branchCode={j.branchCode}
+            />
             <div className="text-end">
               <h1 className="text-lg font-bold">
                 {doc === 'checkin' ? t('print.checkinTitle') : t('print.handoverTitle')}

@@ -5238,6 +5238,369 @@
           "settings"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/jobs/{jobId}/quotes": {
+      "get": {
+        "operationId": "getJobQuotes",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "All quote revisions of a job, newest first",
+        "tags": [
+          "workshop"
+        ]
+      },
+      "post": {
+        "operationId": "createQuote",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a draft quote (the next revision) priced from the tasks",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/quotes/{quoteId}": {
+      "patch": {
+        "operationId": "updateQuote",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Draft: discount and per-task price changes (with reasons)",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/approve-discount": {
+      "post": {
+        "operationId": "approveQuoteDiscount",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Owner approves a discount above the managers’ limit",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/issue": {
+      "post": {
+        "operationId": "issueQuote",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Number and freeze the draft for the customer",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/decision": {
+      "post": {
+        "operationId": "decideQuote",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the customer’s approval or refusal of an issued quote",
+        "tags": [
+          "workshop"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/quotes/{quoteId}/discard": {
+      "post": {
+        "operationId": "discardQuote",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobQuotesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a draft (issued quotes stay on record)",
+        "tags": [
+          "workshop"
+        ]
+      }
     }
   },
   "info": {
@@ -7926,7 +8289,10 @@
               "addition_approved",
               "addition_declined",
               "addition_withdrawn",
-              "bay"
+              "bay",
+              "quote_issued",
+              "quote_approved",
+              "quote_declined"
             ]
           },
           "fromStatus": {
@@ -9884,6 +10250,328 @@
           }
         },
         "required": [
+          "version"
+        ]
+      },
+      "QuoteLineDto": {
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "type": "number"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "string",
+            "example": "1.50"
+          },
+          "rate": {
+            "type": "string",
+            "example": "150.00",
+            "description": "Labour rate per hour used"
+          },
+          "overrideAmount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Price set by hand instead of hours × rate"
+          },
+          "overrideReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "example": "225.00"
+          }
+        },
+        "required": [
+          "lineNo",
+          "taskId",
+          "description",
+          "hours",
+          "rate",
+          "amount"
+        ]
+      },
+      "QuoteDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "number": {
+            "type": "string",
+            "nullable": true,
+            "example": "Q-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "issued",
+              "approved",
+              "declined",
+              "superseded"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "example": "QAR"
+          },
+          "quoteDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-29"
+          },
+          "discountPct": {
+            "type": "string",
+            "example": "5.0000"
+          },
+          "discountReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountSetByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountNeedsApproval": {
+            "type": "boolean",
+            "description": "The discount is above the managers’ limit and not yet approved"
+          },
+          "discountApprovedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = no tax"
+          },
+          "taxPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "subtotal": {
+            "type": "string"
+          },
+          "discountAmount": {
+            "type": "string"
+          },
+          "netAmount": {
+            "type": "string"
+          },
+          "taxAmount": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "issuedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "issuedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "decidedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorizedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "authorizedVia": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "in_person",
+              "phone",
+              "written"
+            ]
+          },
+          "declineReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          },
+          "actions": {
+            "description": "What the caller can do now (edit, discard, approveDiscount, issue, decide)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "status",
+          "currency",
+          "discountPct",
+          "discountNeedsApproval",
+          "pricesIncludeTax",
+          "subtotal",
+          "discountAmount",
+          "netAmount",
+          "taxAmount",
+          "total",
+          "lines",
+          "version",
+          "actions"
+        ]
+      },
+      "JobQuotesDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "labourRate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Branch labour rate today"
+          },
+          "managerDiscountLimitPct": {
+            "type": "string",
+            "example": "10.0000"
+          },
+          "quotes": {
+            "description": "Newest revision first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteDto"
+            }
+          },
+          "canCreate": {
+            "type": "boolean",
+            "description": "The caller can start a new draft now"
+          }
+        },
+        "required": [
+          "jobId",
+          "currency",
+          "managerDiscountLimitPct",
+          "quotes",
+          "canCreate"
+        ]
+      },
+      "QuoteLineChangeDto": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "overrideAmount": {
+            "type": "string",
+            "nullable": true
+          },
+          "overrideReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "taskId"
+        ]
+      },
+      "UpdateQuoteDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "discountPct": {
+            "type": "string",
+            "example": "5"
+          },
+          "discountReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineChangeDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "discountPct",
+          "lines"
+        ]
+      },
+      "QuoteVersionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "QuoteDecisionDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "decline"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "authorizedByName": {
+            "type": "string"
+          },
+          "authorizedVia": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "phone",
+              "written"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
           "version"
         ]
       },

@@ -46,6 +46,8 @@ export type BayBoard = Schemas['BayBoardDto'];
 export type TaxSetup = Schemas['TaxSetupDto'];
 export type Pricing = Schemas['PricingDto'];
 export type CompanyProfile = Schemas['CompanyProfileDto'];
+export type JobQuotes = Schemas['JobQuotesDto'];
+export type Quote = Schemas['QuoteDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

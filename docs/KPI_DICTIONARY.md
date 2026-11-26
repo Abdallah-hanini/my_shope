@@ -82,3 +82,17 @@ Code: `apps/api/src/workshop/labour.ts` (pure, unit-tested) and `labour.service.
 | Efficiency % | Estimated ÷ Actual × 100, 1 decimal, half up; **null without time**, shown as "No time" |
 
 Totals add the technicians' figures; total efficiency is total estimated ÷ total actual. Labour cost is not computed (T-64).
+
+## Quote arithmetic (T-71)
+
+Code: `apps/api/src/quotes/quote-math.ts` (unit-tested). The database also checks the results.
+
+| Figure | Definition |
+|---|---|
+| Line amount | Manager's price if set, else hours × labour rate; 2 decimals, half up |
+| Subtotal | Σ line amounts |
+| Discount | Subtotal × discount % ; 2 decimals, half up |
+| Net | Subtotal − discount |
+| Tax (prices exclude tax) | Net × rate ÷ 100 ; 2 decimals, half up ; total = net + tax |
+| Tax (prices include tax) | Net × rate ÷ (100 + rate) ; 2 decimals, half up ; total = net |
+| No default tax | Tax 0 ; total = net |

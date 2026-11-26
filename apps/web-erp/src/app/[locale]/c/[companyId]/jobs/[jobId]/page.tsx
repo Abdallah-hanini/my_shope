@@ -18,6 +18,7 @@ import {
   thNum,
 } from '@/components/ui';
 import { AdditionsCard } from '@/components/workshop/Additions';
+import { QuoteCard } from '@/components/workshop/QuoteCard';
 import { InspectionCard, PhotosCard } from '@/components/workshop/CheckIn';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobForm } from '@/components/workshop/JobForm';
@@ -77,6 +78,9 @@ export default async function JobPage({
         ),
       )
     : null;
+  const quotes = await attempt(async () =>
+    unwrap(await api.GET('/api/v1/companies/{companyId}/jobs/{jobId}/quotes', path)),
+  );
   const freeBays = bays?.ok ? bays.data.bays.filter((b) => b.active && !b.job) : [];
   const tz = company.timezone;
   // Managers never enter their own time (the server refuses it too), so they are not offered.
@@ -282,6 +286,10 @@ export default async function JobPage({
               </tfoot>
             </Table>
           </Card>
+
+          {quotes.ok ? (
+            <QuoteCard job={j} data={quotes.data} locale={locale} companyId={companyId} timeZone={tz} />
+          ) : null}
 
           <AdditionsCard job={j} locale={locale} companyId={companyId} timeZone={tz} />
 
