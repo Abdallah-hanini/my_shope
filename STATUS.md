@@ -8,8 +8,53 @@
 | 1 Identity/org/accounting | **In progress.** API (P1-01 to P1-09) and web ERP screens with staff sign-in (P1-10, web part) are implemented and verified. Still to do: manager app sign-in and screens, maker-checker (P1-12, needs D-11) and opening balances (P1-13, needs D-14). Gate not yet claimed. |
 | AUTO360 UI/UX | **Increment 1 done:** audit, catalog (380 views), design system, app shell, executive dashboard (WEB-001). **Increment 2 done:** users, roles and permission matrix (WEB-224/225/226). **Increment 3 done:** trial balance and general ledger (WEB-122/100). **Increment 4 done:** global search (WEB-237). **Increment 5 done:** export centre (WEB-205). **Increment 6 done:** notification inbox with the outbox dispatcher (P1-11). |
 | Shop server (L-01 to L-05) | **Implemented and verified on Linux Docker.** Not yet installed on the real Windows PC. |
-| 3 Sales/POS/workshop | **Started:** workshop job cards first slice (customers, vehicles, check-in, tasks, assignment, lifecycle with QC and rework, delivery, board). No prices, quotations, parts or invoices yet (need D-05 tax, D-06 costing). |
+| 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings done; quotes next. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
+
+## 2026-11-28: D-05 decided; tax, pricing and letterhead settings (step 1 of 3)
+
+### Decision (owner, 2026-11-28)
+
+- **Tax (D-05 → T-68):** taxes are configurable by the accountant for the country. Nothing is built in, and until the accountant chooses a default tax, documents carry no tax.
+- **Labour (T-69):** task hours × the branch's hourly rate, with an advisor override per task (with a reason) in the quotes step.
+- **Discounts (T-69):** managers may give discounts up to a limit; above it the owner approves; nobody approves their own.
+- **Letterhead (T-70):** CR number, address, phone and logo are optional; empty fields are not printed.
+- **Plan:** (1) settings, this change; (2) priced quotes on job cards with customer approval and a printed quote; (3) invoices and payments, posted with accounts the accountant chooses.
+
+### Changes
+
+- **Tax set-up** (Organization → Tax set-up, for the accountant with `accounting.tax.manage`, company-wide):
+  - tax codes, with their tax payable account (must be an active liability posting account);
+  - rates by effective date: a new rate starts today or later, rates in effect are never changed (database), and only future rates can be removed;
+  - the default tax on sales, or none;
+  - whether typed prices include tax;
+  - the tax registration number.
+- **Labour rates and discounts** (Organization → Labour rates and discounts, for the owner with `workshop.pricing.manage`): an hourly labour rate per branch with dated history and the same history rules; the managers' discount limit, company-wide (default 0 %).
+- **Company profile** (Organization → Company profile, `org.company.manage`): CR number, address in English and Arabic, phone, and the logo. Logos are re-encoded to PNG at most 600 × 300 with metadata removed; SVG and other formats are refused.
+- **Printed job sheets:** they now show the letterhead (logo, address, phone, CR number).
+- **New permissions** for company administrators (also existing ones, by migration): `org.company.manage`, `accounting.tax.manage`, `workshop.pricing.manage`.
+- **Migration `tax_pricing_settings`:** tax codes, rates and settings, labour rates, pricing settings, the company logo, and the letterhead columns on the company. Checks cover the rate ranges, the tax account type, an immutable code, the dated-rate history, and a default tax that stays active.
+
+### Evidence (2026-11-28, Linux Docker)
+
+- Unit tests: dated-rate selection 1; validation 87 (percent, money, tax code, letterhead).
+- Integration (settings.int, 5):
+  - empty set-up; only a company-wide accountant manages it; liability account required; duplicate code refused;
+  - past rates refused; 0 % today and 5 % from 2099, with the future rate removable but the current one not (API and database); updates refused;
+  - default tax with a version check; the default cannot be deactivated (API and database);
+  - labour rates per branch with branch scope; discount limit company-wide with validation;
+  - letterhead save with a version check; logo re-encoded to 600 × 150 PNG without EXIF; SVG refused; logo removed.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 194/194 across 14 suites on a fresh database; browser end-to-end 43/43.
+- The new end-to-end check covers:
+  - the letterhead with a logo;
+  - tax code VAT-STD with 0 % from today made the default (the accountant's choice in the test, not a real rate);
+  - DOH labour rate 150.00 QAR per hour and a 10 % discount limit;
+  - the job sheet showing the logo, address and CR number;
+  - the three pages on an Arabic phone.
+
+### Open
+
+- Step 2: quotes. Step 3: invoices, which need the accountant to choose the revenue and receivable accounts (D-04 posting matrix).
 
 ## 2026-11-28: Bay allocation (WEB-022)
 

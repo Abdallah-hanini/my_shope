@@ -1220,6 +1220,206 @@ export interface paths {
         patch: operations["updateBay"];
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/tax": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tax codes with dated rates, and the tax settings */
+        get: operations["getTaxSetup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/tax/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setTaxSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/tax/codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createTaxCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateTaxCode"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A rate from a date onwards (today or later) */
+        post: operations["addTaxRate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}/rates/{rateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a rate that has not started yet */
+        delete: operations["removeTaxRate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Labour rates per branch and the discount limit */
+        get: operations["getPricing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/pricing/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setPricingSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/branches/{branchId}/labour-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A rate per hour from a date onwards */
+        post: operations["addLabourRate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/labour-rates/{rateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a rate that has not started yet */
+        delete: operations["removeLabourRate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Letterhead details */
+        get: operations["getCompanyProfile"];
+        put: operations["setCompanyProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/profile/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCompanyLogo"];
+        /** Upload the logo (JPEG, PNG or WebP; stored as PNG) */
+        put: operations["setCompanyLogo"];
+        post?: never;
+        delete: operations["removeCompanyLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2486,6 +2686,133 @@ export interface components {
             version: number;
             name: string;
             active: boolean;
+        };
+        AccountRefDto: {
+            id: string;
+            code: string;
+            name: string;
+        };
+        DatedRateDto: {
+            id: string;
+            /**
+             * @description Percent (tax) or amount per hour (labour)
+             * @example 5.0000
+             */
+            value: string;
+            /** @example 2027-01-01 */
+            effectiveFrom: string;
+            /** @description Not started yet, so it may still be removed */
+            canRemove: boolean;
+        };
+        TaxCodeDto: {
+            id: string;
+            /** @example VAT-STD */
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            active: boolean;
+            outputAccount?: components["schemas"]["AccountRefDto"] | null;
+            /** @description Rate in force today (percent) */
+            currentRatePct?: string | null;
+            /** @description Newest first */
+            rates: components["schemas"]["DatedRateDto"][];
+            version: number;
+        };
+        TaxSetupDto: {
+            /**
+             * @description Today in the company's time zone
+             * @example 2026-11-28
+             */
+            today: string;
+            pricesIncludeTax: boolean;
+            /** @description null = no tax on sales */
+            defaultTaxCodeId?: string | null;
+            taxRegistrationNo?: string | null;
+            /** @description 0 until the settings are first saved */
+            version: number;
+            codes: components["schemas"]["TaxCodeDto"][];
+            /** @description The caller may change the tax set-up (accounting.tax.manage) */
+            canManage: boolean;
+        };
+        TaxSettingsDto: {
+            version: number;
+            pricesIncludeTax: boolean;
+            defaultTaxCodeId?: string | null;
+            taxRegistrationNo?: string | null;
+        };
+        CreateTaxCodeDto: {
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            outputAccountId?: string | null;
+        };
+        UpdateTaxCodeDto: {
+            version: number;
+            name: string;
+            nameAr?: string | null;
+            outputAccountId?: string | null;
+            active: boolean;
+        };
+        AddTaxRateDto: {
+            /** @example 5 */
+            rate: string;
+            /** @example 2027-01-01 */
+            effectiveFrom: string;
+        };
+        BranchLabourDto: {
+            branchId: string;
+            branchCode: string;
+            branchName: string;
+            /** @description Rate per hour in force today */
+            currentRate?: string | null;
+            /** @description Newest first */
+            rates: components["schemas"]["DatedRateDto"][];
+            /** @description The caller may change this branch’s rates */
+            canManage: boolean;
+        };
+        PricingDto: {
+            /** @example 2026-11-28 */
+            today: string;
+            /** @example QAR */
+            currency: string;
+            /** @example 10.0000 */
+            managerDiscountLimitPct: string;
+            /** @description 0 until first saved */
+            version: number;
+            branches: components["schemas"]["BranchLabourDto"][];
+            /** @description The caller may change the discount limit */
+            canManageSettings: boolean;
+        };
+        PricingSettingsDto: {
+            version: number;
+            /** @example 10 */
+            managerDiscountLimitPct: string;
+        };
+        AddLabourRateDto: {
+            /** @example 150 */
+            rate: string;
+            /** @example 2027-01-01 */
+            effectiveFrom: string;
+        };
+        CompanyProfileDto: {
+            legalName: string;
+            legalNameAr?: string | null;
+            crNumber?: string | null;
+            address?: string | null;
+            addressAr?: string | null;
+            phone?: string | null;
+            /** @description Changes when the logo changes */
+            logoVersion?: string | null;
+            taxRegistrationNo?: string | null;
+            version: number;
+            canManage: boolean;
+        };
+        UpdateCompanyProfileDto: {
+            version: number;
+            crNumber?: string | null;
+            address?: string | null;
+            addressAr?: string | null;
+            phone?: string | null;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -4761,6 +5088,363 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BayBoardDto"];
+                };
+            };
+        };
+    };
+    getTaxSetup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    setTaxSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    createTaxCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTaxCodeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    updateTaxCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                taxCodeId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTaxCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    addTaxRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                taxCodeId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddTaxRateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    removeTaxRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                taxCodeId: string;
+                rateId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSetupDto"];
+                };
+            };
+        };
+    };
+    getPricing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingDto"];
+                };
+            };
+        };
+    };
+    setPricingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingDto"];
+                };
+            };
+        };
+    };
+    addLabourRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddLabourRateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingDto"];
+                };
+            };
+        };
+    };
+    removeLabourRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rateId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingDto"];
+                };
+            };
+        };
+    };
+    getCompanyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfileDto"];
+                };
+            };
+        };
+    };
+    setCompanyProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCompanyProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfileDto"];
+                };
+            };
+        };
+    };
+    getCompanyLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description PNG image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+        };
+    };
+    setCompanyLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfileDto"];
+                };
+            };
+        };
+    };
+    removeCompanyLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyProfileDto"];
                 };
             };
         };

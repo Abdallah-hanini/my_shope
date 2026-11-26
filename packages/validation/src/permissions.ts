@@ -4,6 +4,7 @@
  */
 export const COMPANY_PERMISSIONS = [
   'org.company.read',
+  'org.company.manage',
   'org.branch.read',
   'org.branch.manage',
   'iam.role.read',
@@ -19,6 +20,7 @@ export const COMPANY_PERMISSIONS = [
   'accounting.journal.read',
   'accounting.journal.post',
   'accounting.journal.reverse',
+  'accounting.tax.manage',
   'reports.financial.read',
   'crm.customer.read',
   'crm.customer.manage',
@@ -26,13 +28,17 @@ export const COMPANY_PERMISSIONS = [
   'workshop.job.manage',
   'workshop.job.work',
   'workshop.job.qc',
+  'workshop.pricing.manage',
 ] as const;
 
 export type CompanyPermission = (typeof COMPANY_PERMISSIONS)[number];
 
 /** Groups for the permission matrix and role editor (display order). */
 export const PERMISSION_GROUPS: { id: string; permissions: CompanyPermission[] }[] = [
-  { id: 'organization', permissions: ['org.company.read', 'org.branch.read', 'org.branch.manage'] },
+  {
+    id: 'organization',
+    permissions: ['org.company.read', 'org.company.manage', 'org.branch.read', 'org.branch.manage'],
+  },
   {
     id: 'accounting',
     permissions: [
@@ -43,13 +49,20 @@ export const PERMISSION_GROUPS: { id: string; permissions: CompanyPermission[] }
       'accounting.journal.read',
       'accounting.journal.post',
       'accounting.journal.reverse',
+      'accounting.tax.manage',
     ],
   },
   { id: 'reporting', permissions: ['reports.financial.read'] },
   { id: 'customers', permissions: ['crm.customer.read', 'crm.customer.manage'] },
   {
     id: 'workshop',
-    permissions: ['workshop.job.read', 'workshop.job.manage', 'workshop.job.work', 'workshop.job.qc'],
+    permissions: [
+      'workshop.job.read',
+      'workshop.job.manage',
+      'workshop.job.work',
+      'workshop.job.qc',
+      'workshop.pricing.manage',
+    ],
   },
   {
     id: 'access',

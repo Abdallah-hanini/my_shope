@@ -110,7 +110,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | ACC-007 | Fixed assets/depreciation | 6 | Not started | — |
 | ACC-008 | Periods | 1 | Done (API + web, verified) | Non-overlapping periods, close with optimistic lock + row lock; reopen blocked pending approvals; integration incl. lock test; web screens + `scripts/e2e-web.mjs` |
 | ACC-009 | Cost centers | 1 | Not started | — |
-| ACC-010 | Currency/tax | 1 (blocked: tax decision) | Not started | — |
+| ACC-010 | Currency/tax | 1 | Partly done: tax set-up configured by the accountant (D-05): codes, dated rates that never change once in effect, default tax (none until chosen), price basis, registration no., tax payable account. Tax on documents comes with quotes and invoices. Multi-currency waits for D-07 | `apps/api/src/settings` (effective.ts unit 1), migration `tax_pricing_settings`; settings.int (5); e2e |
 | ACC-011 | Budgets | 5 | Not started | — |
 | ACC-012 | Credit/debit notes | 3 | Not started | — |
 | ACC-013 | WIP | 3 | Not started | — |

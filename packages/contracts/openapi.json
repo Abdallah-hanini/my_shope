@@ -4563,6 +4563,681 @@
           "workshop"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/tax": {
+      "get": {
+        "operationId": "getTaxSetup",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tax codes with dated rates, and the tax settings",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/tax/settings": {
+      "put": {
+        "operationId": "setTaxSettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/tax/codes": {
+      "post": {
+        "operationId": "createTaxCode",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaxCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}": {
+      "patch": {
+        "operationId": "updateTaxCode",
+        "parameters": [
+          {
+            "name": "taxCodeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaxCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}/rates": {
+      "post": {
+        "operationId": "addTaxRate",
+        "parameters": [
+          {
+            "name": "taxCodeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTaxRateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A rate from a date onwards (today or later)",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/tax/codes/{taxCodeId}/rates/{rateId}": {
+      "delete": {
+        "operationId": "removeTaxRate",
+        "parameters": [
+          {
+            "name": "taxCodeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "rateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSetupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a rate that has not started yet",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/pricing": {
+      "get": {
+        "operationId": "getPricing",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Labour rates per branch and the discount limit",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/pricing/settings": {
+      "put": {
+        "operationId": "setPricingSettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/branches/{branchId}/labour-rates": {
+      "post": {
+        "operationId": "addLabourRate",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLabourRateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A rate per hour from a date onwards",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/labour-rates/{rateId}": {
+      "delete": {
+        "operationId": "removeLabourRate",
+        "parameters": [
+          {
+            "name": "rateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a rate that has not started yet",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/profile": {
+      "get": {
+        "operationId": "getCompanyProfile",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Letterhead details",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "setCompanyProfile",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/profile/logo": {
+      "put": {
+        "operationId": "setCompanyLogo",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload the logo (JPEG, PNG or WebP; stored as PNG)",
+        "tags": [
+          "settings"
+        ]
+      },
+      "delete": {
+        "operationId": "removeCompanyLogo",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      },
+      "get": {
+        "operationId": "getCompanyLogo",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG image",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "settings"
+        ]
+      }
     }
   },
   "info": {
@@ -8793,6 +9468,423 @@
           "version",
           "name",
           "active"
+        ]
+      },
+      "AccountRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ]
+      },
+      "DatedRateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string",
+            "example": "5.0000",
+            "description": "Percent (tax) or amount per hour (labour)"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "example": "2027-01-01"
+          },
+          "canRemove": {
+            "type": "boolean",
+            "description": "Not started yet, so it may still be removed"
+          }
+        },
+        "required": [
+          "id",
+          "value",
+          "effectiveFrom",
+          "canRemove"
+        ]
+      },
+      "TaxCodeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "VAT-STD"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "outputAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "currentRatePct": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rate in force today (percent)"
+          },
+          "rates": {
+            "description": "Newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatedRateDto"
+            }
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "active",
+          "rates",
+          "version"
+        ]
+      },
+      "TaxSetupDto": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "example": "2026-11-28",
+            "description": "Today in the company's time zone"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "defaultTaxCodeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = no tax on sales"
+          },
+          "taxRegistrationNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number",
+            "description": "0 until the settings are first saved"
+          },
+          "codes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxCodeDto"
+            }
+          },
+          "canManage": {
+            "type": "boolean",
+            "description": "The caller may change the tax set-up (accounting.tax.manage)"
+          }
+        },
+        "required": [
+          "today",
+          "pricesIncludeTax",
+          "version",
+          "codes",
+          "canManage"
+        ]
+      },
+      "TaxSettingsDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "defaultTaxCodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRegistrationNo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "version",
+          "pricesIncludeTax"
+        ]
+      },
+      "CreateTaxCodeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "UpdateTaxCodeDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "active"
+        ]
+      },
+      "AddTaxRateDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "string",
+            "example": "5"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "example": "2027-01-01"
+          }
+        },
+        "required": [
+          "rate",
+          "effectiveFrom"
+        ]
+      },
+      "BranchLabourDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "currentRate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rate per hour in force today"
+          },
+          "rates": {
+            "description": "Newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatedRateDto"
+            }
+          },
+          "canManage": {
+            "type": "boolean",
+            "description": "The caller may change this branch’s rates"
+          }
+        },
+        "required": [
+          "branchId",
+          "branchCode",
+          "branchName",
+          "rates",
+          "canManage"
+        ]
+      },
+      "PricingDto": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "example": "2026-11-28"
+          },
+          "currency": {
+            "type": "string",
+            "example": "QAR"
+          },
+          "managerDiscountLimitPct": {
+            "type": "string",
+            "example": "10.0000"
+          },
+          "version": {
+            "type": "number",
+            "description": "0 until first saved"
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchLabourDto"
+            }
+          },
+          "canManageSettings": {
+            "type": "boolean",
+            "description": "The caller may change the discount limit"
+          }
+        },
+        "required": [
+          "today",
+          "currency",
+          "managerDiscountLimitPct",
+          "version",
+          "branches",
+          "canManageSettings"
+        ]
+      },
+      "PricingSettingsDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "managerDiscountLimitPct": {
+            "type": "string",
+            "example": "10"
+          }
+        },
+        "required": [
+          "version",
+          "managerDiscountLimitPct"
+        ]
+      },
+      "AddLabourRateDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "string",
+            "example": "150"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "example": "2027-01-01"
+          }
+        },
+        "required": [
+          "rate",
+          "effectiveFrom"
+        ]
+      },
+      "CompanyProfileDto": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string"
+          },
+          "legalNameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "crNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoVersion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Changes when the logo changes"
+          },
+          "taxRegistrationNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          },
+          "canManage": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "legalName",
+          "version",
+          "canManage"
+        ]
+      },
+      "UpdateCompanyProfileDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "crNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "version"
         ]
       },
       "ProblemDetailsDto": {

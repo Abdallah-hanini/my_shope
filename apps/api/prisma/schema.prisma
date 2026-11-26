@@ -31,6 +31,11 @@ model Company {
   version      Int          @default(1)
   createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// Letterhead (optional; printed on quotes, invoices and job sheets).
+  crNumber     String?      @map("cr_number")
+  address      String?
+  addressAr    String?      @map("address_ar")
+  phone        String?
 
   branches        Branch[]
   roles           Role[]
@@ -45,6 +50,11 @@ model Company {
   vehicles        Vehicle[]
   jobCards        JobCard[]
   appointments    Appointment[]
+  logo            CompanyLogo?
+  taxCodes        TaxCode[]
+  taxSettings     TaxSettings?
+  pricingSettings PricingSettings?
+  labourRates     LabourRate[]
 
   @@map("company")
   @@schema("org")
@@ -69,6 +79,7 @@ model Branch {
   workshopHours    WorkshopHours[]
   appointments     Appointment[]
   bays             Bay[]
+  labourRates      LabourRate[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -255,6 +266,7 @@ model Account {
   parent   Account?      @relation("hierarchy", fields: [companyId, parentId], references: [companyId, id], onDelete: Restrict)
   children Account[]     @relation("hierarchy")
   lines    JournalLine[]
+  taxCodes TaxCode[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -749,5 +761,104 @@ model Bay {
 
   @@unique([branchId, code])
   @@map("bay")
+  @@schema("workshop")
+}
+
+/// Company logo, re-encoded to PNG by the server (letterhead).
+model CompanyLogo {
+  companyId String   @id @map("company_id") @db.Uuid
+  png       Bytes
+  width     Int
+  height    Int
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@map("company_logo")
+  @@schema("org")
+}
+
+/// A tax the accountant sets up for the company's country (D-05); rates change by date.
+model TaxCode {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  code            String
+  name            String
+  nameAr          String?  @map("name_ar")
+  active          Boolean  @default(true)
+  /// Liability posting account the tax is owed to (used by invoices).
+  outputAccountId String?  @map("output_account_id") @db.Uuid
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  outputAccount Account?      @relation(fields: [companyId, outputAccountId], references: [companyId, id], onDelete: Restrict)
+  rates         TaxRate[]
+  defaultFor    TaxSettings[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, id])
+  @@map("tax_code")
+  @@schema("accounting")
+}
+
+/// The rate of a tax code from a date onwards. Past and current rates are never changed.
+model TaxRate {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @map("company_id") @db.Uuid
+  taxCodeId     String   @map("tax_code_id") @db.Uuid
+  ratePct       Decimal  @map("rate_pct") @db.Decimal(7, 4)
+  effectiveFrom DateTime @map("effective_from") @db.Date
+  createdBy     String   @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  taxCode TaxCode @relation(fields: [companyId, taxCodeId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([taxCodeId, effectiveFrom])
+  @@map("tax_rate")
+  @@schema("accounting")
+}
+
+model TaxSettings {
+  companyId         String  @id @map("company_id") @db.Uuid
+  pricesIncludeTax  Boolean @default(false) @map("prices_include_tax")
+  defaultTaxCodeId  String? @map("default_tax_code_id") @db.Uuid
+  taxRegistrationNo String? @map("tax_registration_no")
+  version           Int     @default(1)
+
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  defaultTaxCode TaxCode? @relation(fields: [companyId, defaultTaxCodeId], references: [companyId, id], onDelete: Restrict)
+
+  @@map("tax_settings")
+  @@schema("accounting")
+}
+
+/// Labour price per hour at a branch from a date onwards (company currency).
+model LabourRate {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String   @map("company_id") @db.Uuid
+  branchId      String   @map("branch_id") @db.Uuid
+  rate          Decimal  @db.Decimal(12, 2)
+  effectiveFrom DateTime @map("effective_from") @db.Date
+  createdBy     String   @map("created_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch  Branch  @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([branchId, effectiveFrom])
+  @@map("labour_rate")
+  @@schema("workshop")
+}
+
+model PricingSettings {
+  companyId               String  @id @map("company_id") @db.Uuid
+  /// Largest discount a manager may give; above it the owner approves.
+  managerDiscountLimitPct Decimal @default(0) @map("manager_discount_limit_pct") @db.Decimal(7, 4)
+  version                 Int     @default(1)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@map("pricing_settings")
   @@schema("workshop")
 }

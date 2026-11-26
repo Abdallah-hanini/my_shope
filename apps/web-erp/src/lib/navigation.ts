@@ -65,9 +65,24 @@ export function companyNavigation(
     },
     {
       label: t('nav.groupOrganization'),
-      items: can('org.branch.read')
-        ? [{ href: `${base}/branches`, label: t('nav.branches'), icon: 'Building2' }]
-        : [],
+      items: [
+        ...(can('org.branch.read')
+          ? [{ href: `${base}/branches`, label: t('nav.branches'), icon: 'Building2' as const }]
+          : []),
+        ...(can('org.company.read')
+          ? [
+              {
+                href: `${base}/settings/company`,
+                label: t('nav.companyProfile'),
+                icon: 'Building2' as const,
+              },
+              { href: `${base}/settings/tax`, label: t('nav.tax'), icon: 'Percent' as const },
+            ]
+          : []),
+        ...(can('workshop.job.read')
+          ? [{ href: `${base}/settings/pricing`, label: t('nav.pricing'), icon: 'Tags' as const }]
+          : []),
+      ],
     },
     {
       label: t('nav.groupAdministration'),

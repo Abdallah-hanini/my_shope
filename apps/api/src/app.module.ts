@@ -21,6 +21,7 @@ import { CrmModule } from './crm/crm.module';
 import { NotificationModule } from './notifications/notification.module';
 import { WorkshopModule } from './workshop/workshop.module';
 import { SearchModule } from './search/search.module';
+import { SettingsModule } from './settings/settings.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
@@ -64,6 +65,7 @@ export class AppModule {
         NotificationModule,
         CrmModule,
         WorkshopModule,
+        SettingsModule,
       ],
       providers: [
         { provide: API_ENV, useValue: env },

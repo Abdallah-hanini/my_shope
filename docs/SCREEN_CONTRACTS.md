@@ -107,6 +107,24 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
 - **Permissions:** viewing needs `workshop.job.read`. Placing cars: managers, or technicians on the job. Setting up bays: `workshop.job.manage`.
 - **Tests:** bays.int (7); e2e.
 
+## WEB-127 Tax configuration (D-05)
+- **Route:** `/[locale]/c/[id]/settings/tax`. **Requirement:** ACC-010.
+- **Behaviour:**
+  - Tax settings: the default tax on sales (or none), whether typed prices include tax, and the tax registration number.
+  - Each tax code shows its rate today and its dated rates, newest first. You can add a rate (today or later), remove a rate that has not started, and edit the name, Arabic name, tax payable account and active flag.
+  - A form adds new tax codes.
+- **Permissions:** reading needs `org.company.read`; changes need `accounting.tax.manage` for the whole company. Rules: T-68.
+- **Tests:** settings.int; e2e.
+
+## Labour rates and discount limit (WEB-020 pricing inputs)
+- **Route:** `/[locale]/c/[id]/settings/pricing`.
+- **Behaviour:** the managers' discount limit (company-wide), and per branch the labour rate today with its dated history; add a rate or remove one that has not started.
+- **Permission:** `workshop.pricing.manage` (per branch for rates, company-wide for the limit). Rules: T-69.
+
+## WEB-222 Company letterhead (partial)
+- **Route:** `/[locale]/c/[id]/settings/company`.
+- **Behaviour:** CR number, address in English and Arabic, phone, and logo (upload or remove). These are printed on the job sheets, and on quotes and invoices when those exist. Rules: T-70.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

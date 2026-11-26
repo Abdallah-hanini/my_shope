@@ -164,7 +164,7 @@ Counts are summarised at the end.
 | WEB-124 | Balance sheet | ACC-016 | 5 | Planned | — | — |
 | WEB-125 | Cash flow statement | ACC-016 | 5 | Planned | — | — |
 | WEB-126 | Financial period closing | ACC-008 | 1 | Partial — close with reason; no close checklist/reopen | /[locale]/c/[id]/periods | e2e "Close a period…" |
-| WEB-127 | Tax configuration | ACC-010 (blocked: D-05) | 1 | Planned | — | — |
+| WEB-127 | Tax configuration | ACC-010 (D-05: configured by the accountant) | 1 | Implemented — tax codes, dated rates, default tax, price basis, registration no., tax account | /[locale]/c/[id]/settings/tax | settings.int; e2e |
 | WEB-128 | Currency and exchange rates | ACC-010 (blocked: D-07) | 2 | Planned | — | — |
 | WEB-129 | Credit and debit notes | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
 | WEB-130 | Work in progress accounting | ACC-001…017, BRD-04 | 1–6 | Planned | — | — |
@@ -289,7 +289,7 @@ Counts are summarised at the end.
 | WEB-219 | Password recovery | SEC-04 (needs SMTP decision) | 1 | Planned | — | — |
 | WEB-220 | MFA verification | SEC-04, SECURITY_QA MFA | 1 | Implemented (Keycloak TOTP) | Keycloak required action / OTP form | e2e + deploy check |
 | WEB-221 | User profile | ADM-001…011, SECURITY_QA | 1 | Partial — profile menu (name, theme, sign out) | header profile menu | e2e sign-out |
-| WEB-222 | Company configuration | ADM-001 | 1 | Partial — create only | /[locale]/companies/new | e2e "Create a company" |
+| WEB-222 | Company configuration | ADM-001 | 1 | Partial — create; letterhead (CR no., address, phone, logo) | /[locale]/companies/new, /[locale]/c/[id]/settings/company | settings.int; e2e |
 | WEB-223 | Branch configuration | ADM-001 | 1 | Partial — create/list | /[locale]/c/[id]/branches | e2e "Branches" |
 | WEB-224 | User management | ADM-002, SEC-04 | 1 | Implemented — list, add staff (Keycloak account + role, one-time temporary password), profile, give/remove role, reset password, deactivate/reactivate | /[locale]/c/[id]/users, /users/[userId] | e2e "Add a staff member", "new staff member signs in", "Profile", "Deactivate"; staff.int 22 tests |
 | WEB-225 | Role management | ADM-002 | 1 | Implemented — list with member counts, create, edit (optimistic version), delete unused; system roles read-only | /[locale]/c/[id]/roles, /roles/[roleId] | e2e "Create a custom role", "System roles are read-only"; staff.int roles tests |
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 27 |
+| Implemented | 28 |
 | Next | 0 |
 | Partial | 9 |
-| Planned | 272 |
+| Planned | 271 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

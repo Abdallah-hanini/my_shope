@@ -9,6 +9,8 @@ import {
   CalendarClock,
   Timer,
   LayoutGrid,
+  Percent,
+  Tags,
   CalendarRange,
   Car,
   CarFront,
@@ -61,6 +63,8 @@ const icons = {
   CalendarClock,
   Timer,
   LayoutGrid,
+  Percent,
+  Tags,
 } as const;
 
 function isActive(path: string, href: string, exact: boolean) {

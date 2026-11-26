@@ -43,6 +43,9 @@ export type CurrentClock = Schemas['CurrentClockDto'];
 export type TimeEntry = Schemas['TimeEntryDto'];
 export type JobAddition = Schemas['JobAdditionDto'];
 export type BayBoard = Schemas['BayBoardDto'];
+export type TaxSetup = Schemas['TaxSetupDto'];
+export type Pricing = Schemas['PricingDto'];
+export type CompanyProfile = Schemas['CompanyProfileDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

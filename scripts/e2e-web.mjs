@@ -984,6 +984,74 @@ async function main() {
     );
 
     await check(
+      'Settings: letterhead with logo, tax set up by the accountant (no built-in rate), labour rate and discount limit; the job sheet shows the letterhead',
+      async () => {
+        await page.goto(`${base()}/settings/company`);
+        const profile = page.getByRole('form', { name: 'Company profile' });
+        await profile.getByLabel('Commercial registration (CR) no.').fill('1234567');
+        await profile.getByLabel('Phone').fill('+974 4444 1234');
+        await profile.getByLabel('Address (English)').fill('Industrial Area, Street 24, Doha');
+        await profile.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        assert(
+          (await page.getByLabel('Commercial registration (CR) no.').inputValue()) === '1234567',
+          'CR saved',
+        );
+        const sharp = createRequire(join(root, 'apps/api/package.json'))('sharp');
+        const logo = await sharp({ create: { width: 800, height: 200, channels: 3, background: '#1d4ed8' } })
+          .png()
+          .toBuffer();
+        const up = page.getByRole('form', { name: 'Upload logo' });
+        await up
+          .locator('input[name=file]')
+          .setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: logo });
+        await up.getByRole('button', { name: 'Upload logo' }).click();
+        await page.waitForFunction(() => {
+          const el = document.querySelector('img[alt="Logo"]');
+          return el instanceof HTMLImageElement && el.complete && el.naturalWidth === 600;
+        });
+
+        await page.goto(`${base()}/settings/tax`);
+        await page.getByText('No tax is applied to sales.').waitFor();
+        const add = page.getByRole('form', { name: 'Add tax code' });
+        await add.getByLabel('Code').fill('vat-std');
+        await add.getByLabel('Name', { exact: true }).fill('VAT standard');
+        await add.getByRole('button', { name: 'Add tax code' }).click();
+        const code = page.locator('[data-tax-code="VAT-STD"]');
+        await code.getByText('not set yet').waitFor();
+        const rate = page.getByRole('form', { name: 'Add rate VAT-STD' });
+        await rate.getByLabel('Percent').fill('0');
+        await rate.getByRole('button', { name: 'Add rate' }).click();
+        await code.getByText('0 %').waitFor();
+        const ts = page.getByRole('form', { name: 'Tax settings' });
+        await ts.getByLabel('Default tax on sales').selectOption({ label: 'VAT-STD — VAT standard' });
+        await ts.getByRole('button', { name: 'Save' }).click();
+        await page.getByText('Default tax on sales: VAT-STD').waitFor();
+        await shot('settings-tax-en');
+
+        await page.goto(`${base()}/settings/pricing`);
+        const doh = page.getByRole('form', { name: 'Add rate DOH' });
+        await doh.getByLabel('Per hour (QAR)').fill('150');
+        await doh.getByRole('button', { name: 'Add rate' }).click();
+        await page.locator('[data-branch-rate=DOH]').getByText('150.00 QAR / h').waitFor();
+        const lim = page.getByRole('form', { name: 'Managers’ discount limit' });
+        await lim.getByLabel('Percent').fill('10');
+        await lim.getByRole('button', { name: 'Save' }).click();
+        await page.locator('[data-discount-limit]').getByText('10 %').waitFor();
+
+        await page.goto(`${jobUrl}/print`);
+        const head = page.locator('[data-letterhead]');
+        await head.getByText('1234567').waitFor();
+        await head.getByText('Industrial Area, Street 24, Doha').waitFor();
+        await page.waitForFunction(() => {
+          const el = document.querySelector('[data-letterhead] img');
+          return el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0;
+        });
+        await shot('job-sheet-letterhead-en');
+      },
+    );
+
+    await check(
       'Bays: set up bays, put a car on a bay, refuse to deactivate it, move the car from the job card',
       async () => {
         await page.goto(`${base()}/bays`);
@@ -1051,6 +1119,9 @@ async function main() {
           'appointments',
           'labour-time',
           'bays',
+          'settings/company',
+          'settings/tax',
+          'settings/pricing',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
