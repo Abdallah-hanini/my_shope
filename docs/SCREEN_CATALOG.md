@@ -50,9 +50,9 @@ Counts are summarised at the end.
 | ID | View | Requirements | Phase | Status | Route / location | Evidence |
 |---|---|---|---|---|---|---|
 | WEB-032 | Spare parts dashboard | INV-001…004, INV-014 | 2 | Planned | — | — |
-| WEB-033 | Product catalog | INV-001…004, INV-014 | 2 | Planned | — | — |
-| WEB-034 | Create and edit spare part | INV-001…004, INV-014 | 2 | Planned | — | — |
-| WEB-035 | Product details | INV-001…004, INV-014 | 2 | Planned | — | — |
+| WEB-033 | Product catalog | INV-001…004, INV-014 | 2 | Partial — catalogue list with search and stock in your branches | /[locale]/c/[id]/parts | inventory.int; e2e |
+| WEB-034 | Create and edit spare part | INV-001…004, INV-014 | 2 | Implemented — add part (SKU, name, Arabic name, brand, unit); edit name/brand/status | /parts, /parts/[id] | inventory.int; e2e |
+| WEB-035 | Product details | INV-001…004, INV-014 | 2 | Implemented — stock per branch, average cost, value, movements | /parts/[id] | inventory.int; e2e |
 | WEB-036 | Categories and subcategories | INV-001…004, INV-014 | 2 | Planned | — | — |
 | WEB-037 | Manufacturers and brands | INV-001…004, INV-014 | 2 | Planned | — | — |
 | WEB-038 | OEM and alternative part numbers | INV-001…004, INV-014 | 2 | Planned | — | — |
@@ -69,23 +69,23 @@ Counts are summarised at the end.
 | ID | View | Requirements | Phase | Status | Route / location | Evidence |
 |---|---|---|---|---|---|---|
 | WEB-046 | Inventory dashboard | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-047 | Stock availability | INV-005…013, BRD-03 | 2 | Planned | — | — |
+| WEB-047 | Stock availability | INV-005…013, BRD-03 | 2 | Partial — on hand per part and branch | /parts, /parts/[id] | inventory.int |
 | WEB-048 | Warehouse management | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-049 | Storage locations and bins | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-050 | Stock movement history | INV-005…013, BRD-03 | 2 | Planned | — | — |
+| WEB-050 | Stock movement history | INV-005…013, BRD-03 | 2 | Implemented — numbered movements with journal, reference or reason | /parts/[id] | inventory.int; e2e |
 | WEB-051 | Goods receipt | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-052 | Stock issuance | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-053 | Stock reservation | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-054 | Warehouse transfer | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-055 | Transfer tracking | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-056 | Stock adjustments | INV-005…013, BRD-03 | 2 | Planned | — | — |
+| WEB-056 | Stock adjustments | INV-005…013, BRD-03 | 2 | Implemented — counted differences with a reason, out at average, in at a given cost | /parts/[id] | inventory.int; e2e |
 | WEB-057 | Physical stock counting | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-058 | Inventory discrepancies | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-059 | Damaged and quarantined stock | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-060 | Stock write-off | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-061 | Low-stock alerts | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-062 | Dead-stock analysis | INV-005…013, BRD-03 | 2 | Planned | — | — |
-| WEB-063 | Inventory valuation | INV-005…013, BRD-03 | 2 | Planned | — | — |
+| WEB-063 | Inventory valuation | INV-005…013, BRD-03 | 2 | Implemented — value by part, reconciled to the inventory account | /[locale]/c/[id]/stock | inventory.int; e2e |
 | WEB-064 | Serial number tracking | INV-005…013, BRD-03 | 2 | Planned | — | — |
 | WEB-065 | Landed cost allocation | INV-005…013, BRD-03 | 2 | Planned | — | — |
 
@@ -463,10 +463,10 @@ Counts are summarised at the end.
 
 | Status | Views |
 |---|---|
-| Implemented | 30 |
+| Implemented | 35 |
 | Next | 0 |
-| Partial | 9 |
-| Planned | 269 |
+| Partial | 11 |
+| Planned | 262 |
 | Postponed | 70 |
 | Shell | 2 |
 | **Total** | **380** |

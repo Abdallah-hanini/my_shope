@@ -14,6 +14,9 @@ const FIELDS = [
   { key: 'cash', type: 'asset' },
   { key: 'card', type: 'asset' },
   { key: 'bank', type: 'asset' },
+  { key: 'inventory', type: 'asset' },
+  { key: 'goodsReceived', type: 'liability' },
+  { key: 'stockAdjustment', type: 'expense' },
 ] as const;
 
 /** The accountant's posting accounts for invoices and payments (T-72). */

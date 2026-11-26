@@ -105,6 +105,9 @@ export async function postingSettingsAction(
     cashAccountId: id('cashAccountId'),
     cardAccountId: id('cardAccountId'),
     bankAccountId: id('bankAccountId'),
+    inventoryAccountId: id('inventoryAccountId'),
+    goodsReceivedAccountId: id('goodsReceivedAccountId'),
+    stockAdjustmentAccountId: id('stockAdjustmentAccountId'),
   });
   if (!v.ok) return { fieldErrors: v.fieldErrors, values };
   const failed = await mutate(locale, values, async (api) => {

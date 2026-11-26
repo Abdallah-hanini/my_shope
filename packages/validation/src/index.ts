@@ -4,3 +4,4 @@ export * from './permissions';
 export * from './requests';
 export * from './workshop';
 export * from './settings';
+export * from './inventory';

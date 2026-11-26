@@ -11,6 +11,8 @@ import {
   LayoutGrid,
   Percent,
   Tags,
+  Package,
+  Boxes,
   CalendarRange,
   Car,
   CarFront,
@@ -65,6 +67,8 @@ const icons = {
   LayoutGrid,
   Percent,
   Tags,
+  Package,
+  Boxes,
 } as const;
 
 function isActive(path: string, href: string, exact: boolean) {

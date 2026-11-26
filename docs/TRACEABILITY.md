@@ -70,11 +70,11 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | INV-003 | Genuine/aftermarket/used/refurbished | 2 | Not started | — |
 | INV-004 | Retail/wholesale pricing | 2 | Not started | — |
 | INV-005 | Warehouse/bin | 2 | Not started | — |
-| INV-006 | Stock movements and reservations | 2 | Not started | — |
-| INV-007 | Receipts/issues/transfers | 2 | Not started | — |
+| INV-006 | Stock movements and reservations | 2 | Partly done: numbered, immutable stock movements posted to the ledger; reservations come with parts on jobs | `apps/api/src/inventory`, migration `parts_stock`; inventory.int (7) |
+| INV-007 | Receipts/issues/transfers | 2 | Partly done: receipts at cost (Dr inventory, Cr goods received not invoiced), repeated forms record once; issues to jobs and transfers next | inventory.int; e2e |
 | INV-008 | Quarantine and condition inspection | 2 | Not started | — |
-| INV-009 | Counts/adjustments with approval | 2 | Not started | — |
-| INV-010 | FIFO or weighted average policy | 2 (blocked: costing decision) | Not started | — |
+| INV-009 | Counts/adjustments with approval | 2 | Partly done: counted differences with a reason and their own permission, no negative stock (also concurrently); no second approver (D-11: none for now) | inventory.int; e2e |
+| INV-010 | FIFO or weighted average policy | 2 | Done: weighted average (D-06, owner 2026-11-29); stock value reconciles to the inventory account | `inventory/stock-math.ts` (unit 3); inventory.int valuation |
 | INV-011 | Landed cost | 2 | Not started | — |
 | INV-012 | Low stock and aging | 2 | Not started | — |
 | INV-013 | Serial tracking | 2 | Not started | — |

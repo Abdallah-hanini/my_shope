@@ -1174,6 +1174,8 @@ async function main() {
           'settings/company',
           'settings/tax',
           'settings/pricing',
+          'parts',
+          'stock',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1427,6 +1429,80 @@ async function main() {
           .locator('article[data-sheet=handover]')
           .getByText(/Passed · Sara Cashier/)
           .waitFor();
+      },
+    );
+
+    await check(
+      'Parts and stock: stock accounts, a part, receipts at weighted average, a counted adjustment, no negative stock, value matches the ledger',
+      async () => {
+        await page.goto(`${base()}/accounts`);
+        for (const [code, name, type] of [
+          ['1400', 'Inventory', 'asset'],
+          ['2200', 'Goods received not invoiced', 'liability'],
+          ['5900', 'Stock adjustments', 'expense'],
+        ]) {
+          await addAccount(code, name, type, 'posting');
+          await page.getByRole('cell', { name, exact: true }).waitFor();
+        }
+        await page.goto(`${base()}/settings/posting`);
+        const ps = page.getByRole('form', { name: 'Posting accounts' });
+        await ps.locator('select[name=inventoryAccountId]').selectOption({ label: '1400 — Inventory' });
+        await ps
+          .locator('select[name=goodsReceivedAccountId]')
+          .selectOption({ label: '2200 — Goods received not invoiced' });
+        await ps
+          .locator('select[name=stockAdjustmentAccountId]')
+          .selectOption({ label: '5900 — Stock adjustments' });
+        await ps.getByRole('button', { name: 'Save' }).click();
+        await page.waitForLoadState('networkidle');
+        assert(
+          (await page.locator('select[name=inventoryAccountId]').inputValue()) !== '',
+          'stock accounts saved',
+        );
+
+        await page.goto(`${base()}/parts`);
+        await page.getByText('No parts yet.').waitFor();
+        const add = page.getByRole('form', { name: 'Add part' });
+        await add.getByLabel('SKU').fill('oil-5w30');
+        await add.getByLabel('Name', { exact: true }).fill('Engine oil 5W-30');
+        await add.getByLabel('Unit').selectOption('litre');
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          add.getByRole('button', { name: 'Add part' }).click(),
+        ]);
+        const stock = page.locator('[data-branch-stock=DOH]');
+        const receive = async (q, c, ref) => {
+          const f = page.getByRole('form', { name: 'Receive stock DOH' });
+          await f.getByLabel(/^Quantity/).fill(q);
+          await f.getByLabel(/^Unit cost/).fill(c);
+          await f.getByLabel('Delivery note / supplier invoice no.').fill(ref);
+          await f.getByRole('button', { name: 'Receive stock' }).click();
+        };
+        await receive('20', '8.20', 'DN-501');
+        await stock.getByText('20.000 litre').waitFor();
+        await receive('10', '9.10', 'DN-502');
+        await stock.getByText('30.000 litre').waitFor();
+        assert(
+          (await stock.innerText()).includes('8.5000') && (await stock.innerText()).includes('255.00'),
+          await stock.innerText(),
+        );
+        const adjust = async (q, reason) => {
+          await page.getByText('Adjust after a count').first().click();
+          const f = page.getByRole('form', { name: 'Adjust after a count DOH' });
+          await f.getByLabel(/^Quantity/).fill(q);
+          await f.getByLabel('Reason').fill(reason);
+          await f.getByRole('button', { name: 'Adjust after a count' }).click();
+          return f;
+        };
+        await adjust('1.5', 'Spilled during top-up');
+        await stock.getByText('28.500 litre').waitFor();
+        const f = await adjust('100', 'Counted');
+        await f.getByText(/Only 28.500 on hand; stock cannot go below zero/).waitFor();
+        await shot('part-stock-en');
+        await page.goto(`${base()}/stock`);
+        const rec = page.locator('[data-reconciliation]');
+        await rec.getByText('Matches the ledger').waitFor();
+        assert((await rec.innerText()).includes('242.25'), await rec.innerText());
       },
     );
 

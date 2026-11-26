@@ -11,6 +11,48 @@
 | 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
 
+## 2026-11-30: Parts catalogue and stock at weighted average (D-06 step 1 of 3, T-74)
+
+### Changes
+
+- **Inventory** (new menu group):
+  - **Parts:** a catalogue with search; on hand, average cost and value in your branches; add a part (SKU, name, Arabic name, brand, unit).
+  - **Part page:** stock per branch, "Receive stock" (quantity, unit cost, delivery note number), "Adjust after a count" (less or more than recorded, with a reason; found stock needs a unit cost), and the movement history with journal numbers.
+  - **Stock value:** value by part, the total, and the inventory account balance in the ledger, with "Matches the ledger" or "Does not match".
+- **Accounting:** every receipt and adjustment is a numbered movement (SM-yyyy-nnnnnn) posted in the same transaction:
+  - receipt: Dr inventory / Cr goods received, not yet invoiced;
+  - counted less: Dr stock adjustments / Cr inventory;
+  - counted more: Dr inventory / Cr stock adjustments.
+  - The accountant chooses the three new posting accounts; nothing moves until the inventory account is set.
+- **Weighted average (D-06):** see T-74 and KPI_DICTIONARY "Stock value".
+- **Safety:**
+  - stock never goes negative (API check with the stock row locked, and database checks);
+  - balances change only together with a movement written in the same transaction (database trigger);
+  - stock rows start empty; movements never change; SKU and unit never change;
+  - a repeated form records once (idempotency key).
+- **Permissions:** `inventory.read`, `inventory.manage`, `inventory.adjust` (company administrators receive them).
+- **Migration `parts_stock`:** the `inventory` schema (part, stock and movement tables), the journal source "stock", and the three posting accounts.
+- **Not yet:** parts on quotes, reserving and issuing parts to jobs with the cost posted (step 2); parts on invoices (step 3); transfers, supplier bills, low-stock alerts, bins.
+
+### Evidence (2026-11-30, Linux Docker)
+
+- Unit tests: stock arithmetic 3 (receipts move the average; out at average half up, last units take the rest, never negative; litres); validation 91.
+- Integration (inventory.int, 7):
+  - catalogue by company-wide managers; unique SKU; immutable SKU (database);
+  - nothing moves before the inventory account is set;
+  - permissions and branch scope; delivery note required; a repeated form records once;
+  - 20 @ 8.20 + 10 @ 9.10 = 30 @ 8.5000 = 255.00, posted 1400 Dr 91.00 / 2200 Cr 91.00;
+  - adjustments need a reason; found stock needs a cost; 31 out refused ("Only 30.000 on hand"); 1.5 out = 12.75 posted 5900 Dr / 1400 Cr; 0.5 in;
+  - two people taking the last unit at once: one succeeds, stock stays at 0;
+  - valuation 246.50 = ledger 246.50, reconciled; branch scope;
+  - database refusals: balance change without a movement, movement change, stock delete, non-empty new stock row.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 217/217 across 18 suites on a fresh database; browser end-to-end 46/46.
+- The new end-to-end check:
+  - the accountant's stock accounts; part OIL-5W30 (litre);
+  - receipts of 20 @ 8.20 and 10 @ 9.10 giving an average of 8.5000 and 255.00;
+  - 1.5 litres out "Spilled during top-up", leaving 28.500; 100 out refused;
+  - the stock value page shows 242.25 and "Matches the ledger"; the parts and stock pages on an Arabic phone.
+
 ## 2026-11-29: Owner decisions D-06, D-09, D-11 and the owner's own quality check (T-73)
 
 ### Decisions (owner, 2026-11-29)

@@ -92,6 +92,14 @@ export class PostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) cashAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) cardAccount!: AccountRefDto | null;
   @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) bankAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) inventoryAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({
+    nullable: true,
+    type: AccountRefDto,
+    description: 'Goods received, not yet invoiced (liability)',
+  })
+  goodsReceivedAccount!: AccountRefDto | null;
+  @ApiPropertyOptional({ nullable: true, type: AccountRefDto }) stockAdjustmentAccount!: AccountRefDto | null;
   @ApiProperty({ description: '0 until first saved' }) version!: number;
   @ApiProperty() canManage!: boolean;
 }
@@ -104,6 +112,9 @@ export class SetPostingSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: String }) cashAccountId!: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) cardAccountId!: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) bankAccountId!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) inventoryAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) goodsReceivedAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) stockAdjustmentAccountId?: string | null;
 }
 export class CreateInvoiceDto {
   @ApiProperty({ description: 'The approved quote to invoice' }) quoteId!: string;

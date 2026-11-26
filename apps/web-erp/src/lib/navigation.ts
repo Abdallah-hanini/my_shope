@@ -41,6 +41,15 @@ export function companyNavigation(
       ],
     },
     {
+      label: t('nav.groupInventory'),
+      items: can('inventory.read')
+        ? [
+            { href: `${base}/parts`, label: t('nav.parts'), icon: 'Package' as const },
+            { href: `${base}/stock`, label: t('nav.stockValue'), icon: 'Boxes' as const },
+          ]
+        : [],
+    },
+    {
       label: t('nav.groupFinance'),
       items: [
         ...(can('accounting.journal.read')

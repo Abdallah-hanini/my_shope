@@ -152,6 +152,10 @@ export const postingSettingsSchema = z.object({
   cashAccountId: z.string().uuid().nullable(),
   cardAccountId: z.string().uuid().nullable(),
   bankAccountId: z.string().uuid().nullable(),
+  /** Stock (T-74): inventory asset, goods received not yet invoiced, stock adjustments. */
+  inventoryAccountId: z.string().uuid().nullable().optional(),
+  goodsReceivedAccountId: z.string().uuid().nullable().optional(),
+  stockAdjustmentAccountId: z.string().uuid().nullable().optional(),
 });
 export type PostingSettingsInput = z.infer<typeof postingSettingsSchema>;
 

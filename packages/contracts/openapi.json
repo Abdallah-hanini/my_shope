@@ -5991,6 +5991,360 @@
           "billing"
         ]
       }
+    },
+    "/api/v1/companies/{companyId}/parts": {
+      "get": {
+        "operationId": "listParts",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Catalogue with stock in the caller’s branches",
+        "tags": [
+          "inventory"
+        ]
+      },
+      "post": {
+        "operationId": "createPart",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/parts/{partId}": {
+      "get": {
+        "operationId": "getPart",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A part with stock per branch and its movements",
+        "tags": [
+          "inventory"
+        ]
+      },
+      "patch": {
+        "operationId": "updatePart",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePartDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/parts/{partId}/receipts": {
+      "post": {
+        "operationId": "receiveStock",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiveStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Goods received at a cost; posted Dr inventory, Cr goods received",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/parts/{partId}/adjustments": {
+      "post": {
+        "operationId": "adjustStock",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A counted difference with a reason, against stock adjustments",
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/inventory/valuation": {
+      "get": {
+        "operationId": "getStockValuation",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValuationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stock value by part, reconciled to the inventory account",
+        "tags": [
+          "inventory"
+        ]
+      }
     }
   },
   "info": {
@@ -11022,6 +11376,34 @@
               }
             ]
           },
+          "inventoryAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "goodsReceivedAccount": {
+            "nullable": true,
+            "description": "Goods received, not yet invoiced (liability)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
+          "stockAdjustmentAccount": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefDto"
+              }
+            ]
+          },
           "version": {
             "type": "number",
             "description": "0 until first saved"
@@ -11058,6 +11440,18 @@
             "nullable": true
           },
           "bankAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "inventoryAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "goodsReceivedAccountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stockAdjustmentAccountId": {
             "type": "string",
             "nullable": true
           }
@@ -11429,6 +11823,476 @@
         "required": [
           "version",
           "reason"
+        ]
+      },
+      "PartListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "each",
+              "litre",
+              "kg",
+              "metre",
+              "set"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "onHand": {
+            "type": "string",
+            "example": "12.000",
+            "description": "On hand in the branches the caller sees (or the chosen branch)"
+          },
+          "value": {
+            "type": "string",
+            "example": "150.00"
+          },
+          "averageCost": {
+            "type": "string",
+            "nullable": true,
+            "example": "12.5000"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "unit",
+          "active",
+          "onHand",
+          "value"
+        ]
+      },
+      "PartListDto": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartListItemDto"
+            }
+          },
+          "canCreate": {
+            "type": "boolean",
+            "description": "The caller may add parts"
+          }
+        },
+        "required": [
+          "parts",
+          "canCreate"
+        ]
+      },
+      "CreatePartDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "each",
+              "litre",
+              "kg",
+              "metre",
+              "set"
+            ]
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "unit"
+        ]
+      },
+      "BranchStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "onHand": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "averageCost": {
+            "type": "string",
+            "nullable": true
+          },
+          "canReceive": {
+            "type": "boolean",
+            "description": "The caller may receive stock here"
+          },
+          "canAdjust": {
+            "type": "boolean",
+            "description": "The caller may adjust stock here"
+          }
+        },
+        "required": [
+          "branchId",
+          "branchCode",
+          "onHand",
+          "value",
+          "canReceive",
+          "canAdjust"
+        ]
+      },
+      "StockMovementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "example": "SM-2026-000001"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "receipt",
+              "adjustment_in",
+              "adjustment_out"
+            ]
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitCost": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "onHandAfter": {
+            "type": "string"
+          },
+          "valueAfter": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "journalNumber": {
+            "type": "string"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "branchCode",
+          "kind",
+          "quantity",
+          "unitCost",
+          "value",
+          "onHandAfter",
+          "valueAfter",
+          "journalNumber",
+          "createdByName",
+          "createdAt"
+        ]
+      },
+      "PartDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "each",
+              "litre",
+              "kg",
+              "metre",
+              "set"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "onHand": {
+            "type": "string",
+            "example": "12.000",
+            "description": "On hand in the branches the caller sees (or the chosen branch)"
+          },
+          "value": {
+            "type": "string",
+            "example": "150.00"
+          },
+          "averageCost": {
+            "type": "string",
+            "nullable": true,
+            "example": "12.5000"
+          },
+          "version": {
+            "type": "number"
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchStockDto"
+            }
+          },
+          "movements": {
+            "description": "Newest first (up to 100)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockMovementDto"
+            }
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "The caller may edit the catalogue entry"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "unit",
+          "active",
+          "onHand",
+          "value",
+          "version",
+          "branches",
+          "movements",
+          "canEdit"
+        ]
+      },
+      "UpdatePartDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "active"
+        ]
+      },
+      "ReceiveStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10"
+          },
+          "unitCost": {
+            "type": "string",
+            "example": "12.50"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Supplier delivery note or invoice number"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchId",
+          "quantity",
+          "unitCost",
+          "reference",
+          "idempotencyKey"
+        ]
+      },
+      "AdjustStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ]
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "unitCost": {
+            "type": "string",
+            "nullable": true,
+            "description": "Required for found stock (in)"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchId",
+          "direction",
+          "quantity",
+          "reason",
+          "idempotencyKey"
+        ]
+      },
+      "ValuationRowDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "onHand": {
+            "type": "string"
+          },
+          "averageCost": {
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "partId",
+          "sku",
+          "name",
+          "unit",
+          "onHand",
+          "value"
+        ]
+      },
+      "ValuationDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuationRowDto"
+            }
+          },
+          "totalValue": {
+            "type": "string",
+            "description": "Σ stock value"
+          },
+          "ledgerBalance": {
+            "type": "string",
+            "nullable": true,
+            "description": "Inventory account balance in the ledger (same branches)"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "description": "Stock value equals the inventory account balance"
+          }
+        },
+        "required": [
+          "asOf",
+          "currency",
+          "rows",
+          "totalValue",
+          "reconciled"
         ]
       },
       "ProblemDetailsDto": {

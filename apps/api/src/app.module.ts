@@ -24,6 +24,7 @@ import { SearchModule } from './search/search.module';
 import { SettingsModule } from './settings/settings.module';
 import { QuoteModule } from './quotes/quote.module';
 import { BillingModule } from './billing/billing.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 
@@ -70,6 +71,7 @@ export class AppModule {
         SettingsModule,
         QuoteModule,
         BillingModule,
+        InventoryModule,
       ],
       providers: [
         { provide: API_ENV, useValue: env },

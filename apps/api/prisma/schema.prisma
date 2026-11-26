@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting", "crm", "workshop"]
+  schemas  = ["public", "platform", "iam", "org", "accounting", "reporting", "crm", "workshop", "inventory"]
 }
 
 enum RecordStatus {
@@ -80,6 +80,8 @@ model Branch {
   appointments     Appointment[]
   bays             Bay[]
   labourRates      LabourRate[]
+  stock            Stock[]
+  stockMovements   StockMovement[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -244,6 +246,7 @@ enum JournalSource {
   reversal
   invoice
   payment
+  stock
 
   @@schema("accounting")
 }
@@ -945,13 +948,16 @@ model QuoteLine {
 
 /// The accountant's posting accounts for workshop invoices and payments (T-72).
 model PostingSettings {
-  companyId              String  @id @map("company_id") @db.Uuid
-  labourRevenueAccountId String? @map("labour_revenue_account_id") @db.Uuid
-  receivableAccountId    String? @map("receivable_account_id") @db.Uuid
-  cashAccountId          String? @map("cash_account_id") @db.Uuid
-  cardAccountId          String? @map("card_account_id") @db.Uuid
-  bankAccountId          String? @map("bank_account_id") @db.Uuid
-  version                Int     @default(1)
+  companyId                String  @id @map("company_id") @db.Uuid
+  labourRevenueAccountId   String? @map("labour_revenue_account_id") @db.Uuid
+  receivableAccountId      String? @map("receivable_account_id") @db.Uuid
+  cashAccountId            String? @map("cash_account_id") @db.Uuid
+  cardAccountId            String? @map("card_account_id") @db.Uuid
+  bankAccountId            String? @map("bank_account_id") @db.Uuid
+  inventoryAccountId       String? @map("inventory_account_id") @db.Uuid
+  goodsReceivedAccountId   String? @map("goods_received_account_id") @db.Uuid
+  stockAdjustmentAccountId String? @map("stock_adjustment_account_id") @db.Uuid
+  version                  Int     @default(1)
 
   @@map("posting_settings")
   @@schema("accounting")
@@ -1040,4 +1046,75 @@ model Payment {
   @@index([invoiceId])
   @@map("payment")
   @@schema("workshop")
+}
+
+/// A part in the company catalogue (T-74). Stock is held per branch.
+model Part {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  sku       String
+  name      String
+  nameAr    String?  @map("name_ar")
+  brand     String?
+  unit      String
+  active    Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  stock     Stock[]
+  movements StockMovement[]
+
+  @@unique([companyId, sku])
+  @@unique([companyId, id])
+  @@map("part")
+  @@schema("inventory")
+}
+
+/// Quantity and value of a part at a branch (weighted average: average cost = value ÷ quantity).
+model Stock {
+  companyId String   @map("company_id") @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  partId    String   @map("part_id") @db.Uuid
+  onHand    Decimal  @default(0) @map("on_hand") @db.Decimal(14, 3)
+  value     Decimal  @default(0) @db.Decimal(16, 2)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  part   Part   @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([branchId, partId])
+  @@index([companyId, partId])
+  @@map("stock")
+  @@schema("inventory")
+}
+
+/// Every change of stock, posted to the ledger; never changed or deleted.
+model StockMovement {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  branchId       String   @map("branch_id") @db.Uuid
+  partId         String   @map("part_id") @db.Uuid
+  number         String
+  /// receipt | adjustment_in | adjustment_out
+  kind           String
+  quantity       Decimal  @db.Decimal(14, 3)
+  unitCost       Decimal  @map("unit_cost") @db.Decimal(14, 4)
+  value          Decimal  @db.Decimal(16, 2)
+  onHandAfter    Decimal  @map("on_hand_after") @db.Decimal(14, 3)
+  valueAfter     Decimal  @map("value_after") @db.Decimal(16, 2)
+  reference      String?
+  reason         String?
+  idempotencyKey String   @map("idempotency_key")
+  journalId      String   @unique @map("journal_id") @db.Uuid
+  createdBy      String   @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  part   Part   @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([branchId, partId, createdAt])
+  @@map("stock_movement")
+  @@schema("inventory")
 }

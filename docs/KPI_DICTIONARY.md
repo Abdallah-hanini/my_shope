@@ -106,3 +106,12 @@ Code: `apps/api/src/quotes/quote-math.ts` (unit-tested). The database also check
 | Credit note | The invoice journal's lines with debit and credit swapped (a reversal journal) | |
 
 Invoice balance = total − Σ payments (0 for a cancelled invoice). Every posting uses the document date in the company time zone and needs an open fiscal period.
+
+## Stock value (T-74)
+
+| Figure | Definition |
+|---|---|
+| On hand | Σ movement quantities in − out, per part and branch (3 decimals) |
+| Value | Σ movement values in − out (2 decimals); receipts and found stock at quantity × unit cost, half up; stock out at quantity × average, half up; the last units take the remaining value |
+| Average cost | Value ÷ on hand (4 decimals); none when nothing is on hand |
+| Reconciliation | Σ stock value (in the shown branches) = debit − credit of the inventory account in the ledger (same branches) |

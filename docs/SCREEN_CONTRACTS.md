@@ -145,6 +145,11 @@ Contract fields per docs/spec/AUTO360_UI_UX_MASTER_DESIGN.md ("Screen patterns")
   - The printed invoice or credit note shows the letterhead with the tax number, lines, discount, tax, total, payments and balance.
 - **Tests:** billing.int (8); e2e (QC by a second person, posting accounts, invoice, refusal, card and cash, print, delivery, handover sheet).
 
+## Parts and stock (WEB-033/034/035/050/056/063, T-74)
+- **Routes:** `/[locale]/c/[id]/parts` (search, list with on hand, average cost and value; add part), `/parts/[id]` (per branch: stock, Receive stock, Adjust after a count; movements with journal numbers; edit part), `/stock` (value by part, total, inventory account balance, "Matches the ledger").
+- **Permissions:** `inventory.read`; `inventory.manage` (catalogue company-wide, receipts at the branch); `inventory.adjust`. Posting accounts: inventory, goods received not invoiced, stock adjustments.
+- **Tests:** inventory.int (7); e2e.
+
 ## WEB-126 Financial period closing (partial)
 - **Route:** `/[locale]/c/[id]/periods`. **Requirement:** ACC-008.
 - **Behaviour:** create a period; close it with a reason and an optimistic version check.

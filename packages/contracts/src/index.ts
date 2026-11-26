@@ -51,6 +51,9 @@ export type Quote = Schemas['QuoteDto'];
 export type JobBilling = Schemas['JobBillingDto'];
 export type Invoice = Schemas['InvoiceDto'];
 export type PostingSettings = Schemas['PostingSettingsDto'];
+export type PartList = Schemas['PartListDto'];
+export type Part = Schemas['PartDto'];
+export type StockValuation = Schemas['ValuationDto'];
 
 /** Every path the API publishes, for compile-time checks in clients. */
 export type ApiPath = keyof paths;

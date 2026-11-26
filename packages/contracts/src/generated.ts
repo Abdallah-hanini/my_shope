@@ -1641,6 +1641,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalogue with stock in the caller’s branches */
+        get: operations["listParts"];
+        put?: never;
+        post: operations["createPart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/parts/{partId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A part with stock per branch and its movements */
+        get: operations["getPart"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updatePart"];
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/parts/{partId}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Goods received at a cost; posted Dr inventory, Cr goods received */
+        post: operations["receiveStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/parts/{partId}/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A counted difference with a reason, against stock adjustments */
+        post: operations["adjustStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/inventory/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock value by part, reconciled to the inventory account */
+        get: operations["getStockValuation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3138,6 +3223,10 @@ export interface components {
             cashAccount?: components["schemas"]["AccountRefDto"] | null;
             cardAccount?: components["schemas"]["AccountRefDto"] | null;
             bankAccount?: components["schemas"]["AccountRefDto"] | null;
+            inventoryAccount?: components["schemas"]["AccountRefDto"] | null;
+            /** @description Goods received, not yet invoiced (liability) */
+            goodsReceivedAccount?: components["schemas"]["AccountRefDto"] | null;
+            stockAdjustmentAccount?: components["schemas"]["AccountRefDto"] | null;
             /** @description 0 until first saved */
             version: number;
             canManage: boolean;
@@ -3149,6 +3238,9 @@ export interface components {
             cashAccountId?: string | null;
             cardAccountId?: string | null;
             bankAccountId?: string | null;
+            inventoryAccountId?: string | null;
+            goodsReceivedAccountId?: string | null;
+            stockAdjustmentAccountId?: string | null;
         };
         InvoiceLineDto: {
             lineNo: number;
@@ -3252,6 +3344,142 @@ export interface components {
         ReleaseUnpaidDto: {
             version: number;
             reason: string;
+        };
+        PartListItemDto: {
+            id: string;
+            sku: string;
+            name: string;
+            nameAr?: string | null;
+            brand?: string | null;
+            /** @enum {string} */
+            unit: "each" | "litre" | "kg" | "metre" | "set";
+            active: boolean;
+            /**
+             * @description On hand in the branches the caller sees (or the chosen branch)
+             * @example 12.000
+             */
+            onHand: string;
+            /** @example 150.00 */
+            value: string;
+            /** @example 12.5000 */
+            averageCost?: string | null;
+        };
+        PartListDto: {
+            parts: components["schemas"]["PartListItemDto"][];
+            /** @description The caller may add parts */
+            canCreate: boolean;
+        };
+        CreatePartDto: {
+            sku: string;
+            name: string;
+            nameAr?: string | null;
+            brand?: string | null;
+            /** @enum {string} */
+            unit: "each" | "litre" | "kg" | "metre" | "set";
+        };
+        BranchStockDto: {
+            branchId: string;
+            branchCode: string;
+            onHand: string;
+            value: string;
+            averageCost?: string | null;
+            /** @description The caller may receive stock here */
+            canReceive: boolean;
+            /** @description The caller may adjust stock here */
+            canAdjust: boolean;
+        };
+        StockMovementDto: {
+            id: string;
+            /** @example SM-2026-000001 */
+            number: string;
+            branchCode: string;
+            /** @enum {string} */
+            kind: "receipt" | "adjustment_in" | "adjustment_out";
+            quantity: string;
+            unitCost: string;
+            value: string;
+            onHandAfter: string;
+            valueAfter: string;
+            reference?: string | null;
+            reason?: string | null;
+            journalNumber: string;
+            createdByName: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PartDto: {
+            id: string;
+            sku: string;
+            name: string;
+            nameAr?: string | null;
+            brand?: string | null;
+            /** @enum {string} */
+            unit: "each" | "litre" | "kg" | "metre" | "set";
+            active: boolean;
+            /**
+             * @description On hand in the branches the caller sees (or the chosen branch)
+             * @example 12.000
+             */
+            onHand: string;
+            /** @example 150.00 */
+            value: string;
+            /** @example 12.5000 */
+            averageCost?: string | null;
+            version: number;
+            branches: components["schemas"]["BranchStockDto"][];
+            /** @description Newest first (up to 100) */
+            movements: components["schemas"]["StockMovementDto"][];
+            /** @description The caller may edit the catalogue entry */
+            canEdit: boolean;
+        };
+        UpdatePartDto: {
+            version: number;
+            name: string;
+            nameAr?: string | null;
+            brand?: string | null;
+            active: boolean;
+        };
+        ReceiveStockDto: {
+            branchId: string;
+            /** @example 10 */
+            quantity: string;
+            /** @example 12.50 */
+            unitCost: string;
+            /** @description Supplier delivery note or invoice number */
+            reference: string;
+            idempotencyKey: string;
+        };
+        AdjustStockDto: {
+            branchId: string;
+            /** @enum {string} */
+            direction: "in" | "out";
+            quantity: string;
+            /** @description Required for found stock (in) */
+            unitCost?: string | null;
+            reason: string;
+            idempotencyKey: string;
+        };
+        ValuationRowDto: {
+            partId: string;
+            sku: string;
+            name: string;
+            unit: string;
+            onHand: string;
+            averageCost?: string | null;
+            value: string;
+        };
+        ValuationDto: {
+            branchId?: string | null;
+            /** Format: date-time */
+            asOf: string;
+            currency: string;
+            rows: components["schemas"]["ValuationRowDto"][];
+            /** @description Σ stock value */
+            totalValue: string;
+            /** @description Inventory account balance in the ledger (same branches) */
+            ledgerBalance?: string | null;
+            /** @description Stock value equals the inventory account balance */
+            reconciled: boolean;
         };
         ProblemDetailsDto: {
             /** @example about:blank */
@@ -6252,6 +6480,179 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobBillingDto"];
+                };
+            };
+        };
+    };
+    listParts: {
+        parameters: {
+            query?: {
+                includeInactive?: "true" | "false";
+                branchId?: unknown;
+                q?: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartListDto"];
+                };
+            };
+        };
+    };
+    createPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    getPart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    updatePart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    receiveStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveStockDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    adjustStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustStockDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartDto"];
+                };
+            };
+        };
+    };
+    getStockValuation: {
+        parameters: {
+            query?: {
+                branchId?: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValuationDto"];
                 };
             };
         };

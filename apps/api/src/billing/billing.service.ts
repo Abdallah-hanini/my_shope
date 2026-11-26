@@ -29,7 +29,10 @@ const invoiceInclude = {
   creditOf: { select: { number: true } },
 } satisfies Prisma.InvoiceInclude;
 type InvoiceRow = Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>;
-const ACCOUNTS = ['labourRevenue', 'receivable', 'cash', 'card', 'bank'] as const;
+/** Accounts invoicing needs (shown as missing on the job card). */
+const BILLING_ACCOUNTS = ['labourRevenue', 'receivable', 'cash', 'card', 'bank'] as const;
+/** Every posting setting, with stock (T-74). */
+const ACCOUNTS = [...BILLING_ACCOUNTS, 'inventory', 'goodsReceived', 'stockAdjustment'] as const;
 const METHOD_ACCOUNT = { cash: 'cashAccountId', card: 'cardAccountId', bank: 'bankAccountId' } as const;
 /** Account types each posting setting accepts. */
 const ACCOUNT_TYPES: Record<(typeof ACCOUNTS)[number], string> = {
@@ -38,6 +41,9 @@ const ACCOUNT_TYPES: Record<(typeof ACCOUNTS)[number], string> = {
   cash: 'asset',
   card: 'asset',
   bank: 'asset',
+  inventory: 'asset',
+  goodsReceived: 'liability',
+  stockAdjustment: 'expense',
 };
 
 /**
@@ -87,6 +93,9 @@ export class BillingService {
       cashAccount: ref(s?.cashAccountId),
       cardAccount: ref(s?.cardAccountId),
       bankAccount: ref(s?.bankAccountId),
+      inventoryAccount: ref(s?.inventoryAccountId),
+      goodsReceivedAccount: ref(s?.goodsReceivedAccountId),
+      stockAdjustmentAccount: ref(s?.stockAdjustmentAccountId),
       version: s?.version ?? 0,
       canManage: await this.can(p, scope.companyId, 'accounting.account.manage'),
     };
@@ -117,6 +126,9 @@ export class BillingService {
       cashAccountId: input.cashAccountId,
       cardAccountId: input.cardAccountId,
       bankAccountId: input.bankAccountId,
+      inventoryAccountId: input.inventoryAccountId ?? null,
+      goodsReceivedAccountId: input.goodsReceivedAccountId ?? null,
+      stockAdjustmentAccountId: input.stockAdjustmentAccountId ?? null,
     };
     await this.prisma.$transaction(async (tx) => {
       if (input.version === 0) {
@@ -177,7 +189,7 @@ export class BillingService {
           live.payments.map((x) => x.amount),
         )
       : null;
-    const missing = ACCOUNTS.filter((k) => !settings?.[`${k}AccountId`]);
+    const missing = BILLING_ACCOUNTS.filter((k) => !settings?.[`${k}AccountId`]);
     return {
       jobId,
       currency: job.company.baseCurrency,
