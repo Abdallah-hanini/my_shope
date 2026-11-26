@@ -2442,6 +2442,8 @@ export interface components {
             fromStatus?: string | null;
             toStatus?: string | null;
             note?: string | null;
+            /** @description A quality check by the owner of work they did on the job (T-73) */
+            selfCheck: boolean;
         };
         InspectionItemDto: {
             /** @description Checklist key (INSPECTION_ITEMS) */

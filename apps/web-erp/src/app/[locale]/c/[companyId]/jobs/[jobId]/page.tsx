@@ -320,6 +320,11 @@ export default async function JobPage({
                     {e.toStatus && e.kind !== 'status' && e.kind !== 'created'
                       ? ` → ${t(`job.status.${e.toStatus}` as MessageKey)}`
                       : ''}
+                    {e.selfCheck ? (
+                      <span className="ms-2">
+                        <Badge tone="warning">{t('job.ownWork')}</Badge>
+                      </span>
+                    ) : null}
                     {e.note ? <span className="text-[var(--color-text-muted)]"> — {e.note}</span> : null}
                   </p>
                   <p className="text-xs text-[var(--color-text-muted)]">
@@ -413,7 +418,12 @@ export default async function JobPage({
             </p>
           ) : null}
           {can('qc') ? (
-            <Panel title={t('job.qc')} help={t('job.qcHelp')}>
+            <Panel
+              title={t('job.qc')}
+              help={
+                j.tasks.some((x) => x.technicianId === me.user.id) ? t('job.qcOwnWorkHelp') : t('job.qcHelp')
+              }
+            >
               <InlineForm
                 action={step('qc')}
                 locale={locale}

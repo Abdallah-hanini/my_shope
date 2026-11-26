@@ -124,6 +124,8 @@ export class JobEventDto {
   @ApiPropertyOptional({ nullable: true, type: String }) fromStatus!: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) toStatus!: string | null;
   @ApiPropertyOptional({ nullable: true, type: String }) note!: string | null;
+  @ApiProperty({ description: 'A quality check by the owner of work they did on the job (T-73)' })
+  selfCheck!: boolean;
 }
 
 export class JobPartyDto {

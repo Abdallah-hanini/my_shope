@@ -916,4 +916,7 @@ export const ar: Record<MessageKey, string> = {
   'job.event.payment_received': 'استُلمت دفعة',
   'job.event.unpaid_release': 'أفرج المالك عن السيارة دون دفع',
   'bill.paidInvoice': 'مدفوعة',
+  'job.qcOwnWorkHelp':
+    'لقد عملت على هذا الأمر. بصفتك المالك يمكنك فحصه بنفسك، لكن اذكر السبب في الملاحظة؛ ويُسجَّل كفحص لعملك أنت.',
+  'job.ownWork': 'عمله الخاص',
 };

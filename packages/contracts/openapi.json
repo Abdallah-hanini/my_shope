@@ -8700,13 +8700,18 @@
           "note": {
             "type": "string",
             "nullable": true
+          },
+          "selfCheck": {
+            "type": "boolean",
+            "description": "A quality check by the owner of work they did on the job (T-73)"
           }
         },
         "required": [
           "id",
           "occurredAt",
           "actorName",
-          "kind"
+          "kind",
+          "selfCheck"
         ]
       },
       "InspectionItemDto": {

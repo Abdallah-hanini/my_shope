@@ -12,6 +12,7 @@ const ev = (kind: Ev['kind'], actorName: string): Ev => ({
   fromStatus: null,
   toStatus: null,
   note: null,
+  selfCheck: false,
 });
 const addition = (seq: number, status: string) => ({ id: `a${seq}`, seq, status }) as never;
 

@@ -549,12 +549,25 @@ export class JobService {
 
   async qc(scope: CompanyScope, p: Principal, id: string, input: QcResultInput, ctx: AuditContext) {
     return this.act(scope, p, id, 'qc', input.version, ctx, async (tx, job) => {
+      // T-73: an owner checking work they did on the job must say why; it is marked in the record.
+      const self = job.tasks.some((t) => t.technicianId === p.userId);
+      if (self && !input.note)
+        throw unprocessable('You worked on this job: give the reason for checking it yourself');
       if (input.result === 'pass') {
         await tx.jobCard.update({ where: { id }, data: { status: 'ready' } });
         await this.outbox(tx, ctx, job, 'workshop.job.ready', {});
         return {
-          event: { kind: 'qc_pass', toStatus: 'ready', note: input.note ?? undefined },
-          audit: { action: 'workshop.job.qc_pass', after: { note: input.note } },
+          event: {
+            kind: 'qc_pass',
+            toStatus: 'ready',
+            note: input.note ?? undefined,
+            data: { selfCheck: self },
+          },
+          audit: {
+            action: self ? 'workshop.job.qc_pass_own_work' : 'workshop.job.qc_pass',
+            reason: self ? (input.note ?? undefined) : undefined,
+            after: { note: input.note, selfCheck: self },
+          },
         };
       }
       const reopen = job.tasks.filter((t) => input.reopenTaskIds.includes(t.id));
@@ -575,10 +588,10 @@ export class JobService {
           kind: 'qc_fail',
           toStatus: 'rework',
           note: input.note,
-          data: { reopenTaskIds: input.reopenTaskIds },
+          data: { reopenTaskIds: input.reopenTaskIds, selfCheck: self },
         },
         audit: {
-          action: 'workshop.job.qc_fail',
+          action: self ? 'workshop.job.qc_fail_own_work' : 'workshop.job.qc_fail',
           reason: input.note,
           after: { reopenTaskIds: input.reopenTaskIds },
         },
@@ -935,6 +948,7 @@ export class JobService {
       manage: can('workshop.job.manage'),
       work: can('workshop.job.work'),
       qc: can('workshop.job.qc'),
+      owner: can('workshop.pricing.manage'),
       onJob: job.tasks.some((t) => t.technicianId === p.userId),
       onTask: taskId ? job.tasks.some((t) => t.id === taskId && t.technicianId === p.userId) : false,
     };
@@ -1125,6 +1139,7 @@ export class JobService {
         fromStatus: e.fromStatus,
         toStatus: e.toStatus,
         note: e.note,
+        selfCheck: !!(e.data as { selfCheck?: boolean } | null)?.selfCheck,
       })),
       // While the customer has not decided, neither a second proposal nor the quality check.
       actions: availableActions(status, actor).filter(

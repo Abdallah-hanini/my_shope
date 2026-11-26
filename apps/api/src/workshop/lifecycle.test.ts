@@ -71,4 +71,10 @@ describe('job lifecycle', () => {
     expect(allowedInStatus('removePhoto', 'approved')).toBe(false);
     expect(allowedInStatus('inspect', 'approved')).toBe(false);
   });
+
+  it('the owner may quality-check work they did on the job (with a reason, checked by the service)', () => {
+    expect(permits('qc', { manage: true, work: true, qc: true, onJob: true })).toBe(false);
+    expect(permits('qc', { manage: true, work: true, qc: true, onJob: true, owner: true })).toBe(true);
+    expect(permits('qc', { manage: true, work: true, qc: false, onJob: true, owner: true })).toBe(false);
+  });
 });

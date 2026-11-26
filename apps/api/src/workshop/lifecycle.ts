@@ -82,6 +82,8 @@ export interface Actor {
   onJob: boolean;
   /** The actor is the technician of the task concerned (completeTask). */
   onTask?: boolean;
+  /** The actor is an owner (workshop.pricing.manage): may check their own work, with a reason. */
+  owner?: boolean;
 }
 
 export function permits(action: JobAction, a: Actor): boolean {
@@ -104,8 +106,9 @@ export function permits(action: JobAction, a: Actor): boolean {
     case 'completeTask':
       return a.manage || (a.work && !!a.onTask);
     case 'qc':
-      // Segregation of duties: nobody inspects work they did on this job.
-      return a.qc && !a.onJob;
+      // Segregation of duties: nobody inspects work they did on this job, except the owner, who
+      // must then give a reason (owner's decision 2026-11-29, T-73).
+      return a.qc && (!a.onJob || !!a.owner);
     case 'note':
       return a.manage || a.work || a.qc;
     case 'proposeAddition':

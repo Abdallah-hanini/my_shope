@@ -932,4 +932,7 @@ export const en = {
   'job.event.payment_received': 'Payment received',
   'job.event.unpaid_release': 'Released unpaid by the owner',
   'bill.paidInvoice': 'Paid',
+  'job.qcOwnWorkHelp':
+    'You worked on this job. As the owner you may check it yourself, but give the reason in the note; it is recorded as a check of your own work.',
+  'job.ownWork': 'own work',
 } as const;

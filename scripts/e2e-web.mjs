@@ -806,12 +806,8 @@ async function main() {
         }
         await step('Send to quality check');
         await page.locator('main').getByText('Quality check', { exact: true }).first().waitFor();
-        // Segregation of duties: the person who did the work is not offered the inspection.
-        assert(
-          (await page.getByRole('heading', { name: 'Quality check', level: 2 }).count()) === 0,
-          'QC offered to the technician',
-        );
-        await page.getByText('Waiting for the quality check by an inspector').waitFor();
+        // Segregation of duties (T-73): the owner, who did the work, may check it only with a reason.
+        await page.getByText('You worked on this job. As the owner you may check it yourself').waitFor();
         const timeline = await page.locator('#timeline-title').locator('xpath=../..').innerText();
         assert(
           /Job card opened[\s\S]*Approved[\s\S]*In progress[\s\S]*Task done[\s\S]*Quality check/.test(

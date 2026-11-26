@@ -11,6 +11,28 @@
 | 3 Sales/POS/workshop | **In progress:** workshop job cards (check-in, inspection, photos, tasks, assignment, QC and rework, additional work, labour time, bays, appointments, printouts, delivery). D-05 decided (tax configured by the accountant); tax, labour-rate and letterhead settings, priced quotes, invoices, payments and paid handover done. Parts wait for D-06. |
 | 2, 4–7 | Not started. |
 
+## 2026-11-29: Owner decisions D-06, D-09, D-11 and the owner's own quality check (T-73)
+
+### Decisions (owner, 2026-11-29)
+
+- **D-06 costing:** weighted average. This unlocks parts and stock, the next increment; please confirm with your accountant.
+- **One-person QC:** only the owner may check their own work, with a reason (T-73).
+- **D-09 messaging:** not yet.
+- **D-11 approvals:** none for now; reasons and the audit trail stay.
+
+### Changes
+
+- **QC rule:** an owner (`workshop.pricing.manage`) who worked on a job is offered the quality check, with the help text "You worked on this job… give the reason". Without a reason the server refuses. The check is marked "own work" in the timeline and audited as `qc_pass_own_work` or `qc_fail_own_work` with the reason. Everyone else who worked on the job is still refused.
+- **API:** job timeline events now include `selfCheck`.
+- **Test change:** the browser test's QC assertion now expects the owner to be offered the check with the own-work help, instead of not being offered it.
+
+### Evidence (2026-11-29, Linux Docker)
+
+- Lifecycle unit tests 7.
+- Integration (qc-own-work.int, 2): a foreman who did the work gets 403; the owner without a reason gets 422; with a reason the job becomes ready, the timeline shows `selfCheck`, and the audit records the reason.
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; migration drift none; smoke 11/11; integration 210/210 across 17 suites on a fresh database; browser end-to-end 45/45.
+- During the gate, one web unit test run failed once and passed in the next four runs, probably a stale compile cache after a type change. Not seen again.
+
 ## 2026-11-29: Invoices, payments and handover (T-72; D-05 step 3 of 3)
 
 ### Decisions (owner, 2026-11-29)
