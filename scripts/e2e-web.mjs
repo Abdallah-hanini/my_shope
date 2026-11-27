@@ -4,6 +4,7 @@
 //   pnpm build && pnpm db:up && pnpm db:migrate && pnpm auth:up && pnpm test:e2e-web [--screenshots <dir>]
 // Uses DATABASE_URL / REDIS_* from the environment or apps/api/.env. Creates a uniquely named
 // company and Keycloak user each run (synthetic data only).
+import AxeBuilder from '@axe-core/playwright';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -599,6 +600,8 @@ async function main() {
       // Events are delivered by the dispatcher within seconds; the bell refreshes on navigation.
       for (let i = 0; i < 40; i++) {
         await page.goto(`${base()}/journals`);
+        // The bell fetches its count after the page loads: read it once that request has settled.
+        await page.waitForLoadState('networkidle');
         const label = (await bell().getAttribute('aria-label')) ?? '';
         if (pattern.test(label)) return label;
         await page.waitForTimeout(500);
@@ -1763,6 +1766,51 @@ async function main() {
         await page.locator('[data-branch-stock=WAK]').getByText('2.000 litre').waitFor();
         await page.goto(`${base()}/stock`);
         await page.locator('[data-reconciliation]').getByText('Matches the ledger').waitFor();
+      },
+    );
+
+    await check('Quick jump: Ctrl+K, type, Enter opens the page', async () => {
+      await page.goto(`${base()}/jobs`);
+      // The shortcut listener is attached once the page has hydrated.
+      await page.getByRole('button', { name: /Quick jump/ }).waitFor();
+      await page.waitForLoadState('networkidle');
+      await page.keyboard.press('Control+K');
+      const box = page.getByRole('combobox', { name: 'Quick jump' });
+      await box.fill('trial');
+      await page.getByRole('option', { name: /Trial balance/ }).waitFor();
+      await Promise.all([page.waitForURL(/\/trial-balance/), box.press('Enter')]);
+      await page.getByRole('heading', { name: 'Trial balance', exact: true }).waitFor();
+    });
+
+    await check(
+      'Accessibility: no serious or critical WCAG 2.2 A/AA violations on key pages (axe)',
+      async () => {
+        const failures = [];
+        for (const path of [
+          '',
+          'jobs',
+          jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
+          'parts',
+          'suppliers',
+          'supplier-bills?status=all',
+          'transfers?status=all',
+          'trial-balance',
+          'accounts',
+          'users',
+        ]) {
+          for (const lang of ['en', 'ar']) {
+            await page.goto(`${WEB}/${lang}/c/${companyId}/${path}`);
+            await page.waitForLoadState('networkidle');
+            const r = await new AxeBuilder({ page })
+              .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+              .analyze();
+            for (const v of r.violations.filter((x) => x.impact === 'serious' || x.impact === 'critical'))
+              failures.push(
+                `${lang}/${path || 'dashboard'}: ${v.id} (${v.nodes.length}) ${v.nodes[0]?.target?.join(' ')}`,
+              );
+          }
+        }
+        assert(failures.length === 0, failures.join('\n'));
       },
     );
 

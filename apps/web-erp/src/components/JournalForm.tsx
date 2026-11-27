@@ -49,6 +49,8 @@ export function JournalForm({
 }) {
   const t = createTranslator(locale);
   const [state, formAction] = useActionState(action, {} as FormState);
+  // A server error describes the entry as it was submitted: hide it once the entry is edited.
+  const [editedSince, setEditedSince] = useState<FormState | null>(null);
   const [nextKey, setNextKey] = useState(3);
   const [lines, setLines] = useState<Line[]>([
     { key: 1, accountId: '', debit: '', credit: '', description: '' },
@@ -82,8 +84,13 @@ export function JournalForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-5" noValidate>
-      <FormError message={state.error ?? state.fieldErrors?.form} />
+    <form
+      action={formAction}
+      onChange={() => setEditedSince(state)}
+      className="flex flex-col gap-5"
+      noValidate
+    >
+      <FormError message={editedSince === state ? undefined : (state.error ?? state.fieldErrors?.form)} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="lines" value={payload} />
 

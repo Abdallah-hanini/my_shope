@@ -4,6 +4,7 @@ import { Suspense, type ReactNode } from 'react';
 import { sidebarCollapsed, themePreference } from '@/lib/preferences';
 import { currentPath } from '@/lib/session';
 import { Breadcrumbs, LanguageSwitch, type Crumb } from './shell/HeaderLinks';
+import { QuickJump } from './shell/CommandPalette';
 import { HeaderSearch } from './shell/HeaderSearch';
 import { NotificationBell } from './shell/NotificationBell';
 import { CompanySwitcher, ProfileMenu } from './shell/Menus';
@@ -91,6 +92,7 @@ export async function AppShell({
                 <HeaderSearch locale={locale} action={searchHref} />
               </Suspense>
             ) : null}
+            {hasNav ? <QuickJump locale={locale} groups={groups} /> : null}
             {user ? (
               <span className="hidden sm:block">
                 <CompanySwitcher

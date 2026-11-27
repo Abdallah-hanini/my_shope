@@ -46,7 +46,12 @@ export default async function NewAppointmentPage({
     sp.start && !Number.isNaN(Date.parse(sp.start)) ? isoToZonedLocal(sp.start, company.timezone) : '';
   return (
     <>
-      <PageHeader title={t('appt.new')}>{t('appt.reminderNote')}</PageHeader>
+      <PageHeader
+        title={t('appt.new')}
+        back={{ href: `/${locale}/c/${companyId}/appointments`, label: t('nav.appointments') }}
+      >
+        {t('appt.reminderNote')}
+      </PageHeader>
       <Card>
         <SimpleForm
           locale={locale}

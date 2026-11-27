@@ -16,7 +16,7 @@ The owner asked for a commercial-grade UI/UX transformation of the whole product
 | A8 | View switchers built per page (ghost buttons, underlined links) | Four different tab styles | 1 |
 | A9 | Long record pages (job card ≈ 3 500 px) as one column of cards; most forms are a single row of inline controls | Frequent tasks need scrolling; actions compete | 2 |
 | A10 | Lists have no filters beyond a search box on some pages; no sorting | Experienced staff cannot narrow long lists | 2–3 |
-| A11 | No keyboard shortcut beyond "/" for search; no command palette | Power users are slowed down | 3 |
+| A11 | No keyboard shortcut beyond "/" for search; no command palette | Power users are slowed down | 3a ✅ |
 | A12 | Mobile apps (customer, manager) are sign-in shells | Not part of this web transformation; tracked in docs/MOBILE.md | later |
 
 Strengths kept: semantic CSS variables with tested contrast; light, dark and system themes; complete RTL with logical properties; accessible tables (captions, scope); skip link and landmarks; no mock data; server-side permissions.
@@ -99,16 +99,24 @@ Status: ✅ done in this slice · ◐ restyled through shared components (layout
 - **One rule for record pages:** the work (vehicles, service history, stock, bills, deliveries, payments, transfer lines) in the main column; the record's facts (`DescriptionList`) and its edit form in a 340 px side column from 1280 px (stacked below). Applied to customer, vehicle, part, supplier, supplier bill and transfer pages.
 - Inline forms use 12 px spacing between fields and rows.
 
-## 7. Next slices
+## 7. Slice 3a (done)
+
+- **Quick jump (Ctrl/⌘ + K):** a palette of the pages the person can open (the same role-filtered list as the sidebar), filtered as they type in either language (Arabic letter variants and diacritics folded), with arrow keys and Enter. It is a combobox with a listbox, and is also opened from a header button (A11).
+- **Automated accessibility scan (axe-core 4.10, WCAG 2.0/2.1/2.2 A and AA):** the browser test scans ten key pages (dashboard, job board, job card, parts, suppliers, supplier bills, transfers, trial balance, chart of accounts, users) in English and Arabic and fails on any serious or critical violation. The first run found none.
+- **Journal form:** a server error ("not balanced") disappears as soon as the entry is edited, instead of staying next to a now-balanced entry.
+- **Back links** on the new journal, new job card and new appointment pages.
+- **Test reliability:** the notification bell check reads the count after the bell's own request settles (it had failed by milliseconds).
+
+## 8. Next slices
 
 - **Slice 2:**
   - record-page layout with a side column (job card first, then part, supplier, bill, customer, vehicle);
   - grouped forms (form sections instead of single rows);
   - empty states with next steps on every list;
   - page header actions for the primary task of each list.
-- **Slice 3:**
+- **Slice 3b:**
   - list filters and sorting (server-side, from the existing query parameters);
-  - a keyboard command palette;
   - dashboard refinement (KPI hierarchy, chart styling);
-  - an automated accessibility scan (axe) in the browser test.
+  - form sections on the settings pages; a layout pass on appointments, bays, labour time, journals, ledger and trial balance;
+  - widen the accessibility scan to every page.
 - **Mobile apps:** a separate track (docs/MOBILE.md), sharing the same tokens.

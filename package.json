@@ -26,6 +26,7 @@
     "test:e2e-web": "node scripts/e2e-web.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "playwright": "1.63.0",
     "prettier": "3.6.2",
     "turbo": "2.11.13",

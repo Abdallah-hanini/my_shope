@@ -12,6 +12,17 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: UI/UX transformation, slice 3a: quick jump, accessibility scan, form feedback
+
+- **Quick jump (Ctrl/⌘ + K, or the header button):** filter the pages a person may open, in English or Arabic, then open one with Enter. A combobox and listbox for screen readers.
+- **Automated accessibility scan:** axe-core 4.10 (WCAG 2.0/2.1/2.2 A and AA) on ten key pages in both languages, in the browser test. It fails on any serious or critical violation; none were found.
+- **Journal form:** a server error clears once the entry is edited.
+- **Back links** on the new journal, job card and appointment pages.
+- **Test reliability:** the bell count is read after its request settles.
+- New dev dependency: `@axe-core/playwright` 4.10.2 (tests only).
+- Unit test: `normalizeSearch` (2).
+- Evidence: full gate 48/48 (uncached); browser end-to-end 51/51, including the two new checks.
+
 ## 2026-12-01: UI/UX transformation, slice 2b: list and record-page rules across modules
 
 - **Lists** (customers, parts, suppliers, roles, chart of accounts, branches, users, fiscal periods): the list first, the create form after it, and a primary "Add …" button in the header that jumps to the form.

@@ -1139,4 +1139,9 @@ export const en = {
   'common.onThisPage': 'On this page',
   'job.emptyStatuses': 'Statuses with no jobs',
   'common.details': 'Details',
+  'palette.title': 'Quick jump',
+  'palette.open': 'Quick jump (Ctrl K)',
+  'palette.help': 'Type to filter pages, use the arrow keys, press Enter to open.',
+  'palette.placeholder': 'Go to a page…',
+  'palette.none': 'No page matches.',
 } as const;

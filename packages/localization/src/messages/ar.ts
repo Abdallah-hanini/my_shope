@@ -1120,4 +1120,9 @@ export const ar: Record<MessageKey, string> = {
   'common.onThisPage': 'في هذه الصفحة',
   'job.emptyStatuses': 'حالات بلا أوامر عمل',
   'common.details': 'التفاصيل',
+  'palette.title': 'انتقال سريع',
+  'palette.open': 'انتقال سريع (Ctrl K)',
+  'palette.help': 'اكتب لتصفية الصفحات، واستخدم الأسهم، واضغط Enter للفتح.',
+  'palette.placeholder': 'انتقل إلى صفحة…',
+  'palette.none': 'لا توجد صفحة مطابقة.',
 };

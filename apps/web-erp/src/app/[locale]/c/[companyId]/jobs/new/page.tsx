@@ -53,7 +53,12 @@ export default async function NewJobPage({
     : [];
   return (
     <>
-      <PageHeader title={t('job.new')}>{t('job.notIncluded')}</PageHeader>
+      <PageHeader
+        title={t('job.new')}
+        back={{ href: `/${locale}/c/${companyId}/jobs`, label: t('job.title') }}
+      >
+        {t('job.notIncluded')}
+      </PageHeader>
       {vehicles.data.length === 0 ? (
         <Notice>
           {t('job.noVehicles')}{' '}

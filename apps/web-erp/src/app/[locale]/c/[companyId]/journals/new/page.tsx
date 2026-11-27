@@ -54,7 +54,10 @@ export default async function NewJournalPage({
 
   return (
     <>
-      <PageHeader title={t('journal.new')} />
+      <PageHeader
+        title={t('journal.new')}
+        back={{ href: `/${locale}/c/${companyId}/journals`, label: t('nav.journals') }}
+      />
       {posting.length === 0 ? <Notice>{t('journal.noPostingAccounts')}</Notice> : null}
       {!hasOpenPeriod ? <Notice>{t('journal.noOpenPeriod')}</Notice> : null}
       <Card>
