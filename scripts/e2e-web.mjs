@@ -1812,6 +1812,38 @@ async function main() {
       },
     );
 
+    await check(
+      'Reports: Excel export from the profit and loss page equals the screen (net profit, About sheet)',
+      async () => {
+        await page.goto(`${base()}/reports/profit-and-loss`);
+        const shown = (await page.locator('[data-result="Net profit"] td').nth(1).innerText()).replace(
+          /[^0-9.-]/g,
+          '',
+        );
+        await page.locator('#x-format').selectOption('xlsx');
+        await Promise.all([
+          page.waitForURL(/\/exports\?new=[0-9a-f-]{36}$/),
+          page.getByRole('button', { name: 'Export', exact: true }).click(),
+        ]);
+        const row = await waitReady();
+        const [download] = await Promise.all([
+          page.waitForEvent('download'),
+          row.getByRole('link', { name: /^Download/ }).click(),
+        ]);
+        assert(/^profit-and-loss_.+\.xlsx$/.test(download.suggestedFilename()), download.suggestedFilename());
+        const ExcelJS = createRequire(join(root, 'apps/api/package.json'))('exceljs');
+        const wb = new ExcelJS.Workbook();
+        await wb.xlsx.readFile(await download.path());
+        assert(wb.getWorksheet('About').getCell('B1').value === 'Profit and loss', 'About sheet');
+        const ws = wb.worksheets[0];
+        let net;
+        ws.eachRow((r) => {
+          if (r.getCell(2).value === 'Net profit') net = r.getCell(3).value;
+        });
+        assert(Number(net) === Number(shown), `file ${net} vs screen ${shown}`);
+      },
+    );
+
     await check('Quick jump: Ctrl+K, type, Enter opens the page', async () => {
       await page.goto(`${base()}/jobs`);
       // The shortcut listener is attached once the page has hydrated.

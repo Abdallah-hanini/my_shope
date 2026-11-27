@@ -228,7 +228,8 @@ export class ExportService {
         throw unprocessable('The file is too large to keep; narrow the date range or choose a branch');
       }
       const p = input.params;
-      const fileName = `${input.kind.replace('_', '-')}_${job.company.code}_${p.from}_${p.to}.${input.format}`;
+      const period = 'from' in p && p.from ? `${p.from}_${p.to}` : p.to;
+      const fileName = `${input.kind.replace(/_/g, '-')}_${job.company.code}_${period}.${input.format}`;
       const finishedAt = new Date();
       await this.finish(
         id,

@@ -279,6 +279,81 @@ describe('export files equal the screens', () => {
   });
 });
 
+describe('report exports (RPT R2b2) equal their screens', () => {
+  const range = { from: '2026-01-01', to: '2026-12-31' };
+  const n = (v: string | undefined | null) => Number(v ?? 0);
+
+  it('every new report kind produces a file with a header row', async () => {
+    for (const [kind, params] of [
+      ['profit_and_loss', { ...range, compare: 'none' }],
+      ['balance_sheet', { to: '2026-12-31' }],
+      ['receivables_aging', { to: '2026-12-31' }],
+      ['payables_aging', { to: '2026-12-31' }],
+      ['cash_flow', range],
+      ['tax_summary', range],
+      ['sales', range],
+      ['stock_movement', range],
+    ] as const) {
+      const job = await requestExport({ kind, format: 'csv', params });
+      const { res, body } = await runAndDownload(job.id);
+      expect(res.headers['content-disposition']).toContain(kind.replace(/_/g, '-'));
+      expect(parseCsv(body)[0]!.length).toBeGreaterThan(1);
+    }
+  });
+
+  it('profit and loss: each account and the net profit equal the report', async () => {
+    const screen = (
+      await api(app, token)
+        .get(`${base()}/reports/profit-and-loss?from=2026-02-01&to=2026-02-28&compare=previous`)
+        .expect(200)
+    ).body;
+    const job = await requestExport({
+      kind: 'profit_and_loss',
+      format: 'csv',
+      params: { from: '2026-02-01', to: '2026-02-28' },
+    });
+    const rows = parseCsv((await runAndDownload(job.id)).body);
+    expect(rows[0]!.length).toBe(5); // compare defaults to the previous period
+    const sales = rows.find((r) => r[0] === '4100')!;
+    expect(n(sales[2])).toBe(n(screen.revenue.lines[0].amount));
+    expect(n(sales[2])).toBe(250.25);
+    expect(n(rows.at(-1)![2])).toBe(n(screen.netProfit.amount));
+  });
+
+  it('balance sheet as of a date: cash, capital and unclosed result equal the report; "from" is refused', async () => {
+    const screen = (await api(app, token).get(`${base()}/reports/balance-sheet?asOf=2026-02-28`).expect(200))
+      .body;
+    const job = await requestExport({ kind: 'balance_sheet', format: 'xlsx', params: { to: '2026-02-28' } });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await runAndDownload(job.id)).body as unknown as ArrayBuffer);
+    const values = wb.worksheets[0]!.getSheetValues().filter(Boolean) as unknown[][];
+    const byCode = (code: string) => values.find((r) => r.includes(code));
+    expect(Number(byCode('1100')!.at(-1))).toBe(1250.25);
+    expect(Number(byCode('1100')!.at(-1))).toBe(
+      n(screen.assets.lines.find((l: { code: string }) => l.code === '1100').amount),
+    );
+    expect(Number(byCode('3100')!.at(-1))).toBe(1000);
+    expect(Number(values.at(-1)!.at(-1))).toBe(n(screen.totalLiabilitiesAndEquity));
+    await api(app, token)
+      .post(`${base()}/exports`, {
+        kind: 'balance_sheet',
+        format: 'csv',
+        params: { from: '2026-01-01', to: '2026-02-28' },
+      })
+      .expect(400);
+  });
+
+  it('each kind needs the permission of its screen', async () => {
+    // doh holds accounting.journal.read only; peer has no inventory.read.
+    await api(app, tok.doh!)
+      .post(`${base()}/exports`, { kind: 'profit_and_loss', format: 'csv', params: range })
+      .expect(403);
+    await api(app, tok.peer!)
+      .post(`${base()}/exports`, { kind: 'stock_movement', format: 'csv', params: range })
+      .expect(403);
+  });
+});
+
 describe('export authorization', () => {
   it('branch-limited staff get only their branch, even without a branch filter', async () => {
     const job = await requestExport(

@@ -1,13 +1,14 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, groupDigits, isLocale } from '@erp/localization';
 import { notFound } from 'next/navigation';
-import { PrintButton } from '@/components/PrintButton';
+import { ReportActions } from '@/components/reports/ReportActions';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { AsOfFilters, branchOptions, ResultRow, SectionRows } from '@/components/reports/Statements';
 import { Badge, Card, Ltr, Notice, PageHeader, Table, th, thNum } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { asOfDate, query } from '@/lib/ledger';
+import { requestExportAction } from '../../export-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -48,7 +49,14 @@ export default async function BalanceSheetPage({
       <PageHeader
         title={t('rpt.bs')}
         back={{ href: `${base}/reports`, label: t('rpt.center') }}
-        actions={<PrintButton label={t('rpt.print')} />}
+        actions={
+          <ReportActions
+            locale={locale}
+            printLabel={t('rpt.print')}
+            action={res.ok ? requestExportAction.bind(null, locale, companyId) : undefined}
+            initial={{ kind: 'balance_sheet', to: asOf, branchId: branch }}
+          />
+        }
       >
         {res.ok ? (
           <span>

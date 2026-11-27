@@ -12,6 +12,23 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-02: Reporting and dashboards R2b2: Excel and CSV for the new reports
+
+- **Export from the report itself**: P&L, balance sheet, receivables aging, payables aging, cash flow, tax summary, sales and stock movement now have Excel/CSV export next to Print/PDF in the header. The file uses exactly the filters on screen (period or as-of date, branch, comparison).
+- **File = screen**: each file is built by the same reporting service as the page. It goes through the existing background export queue, so these still apply: permission checked on request, on generation and on download; branch scope; 3 in progress per person; expiry; audit trail. The meta block carries the reconciliation results ("matches the ledger: yes/no"), so a file never hides a mismatch.
+- **Permissions**: stock movement needs `inventory.read`; the others need `reports.financial.read`, the same as their pages.
+- **Migration** `20261202090000_report_exports`: widens the `export_job.kind` check to the new kinds. Only adds allowed values; existing rows unchanged, nothing dropped.
+- Not exported yet: workshop operations and customers (screen only). The export centre's own form still offers the three ledger kinds; the new kinds are requested from their report pages and listed there with the rest.
+- Evidence:
+  - exports.int 18 tests (4 new):
+    - every new kind produces a file;
+    - the P&L CSV account and net profit equal the API report (250.25);
+    - balance sheet Excel cash 1 250.25 / capital 1 000 / total equal the report;
+    - a `from` on an as-of export is refused;
+    - each kind needs its screen's permission;
+  - full gate 48/48 (uncached); migration diff clean; integration 264/264 on a fresh database;
+  - browser end-to-end 53/53, including Excel from the P&L page with the net profit equal to the screen.
+
 ## 2026-12-01: Reporting and dashboards R2b1: cash flow and tax summary
 
 - **Cash flow** (`/reports/cash-flow`): cash and bank from opening to closing balance. Money in and out per journal source: customer payments, supplier payments, manual journals, reversals, other. Moves between cash and bank are counted as internal and kept out of money in/out. Checked: opening + in − out = closing. If no account is classed cash/bank, the page asks for that instead of showing zeros.

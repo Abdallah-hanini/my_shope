@@ -3134,7 +3134,7 @@ export interface components {
         };
         CreateExportDto: {
             /** @enum {string} */
-            kind: "trial_balance" | "general_ledger" | "journal_lines";
+            kind: "trial_balance" | "general_ledger" | "journal_lines" | "profit_and_loss" | "balance_sheet" | "receivables_aging" | "payables_aging" | "cash_flow" | "tax_summary" | "sales" | "stock_movement";
             /** @enum {string} */
             format: "csv" | "xlsx";
             /**
@@ -3143,7 +3143,7 @@ export interface components {
              * @enum {string}
              */
             locale: "en" | "ar";
-            /** @description trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?} */
+            /** @description trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?}; profit_and_loss: {from, to, branchId?, compare?}; cash_flow, tax_summary, sales, stock_movement: {from, to, branchId?}; balance_sheet, receivables_aging, payables_aging: {to (as-of date), branchId?} */
             params: {
                 [key: string]: unknown;
             };
@@ -3151,7 +3151,7 @@ export interface components {
         ExportJobDto: {
             id: string;
             /** @enum {string} */
-            kind: "trial_balance" | "general_ledger" | "journal_lines";
+            kind: "trial_balance" | "general_ledger" | "journal_lines" | "profit_and_loss" | "balance_sheet" | "receivables_aging" | "payables_aging" | "cash_flow" | "tax_summary" | "sales" | "stock_movement";
             /** @enum {string} */
             format: "csv" | "xlsx";
             /** @enum {string} */

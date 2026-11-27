@@ -2,7 +2,7 @@
 
 import { unwrap } from '@erp/api-client';
 import { resolveLocale } from '@erp/localization';
-import { createExportSchema } from '@erp/validation';
+import { AS_OF_EXPORT_KINDS, createExportSchema } from '@erp/validation';
 import { redirect } from 'next/navigation';
 import { formValues, mutate, validate } from '@/lib/actions';
 import type { FormState } from '@/lib/form-state';
@@ -19,10 +19,12 @@ export async function requestExportAction(
   const locale = resolveLocale(localeRaw);
   const values = formValues(form);
   const kind = values.kind;
-  const params: Record<string, unknown> = { from: values.from, to: values.to };
+  const asOf = (AS_OF_EXPORT_KINDS as readonly string[]).includes(kind ?? '');
+  const params: Record<string, unknown> = asOf ? { to: values.to } : { from: values.from, to: values.to };
   if (blank(values.branchId)) params.branchId = blank(values.branchId);
   if (kind === 'trial_balance') params.includeZero = values.includeZero === '1';
   if (kind === 'general_ledger') params.accountId = blank(values.accountId);
+  if (kind === 'profit_and_loss') params.compare = values.compare === 'none' ? 'none' : 'previous';
   const v = validate(createExportSchema, {
     kind,
     format: values.format,

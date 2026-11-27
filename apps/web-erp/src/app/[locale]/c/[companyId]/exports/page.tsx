@@ -84,7 +84,7 @@ export default async function ExportCentrePage({
     const account = p.accountId && accounts?.ok ? accounts.data.find((a) => a.id === p.accountId) : undefined;
     const branch = p.branchId && branches?.ok ? branches.data.find((b) => b.id === p.branchId) : undefined;
     return [
-      `${p.from} – ${p.to}`,
+      p.from ? `${p.from} – ${p.to}` : `${t('rpt.asOf')} ${p.to}`,
       account ? `${account.code} ${localName(account, locale)}` : null,
       branch ? branch.code : null,
     ]

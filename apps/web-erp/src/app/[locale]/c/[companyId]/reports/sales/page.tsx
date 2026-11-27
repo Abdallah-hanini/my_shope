@@ -4,7 +4,7 @@ import { Banknote, Percent, ReceiptText, Wrench } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { TrendChart } from '@/components/dashboard/charts';
 import { KpiCard } from '@/components/dashboard/KpiCard';
-import { PrintButton } from '@/components/PrintButton';
+import { ReportActions } from '@/components/reports/ReportActions';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { Amount, LedgerFilters } from '@/components/reports/LedgerParts';
 import { branchOptions } from '@/components/reports/Statements';
@@ -12,6 +12,7 @@ import { Badge, Card, EmptyState, Grid, Ltr, PageHeader, Table, td, tdNum, th, t
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { ledgerRange } from '@/lib/ledger';
+import { requestExportAction } from '../../export-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -49,7 +50,14 @@ export default async function SalesReportPage({
       <PageHeader
         title={t('rpt.sales')}
         back={{ href: `${base}/reports`, label: t('rpt.center') }}
-        actions={<PrintButton label={t('rpt.print')} />}
+        actions={
+          <ReportActions
+            locale={locale}
+            printLabel={t('rpt.print')}
+            action={res.ok ? requestExportAction.bind(null, locale, companyId) : undefined}
+            initial={{ kind: 'sales', from, to, branchId: branch }}
+          />
+        }
       >
         {res.ok ? (
           <span>

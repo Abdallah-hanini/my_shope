@@ -5,7 +5,10 @@ import { minorUnits, type CreateExportInput } from '@erp/validation';
 import type { CompanyScope } from '../auth/principal';
 import { DomainError } from '../common/errors';
 import { PrismaService } from '../infra/prisma.service';
+import { AnalyticsService } from '../reporting/analytics.service';
 import { LedgerService } from '../reporting/ledger.service';
+import { StatementsService } from '../reporting/statements.service';
+import { reportTable } from './report-builders';
 import { ledgerBranchFilter } from '../reporting/report-scope';
 import type { ExportRow, ExportTable } from './table';
 
@@ -44,6 +47,8 @@ export class ExportBuilders {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
+    private readonly statements: StatementsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   async build(input: CreateExportInput, ctx: BuildContext): Promise<ExportTable> {
@@ -54,13 +59,35 @@ export class ExportBuilders {
         return this.generalLedger(input.params, ctx);
       case 'journal_lines':
         return this.journalLines(input.params, ctx);
+      default: {
+        // Statements and analytics (RPT R2b2): the same services as their screens.
+        const p = input.params as {
+          from?: string;
+          to: string;
+          branchId?: string;
+          compare?: 'none' | 'previous';
+        };
+        const { t, title, moneyScale, rtl } = this.base(ctx, input.kind);
+        const r = await reportTable(input.kind, p, ctx, t, {
+          statements: this.statements,
+          analytics: this.analytics,
+        });
+        return {
+          title,
+          moneyScale,
+          rtl,
+          meta: [...(await this.commonMeta(ctx, input.kind, p)), ...r.meta],
+          columns: r.columns,
+          rows: r.rows,
+        };
+      }
     }
   }
 
   private async commonMeta(
     ctx: BuildContext,
     kind: CreateExportInput['kind'],
-    p: { from: string; to: string; branchId?: string },
+    p: { from?: string; to: string; branchId?: string },
   ): Promise<[string, string][]> {
     const t = createTranslator(ctx.locale);
     const branch = p.branchId
@@ -77,7 +104,7 @@ export class ExportBuilders {
         t('export.meta.company'),
         ctx.locale === 'ar' && ctx.company.legalNameAr ? ctx.company.legalNameAr : ctx.company.legalName,
       ],
-      [t('export.meta.period'), `${p.from} – ${p.to}`],
+      p.from ? [t('export.meta.period'), `${p.from} – ${p.to}`] : [t('rpt.asOf'), p.to],
       [t('export.meta.branch'), branch ? `${branch.code} — ${name(branch)}` : t('export.meta.allBranches')],
       [
         t('export.meta.scope'),

@@ -83,5 +83,5 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | R1 | Audit, architecture, coverage matrix, catalog page; P&L, balance sheet, receivables and payables aging (API, pages, print, drill-down, reconciliation); tests | ✅ |
 | R2a | Sales, operations, customers and stock-movement reports (API, pages, catalog, tests) | ✅ |
 | R2b1 | Cash flow and tax summary (API, pages, tests) | ✅ |
-| R2b2 | Excel/CSV downloads for the new reports (PDF: print on every report) | ☐ |
+| R2b2 | Excel/CSV downloads for the new reports, from each report's header (PDF: print on every report) | ✅ |
 | R3 | Owner-set targets and reorder levels; alerts; saved filters and favourites; personal dashboards; scheduled reports (needs mail settings) | ☐ |

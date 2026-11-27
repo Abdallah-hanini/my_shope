@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EXPORT_KINDS } from '@erp/validation';
 
 export class ExportJobDto {
   @ApiProperty() id!: string;
-  @ApiProperty({ enum: ['trial_balance', 'general_ledger', 'journal_lines'] }) kind!: string;
+  @ApiProperty({ enum: EXPORT_KINDS }) kind!: string;
   @ApiProperty({ enum: ['csv', 'xlsx'] }) format!: string;
   @ApiProperty({ enum: ['en', 'ar'] }) locale!: string;
   @ApiProperty({ type: 'object', additionalProperties: true, description: 'Report filters as requested' })
@@ -24,7 +25,7 @@ export class ExportJobDto {
 }
 
 export class CreateExportDto {
-  @ApiProperty({ enum: ['trial_balance', 'general_ledger', 'journal_lines'] }) kind!: string;
+  @ApiProperty({ enum: EXPORT_KINDS }) kind!: string;
   @ApiProperty({ enum: ['csv', 'xlsx'] }) format!: string;
   @ApiPropertyOptional({ enum: ['en', 'ar'], default: 'en', description: 'Language of headers and labels' })
   locale?: string;
@@ -32,7 +33,7 @@ export class CreateExportDto {
     type: 'object',
     additionalProperties: true,
     description:
-      'trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?}',
+      'trial_balance: {from, to, branchId?, includeZero?}; general_ledger: {accountId, from, to, branchId?}; journal_lines: {from, to, branchId?}; profit_and_loss: {from, to, branchId?, compare?}; cash_flow, tax_summary, sales, stock_movement: {from, to, branchId?}; balance_sheet, receivables_aging, payables_aging: {to (as-of date), branchId?}',
   })
   params!: Record<string, unknown>;
 }

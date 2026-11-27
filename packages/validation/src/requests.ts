@@ -239,7 +239,21 @@ export const searchQuerySchema = z.object({
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 
 /** WEB-205 export centre: what can be exported, in which formats. */
-export const EXPORT_KINDS = ['trial_balance', 'general_ledger', 'journal_lines'] as const;
+export const EXPORT_KINDS = [
+  'trial_balance',
+  'general_ledger',
+  'journal_lines',
+  'profit_and_loss',
+  'balance_sheet',
+  'receivables_aging',
+  'payables_aging',
+  'cash_flow',
+  'tax_summary',
+  'sales',
+  'stock_movement',
+] as const;
+/** Kinds read at a cut-off date: their params carry only `to` (the date) and an optional branch. */
+export const AS_OF_EXPORT_KINDS = ['balance_sheet', 'receivables_aging', 'payables_aging'] as const;
 export const EXPORT_FORMATS = ['csv', 'xlsx'] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 /** Permission needed to request, generate and download each kind (same as its screen). */
@@ -247,6 +261,14 @@ export const EXPORT_PERMISSION: Record<ExportKind, string> = {
   trial_balance: 'reports.financial.read',
   general_ledger: 'accounting.journal.read',
   journal_lines: 'accounting.journal.read',
+  profit_and_loss: 'reports.financial.read',
+  balance_sheet: 'reports.financial.read',
+  receivables_aging: 'reports.financial.read',
+  payables_aging: 'reports.financial.read',
+  cash_flow: 'reports.financial.read',
+  tax_summary: 'reports.financial.read',
+  sales: 'reports.financial.read',
+  stock_movement: 'inventory.read',
 };
 const exportRange = { from: isoDate, to: isoDate, branchId: uuid.optional() };
 const exportCommon = { format: z.enum(EXPORT_FORMATS), locale: z.enum(['en', 'ar']).default('en') };
@@ -278,7 +300,34 @@ export const createExportSchema = z.discriminatedUnion('kind', [
       .refine(...rangeOrdered)
       .refine(...rangeBounded),
   }),
-]);
+  z.object({
+    kind: z.literal('profit_and_loss'),
+    ...exportCommon,
+    params: z
+      .object({ ...exportRange, compare: z.enum(['none', 'previous']).default('previous') })
+      .strict()
+      .refine(...rangeOrdered)
+      .refine(...rangeBounded),
+  }),
+  ...(['cash_flow', 'tax_summary', 'sales', 'stock_movement'] as const).map((kind) =>
+    z.object({
+      kind: z.literal(kind),
+      ...exportCommon,
+      params: z
+        .object(exportRange)
+        .strict()
+        .refine(...rangeOrdered)
+        .refine(...rangeBounded),
+    }),
+  ),
+  ...AS_OF_EXPORT_KINDS.map((kind) =>
+    z.object({
+      kind: z.literal(kind),
+      ...exportCommon,
+      params: z.object({ to: isoDate, branchId: uuid.optional() }).strict(),
+    }),
+  ),
+] as const);
 export type CreateExportInput = z.infer<typeof createExportSchema>;
 
 /** Notification inbox listing. */

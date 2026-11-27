@@ -1,7 +1,7 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
 import { notFound } from 'next/navigation';
-import { PrintButton } from '@/components/PrintButton';
+import { ReportActions } from '@/components/reports/ReportActions';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { Amount, LedgerFilters } from '@/components/reports/LedgerParts';
 import { branchOptions } from '@/components/reports/Statements';
@@ -9,6 +9,7 @@ import { Badge, Card, Ltr, Notice, PageHeader, Table, td, tdNum, th, thNum } fro
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { ledgerRange } from '@/lib/ledger';
+import { requestExportAction } from '../../export-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -45,7 +46,14 @@ export default async function CashFlowPage({
       <PageHeader
         title={t('rpt.cashFlow')}
         back={{ href: `${base}/reports`, label: t('rpt.center') }}
-        actions={<PrintButton label={t('rpt.print')} />}
+        actions={
+          <ReportActions
+            locale={locale}
+            printLabel={t('rpt.print')}
+            action={res.ok ? requestExportAction.bind(null, locale, companyId) : undefined}
+            initial={{ kind: 'cash_flow', from, to, branchId: branch }}
+          />
+        }
       >
         {res.ok ? (
           <span>

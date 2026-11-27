@@ -1,12 +1,13 @@
 'use client';
 
 import { createTranslator, type Locale, type MessageKey } from '@erp/localization';
-import { useActionState, useState } from 'react';
+import type { ExportKind } from '@erp/validation';
+import { useActionState, useState, type ReactNode } from 'react';
 import type { FormState } from '@/lib/form-state';
 import { FormError, SubmitButton } from '../forms';
 import { buttonSecondary, Field, inputClass } from '../ui';
 
-type Kind = 'trial_balance' | 'general_ledger' | 'journal_lines';
+type Kind = ExportKind;
 
 /**
  * Two layouts: "compact" sits on a report page and exports exactly what is on screen (hidden
@@ -20,14 +21,17 @@ export function ExportForm({
   accounts = [],
   branches = [],
   compact = false,
+  children,
 }: {
   locale: Locale;
   action: (state: FormState, form: FormData) => Promise<FormState>;
   kinds: Kind[];
   initial: {
     kind: Kind;
-    from: string;
+    /** Omitted for as-of reports (balance sheet, aging). */
+    from?: string;
     to: string;
+    compare?: 'none' | 'previous';
     branchId?: string;
     accountId?: string;
     includeZero?: boolean;
@@ -35,6 +39,8 @@ export function ExportForm({
   accounts?: { id: string; label: string }[];
   branches?: { id: string; label: string }[];
   compact?: boolean;
+  /** Compact only: extra controls on the same row as the button (e.g. print). */
+  children?: ReactNode;
 }) {
   const t = createTranslator(locale);
   const [state, formAction] = useActionState(action, {} as FormState);
@@ -56,6 +62,7 @@ export function ExportForm({
   );
 
   if (compact) {
+    const compactError = state.error ?? err.form ?? err.to ?? err.accountId;
     return (
       <form
         action={formAction}
@@ -63,7 +70,8 @@ export function ExportForm({
         aria-label={t('export.exportAs')}
       >
         <input type="hidden" name="kind" value={initial.kind} />
-        <input type="hidden" name="from" value={initial.from} />
+        {initial.from ? <input type="hidden" name="from" value={initial.from} /> : null}
+        {initial.compare ? <input type="hidden" name="compare" value={initial.compare} /> : null}
         <input type="hidden" name="to" value={initial.to} />
         <input type="hidden" name="fileLocale" value={locale} />
         {initial.branchId ? <input type="hidden" name="branchId" value={initial.branchId} /> : null}
@@ -71,9 +79,13 @@ export function ExportForm({
         {initial.includeZero ? <input type="hidden" name="includeZero" value="1" /> : null}
         <div className="w-48">{formats}</div>
         <SubmitButton label={t('export.exportAs')} locale={locale} className={buttonSecondary} />
-        <div className="basis-full">
-          <FormError message={state.error ?? err.form ?? err.to ?? err.accountId} />
-        </div>
+        {children}
+        {/* Only when there is a message: an empty full-width row would add a gap under the buttons. */}
+        {compactError ? (
+          <div className="basis-full">
+            <FormError message={compactError} />
+          </div>
+        ) : null}
       </form>
     );
   }
@@ -104,7 +116,7 @@ export function ExportForm({
             type="date"
             required
             dir="ltr"
-            defaultValue={v.from ?? initial.from}
+            defaultValue={v.from ?? initial.from ?? ''}
             className={inputClass}
           />
         </Field>

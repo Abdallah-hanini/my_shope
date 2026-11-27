@@ -8,6 +8,6 @@ import { AnalyticsService } from './analytics.service';
 @Module({
   controllers: [ReportingController],
   providers: [ReportingService, LedgerService, StatementsService, AnalyticsService],
-  exports: [LedgerService, StatementsService],
+  exports: [LedgerService, StatementsService, AnalyticsService],
 })
 export class ReportingModule {}

@@ -4,7 +4,7 @@ import { Archive, Boxes, RefreshCw, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { KpiCard } from '@/components/dashboard/KpiCard';
-import { PrintButton } from '@/components/PrintButton';
+import { ReportActions } from '@/components/reports/ReportActions';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { Amount, LedgerFilters } from '@/components/reports/LedgerParts';
 import { branchOptions, Reconciliation } from '@/components/reports/Statements';
@@ -12,6 +12,7 @@ import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, tdNum, th, thNum }
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { ledgerRange } from '@/lib/ledger';
+import { requestExportAction } from '../../export-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const TONE = { fast: 'success', slow: 'warning', dead: 'danger', none: 'neutral' } as const;
@@ -50,7 +51,14 @@ export default async function StockMovementPage({
       <PageHeader
         title={t('rpt.stockMovement')}
         back={{ href: `${base}/reports`, label: t('rpt.center') }}
-        actions={<PrintButton label={t('rpt.print')} />}
+        actions={
+          <ReportActions
+            locale={locale}
+            printLabel={t('rpt.print')}
+            action={res.ok ? requestExportAction.bind(null, locale, companyId) : undefined}
+            initial={{ kind: 'stock_movement', from, to, branchId: branch }}
+          />
+        }
       >
         {res.ok ? (
           <span>
