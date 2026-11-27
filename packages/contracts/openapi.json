@@ -1321,6 +1321,114 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/reports/cash-flow": {
+      "get": {
+        "operationId": "getCashFlow",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cash and bank movements by source, opening to closing",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/tax-summary": {
+      "get": {
+        "operationId": "getTaxSummary",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Output and input tax by code, checked against the tax accounts",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/reports/sales": {
       "get": {
         "operationId": "getSalesReport",
@@ -9222,6 +9330,212 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "CashFlowCategoryDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "customer_receipts",
+              "supplier_payments",
+              "manual",
+              "reversals",
+              "other"
+            ]
+          },
+          "inflow": {
+            "type": "string"
+          },
+          "outflow": {
+            "type": "string"
+          },
+          "net": {
+            "type": "string"
+          },
+          "journals": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "inflow",
+          "outflow",
+          "net",
+          "journals"
+        ]
+      },
+      "CashFlowDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "At least one account is classed cash or bank"
+          },
+          "opening": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CashFlowCategoryDto"
+            }
+          },
+          "internalTransfers": {
+            "type": "number",
+            "description": "Journals that only moved money between cash accounts"
+          },
+          "inflow": {
+            "type": "string"
+          },
+          "outflow": {
+            "type": "string"
+          },
+          "net": {
+            "type": "string"
+          },
+          "closing": {
+            "type": "string"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "description": "Opening + inflow − outflow = closing"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "configured",
+          "opening",
+          "categories",
+          "internalTransfers",
+          "inflow",
+          "outflow",
+          "net",
+          "closing",
+          "reconciled",
+          "asOf"
+        ]
+      },
+      "TaxRowDto": {
+        "type": "object",
+        "properties": {
+          "taxCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null = documents without tax"
+          },
+          "documents": {
+            "type": "number"
+          },
+          "taxable": {
+            "type": "string",
+            "description": "Amount excluding tax"
+          },
+          "tax": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documents",
+          "taxable",
+          "tax"
+        ]
+      },
+      "TaxSummaryDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "output": {
+            "description": "Invoices less credit notes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRowDto"
+            }
+          },
+          "input": {
+            "description": "Supplier bills less cancellations",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRowDto"
+            }
+          },
+          "outputTax": {
+            "type": "string"
+          },
+          "inputTax": {
+            "type": "string"
+          },
+          "netTax": {
+            "type": "string",
+            "description": "Output − input (negative = refundable)"
+          },
+          "outputLedger": {
+            "type": "string",
+            "nullable": true
+          },
+          "inputLedger": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputReconciled": {
+            "type": "boolean"
+          },
+          "inputReconciled": {
+            "type": "boolean"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "output",
+          "input",
+          "outputTax",
+          "inputTax",
+          "netTax",
+          "outputReconciled",
+          "inputReconciled",
+          "asOf"
         ]
       },
       "SalesBranchDto": {

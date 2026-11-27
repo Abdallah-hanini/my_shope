@@ -377,6 +377,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/reports/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cash and bank movements by source, opening to closing */
+        get: operations["getCashFlow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/tax-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Output and input tax by code, checked against the tax accounts */
+        get: operations["getTaxSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/reports/sales": {
         parameters: {
             query?: never;
@@ -2561,6 +2595,66 @@ export interface components {
         AuditEventPageDto: {
             items: components["schemas"]["AuditEventDto"][];
             nextCursor?: string | null;
+        };
+        CashFlowCategoryDto: {
+            /** @enum {string} */
+            key: "customer_receipts" | "supplier_payments" | "manual" | "reversals" | "other";
+            inflow: string;
+            outflow: string;
+            net: string;
+            journals: number;
+        };
+        CashFlowDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            currency: string;
+            /** @description At least one account is classed cash or bank */
+            configured: boolean;
+            opening: string;
+            categories: components["schemas"]["CashFlowCategoryDto"][];
+            /** @description Journals that only moved money between cash accounts */
+            internalTransfers: number;
+            inflow: string;
+            outflow: string;
+            net: string;
+            closing: string;
+            /** @description Opening + inflow − outflow = closing */
+            reconciled: boolean;
+            /** Format: date-time */
+            asOf: string;
+        };
+        TaxRowDto: {
+            /** @description Null = documents without tax */
+            taxCode?: string | null;
+            documents: number;
+            /** @description Amount excluding tax */
+            taxable: string;
+            tax: string;
+        };
+        TaxSummaryDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            currency: string;
+            /** @description Invoices less credit notes */
+            output: components["schemas"]["TaxRowDto"][];
+            /** @description Supplier bills less cancellations */
+            input: components["schemas"]["TaxRowDto"][];
+            outputTax: string;
+            inputTax: string;
+            /** @description Output − input (negative = refundable) */
+            netTax: string;
+            outputLedger?: string | null;
+            inputLedger?: string | null;
+            outputReconciled: boolean;
+            inputReconciled: boolean;
+            /** Format: date-time */
+            asOf: string;
         };
         SalesBranchDto: {
             branchCode: string;
@@ -5462,6 +5556,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEventPageDto"];
+                };
+            };
+        };
+    };
+    getCashFlow: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowDto"];
+                };
+            };
+        };
+    };
+    getTaxSummary: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSummaryDto"];
                 };
             };
         };

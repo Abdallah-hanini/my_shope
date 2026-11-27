@@ -104,3 +104,55 @@ export class AgingDto {
   @ApiProperty({ description: 'Open documents equal the control account balance' }) reconciled!: boolean;
   @ApiProperty({ format: 'date-time' }) asOf!: string;
 }
+
+export class CashFlowCategoryDto {
+  @ApiProperty({ enum: ['customer_receipts', 'supplier_payments', 'manual', 'reversals', 'other'] })
+  key!: string;
+  @ApiProperty() inflow!: string;
+  @ApiProperty() outflow!: string;
+  @ApiProperty() net!: string;
+  @ApiProperty() journals!: number;
+}
+
+export class CashFlowDto {
+  @ApiProperty({ format: 'date' }) from!: string;
+  @ApiProperty({ format: 'date' }) to!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) branchId!: string | null;
+  @ApiProperty() currency!: string;
+  @ApiProperty({ description: 'At least one account is classed cash or bank' }) configured!: boolean;
+  @ApiProperty() opening!: string;
+  @ApiProperty({ type: [CashFlowCategoryDto] }) categories!: CashFlowCategoryDto[];
+  @ApiProperty({ description: 'Journals that only moved money between cash accounts' })
+  internalTransfers!: number;
+  @ApiProperty() inflow!: string;
+  @ApiProperty() outflow!: string;
+  @ApiProperty() net!: string;
+  @ApiProperty() closing!: string;
+  @ApiProperty({ description: 'Opening + inflow − outflow = closing' }) reconciled!: boolean;
+  @ApiProperty({ format: 'date-time' }) asOf!: string;
+}
+
+export class TaxRowDto {
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Null = documents without tax' })
+  taxCode!: string | null;
+  @ApiProperty() documents!: number;
+  @ApiProperty({ description: 'Amount excluding tax' }) taxable!: string;
+  @ApiProperty() tax!: string;
+}
+
+export class TaxSummaryDto {
+  @ApiProperty({ format: 'date' }) from!: string;
+  @ApiProperty({ format: 'date' }) to!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) branchId!: string | null;
+  @ApiProperty() currency!: string;
+  @ApiProperty({ type: [TaxRowDto], description: 'Invoices less credit notes' }) output!: TaxRowDto[];
+  @ApiProperty({ type: [TaxRowDto], description: 'Supplier bills less cancellations' }) input!: TaxRowDto[];
+  @ApiProperty() outputTax!: string;
+  @ApiProperty() inputTax!: string;
+  @ApiProperty({ description: 'Output − input (negative = refundable)' }) netTax!: string;
+  @ApiPropertyOptional({ nullable: true, type: String }) outputLedger!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) inputLedger!: string | null;
+  @ApiProperty() outputReconciled!: boolean;
+  @ApiProperty() inputReconciled!: boolean;
+  @ApiProperty({ format: 'date-time' }) asOf!: string;
+}

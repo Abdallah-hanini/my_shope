@@ -351,3 +351,135 @@ describe('aging', () => {
     await a('admin').get(`${base()}/reports/payables-aging?asOf=2026-02-30`).expect(400);
   });
 });
+
+describe('cash flow', () => {
+  it('by source from opening to closing; a cash-to-bank move is internal', async () => {
+    ids.bank = (
+      await a('admin')
+        .post(`${base()}/accounts`, {
+          code: '1150',
+          name: 'Bank',
+          type: 'asset',
+          isPosting: true,
+          reportingClass: 'bank',
+        })
+        .expect(201)
+    ).body.id;
+    await journal('2026-10-25', 'DOH', 'bank', 'cash', '25.00'); // between cash accounts
+    // Year to date: manual in 1000 + 200 + 300 + 40 = 1540, out 50 + 120 + 80 = 250;
+    // customer receipt 100; supplier payment 70 → closing 1320.
+    const y = (await a('admin').get(`${base()}/reports/cash-flow?from=2026-01-01&to=${today}`).expect(200))
+      .body;
+    expect(y).toMatchObject({
+      configured: true,
+      opening: '0.00',
+      inflow: '1640.00',
+      outflow: '320.00',
+      net: '1320.00',
+      closing: '1320.00',
+      internalTransfers: 1,
+      reconciled: true,
+    });
+    const by = Object.fromEntries(
+      y.categories.map((c: { key: string; net: string; journals: number }) => [c.key, [c.net, c.journals]]),
+    );
+    expect(by).toEqual({
+      customer_receipts: ['100.00', 1],
+      supplier_payments: ['-70.00', 1],
+      manual: ['1290.00', 7],
+      reversals: ['0.00', 0],
+      other: ['0.00', 0],
+    });
+    // October: opening 1000 + 200 − 50 = 1150; in 340, out 200 → 1290.
+    const oct = (
+      await a('admin').get(`${base()}/reports/cash-flow?from=2026-10-01&to=2026-10-31`).expect(200)
+    ).body;
+    expect(oct).toMatchObject({
+      opening: '1150.00',
+      inflow: '340.00',
+      outflow: '200.00',
+      closing: '1290.00',
+      reconciled: true,
+    });
+    await a('nobody').get(`${base()}/reports/cash-flow?from=2026-10-01&to=2026-10-31`).expect(403);
+  });
+});
+
+describe('tax summary', () => {
+  it('output and input tax by code, checked against the tax accounts', async () => {
+    ids.vatOut = (
+      await a('admin')
+        .post(`${base()}/accounts`, { code: '2300', name: 'VAT payable', type: 'liability', isPosting: true })
+        .expect(201)
+    ).body.id;
+    ids.vatIn = (
+      await a('admin')
+        .post(`${base()}/accounts`, { code: '1450', name: 'VAT recoverable', type: 'asset', isPosting: true })
+        .expect(201)
+    ).body.id;
+    const s = (await a('admin').get(`${base()}/posting-settings`).expect(200)).body;
+    await a('admin')
+      .put(`${base()}/posting-settings`, {
+        version: s.version,
+        labourRevenueAccountId: ids.rev,
+        receivableAccountId: ids.ar,
+        cashAccountId: ids.cash,
+        cardAccountId: null,
+        bankAccountId: null,
+        inventoryAccountId: ids.inv,
+        goodsReceivedAccountId: ids.grni,
+        payablesAccountId: ids.ap,
+        inputTaxAccountId: ids.vatIn,
+      })
+      .expect(200);
+    const vat = (
+      await a('admin')
+        .post(`${base()}/tax/codes`, { code: 'VAT', name: 'VAT', outputAccountId: ids.vatOut })
+        .expect(201)
+    ).body.codes[0].id;
+    await a('admin')
+      .post(`${base()}/tax/codes/${vat}/rates`, { rate: '5', effectiveFrom: today })
+      .expect(201);
+    const p = (
+      await a('admin')
+        .post(`${base()}/parts/${ids.part}/receipts`, {
+          branchId: ids.DOH,
+          supplierId: ids.gulf,
+          quantity: '4',
+          unitCost: '25',
+          reference: 'DN-2',
+          idempotencyKey: randomUUID(),
+        })
+        .expect(201)
+    ).body;
+    await a('admin')
+      .post(`${base()}/supplier-bills`, {
+        supplierId: ids.gulf,
+        branchId: ids.DOH,
+        supplierInvoiceNo: 'GP-2',
+        billDate: today,
+        taxCodeId: vat,
+        lines: [{ movementId: p.movements[0].id, amount: '100.00' }],
+        idempotencyKey: randomUUID(),
+      })
+      .expect(201);
+    const from = `${today.slice(0, 7)}-01`;
+    const r = (await a('admin').get(`${base()}/reports/tax-summary?from=${from}&to=${today}`).expect(200))
+      .body;
+    // Output: the 300.00 invoice without tax. Input: GP-1 250.00 without tax; GP-2 100.00 + 5.00 VAT.
+    expect(r).toMatchObject({
+      output: [{ taxCode: null, documents: 1, taxable: '300.00', tax: '0.00' }],
+      input: [
+        { taxCode: null, documents: 1, taxable: '250.00', tax: '0.00' },
+        { taxCode: 'VAT', documents: 1, taxable: '100.00', tax: '5.00' },
+      ],
+      outputTax: '0.00',
+      inputTax: '5.00',
+      netTax: '-5.00',
+      outputLedger: '0.00',
+      inputLedger: '5.00',
+      outputReconciled: true,
+      inputReconciled: true,
+    });
+  });
+});

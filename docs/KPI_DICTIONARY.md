@@ -190,3 +190,17 @@ Owner of every definition below: the accountant (changes go through docs/DECISIO
 | Turnover | Issued cost ÷ ((opening value + closing value) ÷ 2), 2 decimals; null when the average is 0. Depends on the period length |
 | Fast / slow / dead | Fast = parts issued in the period whose cumulative share of issued cost (largest first) starts below 80 %; slow = other parts issued; dead = closing stock > 0 and nothing issued in the period |
 | Stock reconciliation | Closing value = inventory account balance at the end date (same branch scope) |
+
+## Cash flow and tax summary (RPT R2b)
+
+| Figure | Definition |
+|---|---|
+| Cash and bank | Posting accounts with reporting class `cash` or `bank`; without any, the report asks the accountant to classify them |
+| Opening / closing cash | Σ(debit − credit) on those accounts before the start / up to the end |
+| Movement by source | Per journal, its net effect on cash (Σ debit − credit of its cash lines), grouped by the journal's source: customer payments (`payment`), supplier payments (`supplier_payment`), manual journals, reversals, other. Positive = money in, negative = money out |
+| Internal transfer | A journal whose cash lines net to zero (e.g. cash to bank): counted, not shown as money in or out |
+| Check | Opening + money in − money out = closing |
+| Output tax | Σ over invoices and credit notes posted in the period of sign × tax, grouped by tax code; taxable = sign × (total − tax) |
+| Input tax | Σ over supplier bills posted in the period of tax, less bills whose cancellation is posted in the period; taxable = billed amount before tax |
+| Net tax | Output − input (negative = refundable). A working summary, not a filed return |
+| Tax checks | Output = Σ(credit − debit) on the tax codes' payable accounts in the period; input = Σ(debit − credit) on the recoverable input tax account |

@@ -1803,6 +1803,12 @@ async function main() {
         await page.goto(`${base()}/reports/stock-movement`);
         await page.locator('tr[data-stock-part="OIL-5W30"]').waitFor();
         await page.locator('[data-reconciled=true]').waitFor();
+        // R2b: no account in this company is classed cash/bank, so cash flow asks for it.
+        await page.goto(`${base()}/reports/cash-flow`);
+        await page.getByText(/No account is classed as cash or bank yet/).waitFor();
+        await page.goto(`${base()}/reports/tax`);
+        await page.locator('[data-net-tax]').waitFor();
+        assert((await page.locator('#output [data-reconciled=true]').count()) === 1, 'output tax reconciled');
       },
     );
 
@@ -1839,6 +1845,8 @@ async function main() {
           'reports/receivables',
           'reports/sales',
           'reports/stock-movement',
+          'reports/cash-flow',
+          'reports/tax',
         ]) {
           for (const lang of ['en', 'ar']) {
             await page.goto(`${WEB}/${lang}/c/${companyId}/${path}`);

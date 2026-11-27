@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { AsOfQuery, ProfitAndLossQuery } from '@erp/validation';
+import type { AsOfQuery, ProfitAndLossQuery, RangeQuery } from '@erp/validation';
 import type { CompanyScope } from '../auth/principal';
 import { forbidden, unprocessable } from '../common/errors';
 import { PrismaService } from '../infra/prisma.service';
@@ -17,6 +17,8 @@ import {
 import { grossMarginPercent, grossProfit, netProfit } from './kpi';
 import { ledgerBranchFilter } from './report-scope';
 import type {
+  CashFlowDto,
+  TaxSummaryDto,
   AgingDto,
   BalanceSheetDto,
   ProfitAndLossDto,
@@ -440,6 +442,171 @@ export class StatementsService {
       ledgerBalance: ledger ? money(ledger) : null,
       reconciled: ledger ? ledger.equals(total) : false,
       asOf: asOf.toISOString(),
+    };
+  }
+
+  /**
+   * Cash flow (direct method) from the ledger: movements on accounts classed cash or bank. Each
+   * journal's net effect on cash is grouped by the journal's source (customer payments, supplier
+   * payments, manual journals, reversals, other); journals that only move money between cash
+   * accounts net to zero and are counted as internal transfers. Opening + net = closing.
+   */
+  async cashFlow(scope: CompanyScope, q: RangeQuery): Promise<CashFlowDto> {
+    const filter = await ledgerBranchFilter(this.prisma, scope, q.branchId, Prisma.raw('l.branch_id'));
+    const cashLine = Prisma.sql`l.company_id = ${scope.companyId}::uuid AND l.reporting_class IN ('cash', 'bank') ${filter}`;
+    const data = await this.prisma.$transaction(
+      async (tx) => {
+        const [bal] = await tx.$queryRaw<{ accounts: bigint; opening: Dec; closing: Dec }[]>`
+          SELECT (SELECT count(*) FROM accounting.account a
+                   WHERE a.company_id = ${scope.companyId}::uuid AND a.reporting_class IN ('cash', 'bank')) AS accounts,
+                 coalesce(sum(l.debit - l.credit) FILTER (WHERE l.posting_date < ${q.from}::date), 0) AS opening,
+                 coalesce(sum(l.debit - l.credit) FILTER (WHERE l.posting_date <= ${q.to}::date), 0) AS closing
+            FROM reporting.ledger_line l WHERE ${cashLine}`;
+        const journals = await tx.$queryRaw<{ source: string; net: Dec }[]>`
+          SELECT l.source_type::text AS source, sum(l.debit - l.credit) AS net
+            FROM reporting.ledger_line l
+           WHERE ${cashLine} AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date
+           GROUP BY l.journal_id, l.source_type`;
+        return { bal: bal!, journals };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+    const KEYS = ['customer_receipts', 'supplier_payments', 'manual', 'reversals', 'other'] as const;
+    const keyOf = (src: string) =>
+      src === 'payment'
+        ? 'customer_receipts'
+        : src === 'supplier_payment'
+          ? 'supplier_payments'
+          : src === 'manual'
+            ? 'manual'
+            : src === 'reversal'
+              ? 'reversals'
+              : 'other';
+    const cats = new Map<string, { inflow: Dec; outflow: Dec; journals: number }>(
+      KEYS.map((k) => [k, { inflow: new D(0), outflow: new D(0), journals: 0 }]),
+    );
+    let internal = 0;
+    for (const j of data.journals) {
+      const net = new D(j.net);
+      if (net.isZero()) {
+        internal++;
+        continue;
+      }
+      const c = cats.get(keyOf(j.source))!;
+      if (net.greaterThan(0)) c.inflow = c.inflow.plus(net);
+      else c.outflow = c.outflow.plus(net.negated());
+      c.journals++;
+    }
+    const inflow = [...cats.values()].reduce((s, c) => s.plus(c.inflow), new D(0));
+    const outflow = [...cats.values()].reduce((s, c) => s.plus(c.outflow), new D(0));
+    const opening = new D(data.bal.opening);
+    const closing = new D(data.bal.closing);
+    return {
+      from: q.from,
+      to: q.to,
+      branchId: q.branchId ?? null,
+      currency: (await this.company(scope.companyId)).baseCurrency,
+      configured: Number(data.bal.accounts) > 0,
+      opening: money(opening),
+      categories: KEYS.map((k) => {
+        const c = cats.get(k)!;
+        return {
+          key: k,
+          inflow: money(c.inflow),
+          outflow: money(c.outflow),
+          net: money(c.inflow.minus(c.outflow)),
+          journals: c.journals,
+        };
+      }),
+      internalTransfers: internal,
+      inflow: money(inflow),
+      outflow: money(outflow),
+      net: money(inflow.minus(outflow)),
+      closing: money(closing),
+      reconciled: opening.plus(inflow).minus(outflow).equals(closing),
+      asOf: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Tax summary by tax code: output tax on invoices and credit notes posted in the period, input
+   * tax on supplier bills posted in the period less bills cancelled in it. Each side is checked
+   * against its ledger accounts (the tax codes' payable accounts; the input tax account).
+   */
+  async taxSummary(scope: CompanyScope, q: RangeQuery): Promise<TaxSummaryDto> {
+    const invFilter = await this.documentBranchFilter(scope, q.branchId, Prisma.raw('i.branch_id'));
+    const billFilter = await this.documentBranchFilter(scope, q.branchId, Prisma.raw('b.branch_id'));
+    const lf = await ledgerBranchFilter(this.prisma, scope, q.branchId, Prisma.raw('l.branch_id'));
+    const data = await this.prisma.$transaction(
+      async (tx) => {
+        const output = await tx.$queryRaw<{ code: string | null; docs: bigint; taxable: Dec; tax: Dec }[]>`
+          SELECT i.tax_code AS code, count(*) AS docs,
+                 coalesce(sum(CASE WHEN i.kind = 'credit_note' THEN -1 ELSE 1 END * (i.total - i.tax_amount)), 0) AS taxable,
+                 coalesce(sum(CASE WHEN i.kind = 'credit_note' THEN -1 ELSE 1 END * i.tax_amount), 0) AS tax
+            FROM workshop.invoice i JOIN accounting.journal j ON j.id = i.journal_id
+           WHERE i.company_id = ${scope.companyId}::uuid AND j.posting_date BETWEEN ${q.from}::date AND ${q.to}::date ${invFilter}
+           GROUP BY i.tax_code ORDER BY i.tax_code NULLS FIRST`;
+        const input = await tx.$queryRaw<{ code: string | null; docs: bigint; taxable: Dec; tax: Dec }[]>`
+          WITH x AS (
+            SELECT b.tax_code, b.net_amount, b.tax_amount, 1 AS sign FROM purchasing.supplier_bill b
+              JOIN accounting.journal j ON j.id = b.journal_id
+             WHERE b.company_id = ${scope.companyId}::uuid AND j.posting_date BETWEEN ${q.from}::date AND ${q.to}::date ${billFilter}
+            UNION ALL
+            SELECT b.tax_code, b.net_amount, b.tax_amount, -1 FROM purchasing.supplier_bill b
+              JOIN accounting.journal j ON j.id = b.cancel_journal_id
+             WHERE b.company_id = ${scope.companyId}::uuid AND j.posting_date BETWEEN ${q.from}::date AND ${q.to}::date ${billFilter})
+          SELECT tax_code AS code, count(*) AS docs, coalesce(sum(sign * net_amount), 0) AS taxable, coalesce(sum(sign * tax_amount), 0) AS tax
+            FROM x GROUP BY tax_code ORDER BY tax_code NULLS FIRST`;
+        const outAccounts = (
+          await tx.taxCode.findMany({
+            where: { companyId: scope.companyId, outputAccountId: { not: null } },
+            select: { outputAccountId: true },
+          })
+        ).map((c) => c.outputAccountId!);
+        const settings = await tx.postingSettings.findUnique({ where: { companyId: scope.companyId } });
+        const ledger = async (ids: string[], sign: 'cr' | 'dr') => {
+          if (!ids.length) return null;
+          const [r] = await tx.$queryRaw<{ v: Dec }[]>`
+            SELECT coalesce(sum(${sign === 'cr' ? Prisma.sql`l.credit - l.debit` : Prisma.sql`l.debit - l.credit`}), 0) AS v
+              FROM reporting.ledger_line l
+             WHERE l.company_id = ${scope.companyId}::uuid AND l.account_id = ANY(${[...new Set(ids)]}::uuid[])
+               AND l.posting_date BETWEEN ${q.from}::date AND ${q.to}::date ${lf}`;
+          return new D(r!.v);
+        };
+        return {
+          output,
+          input,
+          outputLedger: await ledger(outAccounts, 'cr'),
+          inputLedger: await ledger(settings?.inputTaxAccountId ? [settings.inputTaxAccountId] : [], 'dr'),
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+    const rows = (r: { code: string | null; docs: bigint; taxable: Dec; tax: Dec }[]) =>
+      r.map((x) => ({
+        taxCode: x.code,
+        documents: Number(x.docs),
+        taxable: money(x.taxable),
+        tax: money(x.tax),
+      }));
+    const sum = (r: { tax: Dec }[]) => r.reduce((s, x) => s.plus(x.tax), new D(0));
+    const outputTax = sum(data.output);
+    const inputTax = sum(data.input);
+    return {
+      from: q.from,
+      to: q.to,
+      branchId: q.branchId ?? null,
+      currency: (await this.company(scope.companyId)).baseCurrency,
+      output: rows(data.output),
+      input: rows(data.input),
+      outputTax: money(outputTax),
+      inputTax: money(inputTax),
+      netTax: money(outputTax.minus(inputTax)),
+      outputLedger: data.outputLedger ? money(data.outputLedger) : null,
+      inputLedger: data.inputLedger ? money(data.inputLedger) : null,
+      outputReconciled: data.outputLedger ? data.outputLedger.equals(outputTax) : outputTax.isZero(),
+      inputReconciled: data.inputLedger ? data.inputLedger.equals(inputTax) : inputTax.isZero(),
+      asOf: new Date().toISOString(),
     };
   }
 }

@@ -36,8 +36,8 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Finance | Trial balance, general ledger, exports | ✅ | ledger |
 | Finance | Receivables aging, reconciled | ✅ R1 | invoices, payments, credit notes |
 | Finance | Payables aging, reconciled | ✅ R1 | supplier bills, payments, cancellations |
-| Finance | Cash flow statement (direct, from cash/bank lines by source) | ☐ R2 | ledger + journal source |
-| Finance | Tax summary (output tax on invoices, input tax on bills, by code) | ☐ R2 | invoices, supplier bills |
+| Finance | Cash flow (direct, from cash/bank lines by source), opening to closing | ✅ R2b | ledger + journal source |
+| Finance | Tax summary (output on invoices, input on bills, by code), checked to the tax accounts | ✅ R2b | invoices, supplier bills, ledger |
 | Finance | Budget vs actual | — | no budgets are recorded |
 | Sales | Revenue by labour vs parts, by branch and month, average invoice, discounts, credit notes, reconciled to ledger revenue | ✅ R2a | invoices, their journals |
 | Sales | Best-selling parts and services | ✅ R2a | invoice lines |
@@ -67,6 +67,7 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Finance | General ledger | `/ledger` | accounting.journal.read |
 | Finance | Receivables aging | `/reports/receivables` | reports.financial.read |
 | Finance | Payables aging | `/reports/payables` | reports.financial.read |
+| Finance | Cash flow, tax summary | `/reports/cash-flow`, `/reports/tax` | reports.financial.read |
 | Finance | Export centre | `/exports` | reports.financial.read |
 | Inventory | Stock value, special orders, transfers | `/stock`, `/special-orders`, `/transfers` | inventory.read |
 | Purchasing | Supplier bills | `/supplier-bills` | purchasing.read |
@@ -81,5 +82,6 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 |---|---|---|
 | R1 | Audit, architecture, coverage matrix, catalog page; P&L, balance sheet, receivables and payables aging (API, pages, print, drill-down, reconciliation); tests | ✅ |
 | R2a | Sales, operations, customers and stock-movement reports (API, pages, catalog, tests) | ✅ |
-| R2b | Cash flow and tax summary; Excel/CSV/PDF downloads for the new reports | ☐ |
+| R2b1 | Cash flow and tax summary (API, pages, tests) | ✅ |
+| R2b2 | Excel/CSV downloads for the new reports (PDF: print on every report) | ☐ |
 | R3 | Owner-set targets and reorder levels; alerts; saved filters and favourites; personal dashboards; scheduled reports (needs mail settings) | ☐ |

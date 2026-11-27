@@ -12,6 +12,18 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: Reporting and dashboards R2b1: cash flow and tax summary
+
+- **Cash flow** (`/reports/cash-flow`): cash and bank from opening to closing balance. Money in and out per journal source: customer payments, supplier payments, manual journals, reversals, other. Moves between cash and bank are counted as internal and kept out of money in/out. Checked: opening + in − out = closing. If no account is classed cash/bank, the page asks for that instead of showing zeros.
+- **Tax summary** (`/reports/tax`): tax on sales (invoices less credit notes) and on purchases (supplier bills less cancellations) by tax code, with net payable or refundable. Each side is checked against its ledger tax accounts. Labelled as a working summary, not a filed return.
+- Both are in the catalog (Finance). Formulas are in docs/KPI_DICTIONARY.md.
+- Evidence:
+  - integration (statements.int now 7), against hand-worked figures:
+    - year-to-date cash 1 640 in, 320 out, closing 1 320 (manual 1 290 / 7 journals, customers 100, suppliers −70), with 1 internal cash-to-bank move;
+    - October opening 1 150 → closing 1 290;
+    - tax: invoice 300 without tax; bills 250 without tax and 100 + 5.00 VAT; net −5.00; input ledger 5.00 matches;
+  - full gate 48/48 (uncached); integration 260/260 on a fresh database; browser end-to-end 52/52, including both pages and their accessibility scan.
+
 ## 2026-12-01: Reporting and dashboards R2a: sales, operations, customers, stock movement
 
 - **Sales** (`/reports/sales`, `reports.financial.read`):

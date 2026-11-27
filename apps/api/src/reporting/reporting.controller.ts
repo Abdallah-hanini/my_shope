@@ -28,7 +28,7 @@ import {
   SalesReportDto,
   StockMovementReportDto,
 } from './analytics.dto';
-import { AgingDto, BalanceSheetDto, ProfitAndLossDto } from './statements.dto';
+import { AgingDto, BalanceSheetDto, CashFlowDto, ProfitAndLossDto, TaxSummaryDto } from './statements.dto';
 import { StatementsService } from './statements.service';
 
 @ApiTags('reporting')
@@ -42,6 +42,34 @@ export class ReportingController {
     private readonly statements: StatementsService,
     private readonly analytics: AnalyticsService,
   ) {}
+
+  @Get('cash-flow')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getCashFlow',
+    summary: 'Cash and bank movements by source, opening to closing',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: CashFlowDto })
+  cashFlow(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.statements.cashFlow(s, q);
+  }
+
+  @Get('tax-summary')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getTaxSummary',
+    summary: 'Output and input tax by code, checked against the tax accounts',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: TaxSummaryDto })
+  taxSummary(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.statements.taxSummary(s, q);
+  }
 
   @Get('sales')
   @RequirePermission('reports.financial.read')

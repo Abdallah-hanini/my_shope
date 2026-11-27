@@ -2,6 +2,8 @@ import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import {
   ArrowLeftRight,
   Banknote,
+  Coins,
+  Percent,
   Gauge,
   RefreshCw,
   Users,
@@ -39,6 +41,8 @@ const CATALOG: { group: string; entries: Entry[] }[] = [
       { key: 'bs', href: 'reports/balance-sheet', icon: Landmark, perm: 'reports.financial.read' },
       { key: 'tb', href: 'trial-balance', icon: Scale, perm: 'reports.financial.read' },
       { key: 'gl', href: 'ledger', icon: BookOpen, perm: 'accounting.journal.read' },
+      { key: 'cashFlow', href: 'reports/cash-flow', icon: Coins, perm: 'reports.financial.read' },
+      { key: 'tax', href: 'reports/tax', icon: Percent, perm: 'reports.financial.read' },
       { key: 'ar', href: 'reports/receivables', icon: HandCoins, perm: 'reports.financial.read' },
       { key: 'ap', href: 'reports/payables', icon: Wallet, perm: 'reports.financial.read' },
       { key: 'exports', href: 'exports', icon: FileDown, perm: 'reports.financial.read' },
