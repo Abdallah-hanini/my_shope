@@ -1321,6 +1321,216 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/reports/profit-and-loss": {
+      "get": {
+        "operationId": "getProfitAndLoss",
+        "parameters": [
+          {
+            "name": "compare",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "none",
+                "previous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfitAndLossDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Profit and loss by account, with the previous period",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/balance-sheet": {
+      "get": {
+        "operationId": "getBalanceSheet",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "asOf",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceSheetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assets, liabilities and equity at a date",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/receivables-aging": {
+      "get": {
+        "operationId": "getReceivablesAging",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "asOf",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open customer invoices by age, reconciled",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/payables-aging": {
+      "get": {
+        "operationId": "getPayablesAging",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "asOf",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open supplier bills by days past due, reconciled",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/reports/financial-summary": {
       "get": {
         "operationId": "getFinancialSummary",
@@ -8796,6 +9006,381 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "StatementLineDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "example": "1500.00"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comparison period"
+          },
+          "changePct": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null when the base is zero"
+          }
+        },
+        "required": [
+          "accountId",
+          "code",
+          "name",
+          "amount"
+        ]
+      },
+      "StatementSectionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLineDto"
+            }
+          },
+          "total": {
+            "type": "string"
+          },
+          "previousTotal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comparison period total"
+          }
+        },
+        "required": [
+          "key",
+          "lines",
+          "total"
+        ]
+      },
+      "FigureDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true
+          },
+          "changePct": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "amount"
+        ]
+      },
+      "ProfitAndLossDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "previousFrom": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "previousTo": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "revenue": {
+            "$ref": "#/components/schemas/StatementSectionDto"
+          },
+          "costOfSales": {
+            "description": "Expense accounts classed as COGS",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatementSectionDto"
+              }
+            ]
+          },
+          "operatingExpenses": {
+            "$ref": "#/components/schemas/StatementSectionDto"
+          },
+          "grossProfit": {
+            "$ref": "#/components/schemas/FigureDto"
+          },
+          "netProfit": {
+            "$ref": "#/components/schemas/FigureDto"
+          },
+          "grossMarginPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "previousGrossMarginPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were read"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "revenue",
+          "costOfSales",
+          "operatingExpenses",
+          "grossProfit",
+          "netProfit",
+          "asOf"
+        ]
+      },
+      "BalanceSheetDto": {
+        "type": "object",
+        "properties": {
+          "asOfDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "assets": {
+            "$ref": "#/components/schemas/StatementSectionDto"
+          },
+          "liabilities": {
+            "$ref": "#/components/schemas/StatementSectionDto"
+          },
+          "equity": {
+            "$ref": "#/components/schemas/StatementSectionDto"
+          },
+          "unclosedResult": {
+            "type": "string",
+            "description": "Income less expenses not yet closed to equity (no year-end close yet)"
+          },
+          "totalEquity": {
+            "type": "string"
+          },
+          "totalLiabilitiesAndEquity": {
+            "type": "string"
+          },
+          "balanced": {
+            "type": "boolean",
+            "description": "Assets = liabilities + equity"
+          },
+          "difference": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "asOfDate",
+          "currency",
+          "assets",
+          "liabilities",
+          "equity",
+          "unclosedResult",
+          "totalEquity",
+          "totalLiabilitiesAndEquity",
+          "balanced",
+          "difference",
+          "asOf"
+        ]
+      },
+      "AgingPartyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "number"
+          },
+          "buckets": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "documents",
+          "buckets",
+          "total"
+        ]
+      },
+      "AgingDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "partyId": {
+            "type": "string"
+          },
+          "partyName": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "total": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "string"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "days": {
+            "type": "number",
+            "description": "Receivables: days since the invoice; payables: days past due"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "partyId",
+          "partyName",
+          "date",
+          "total",
+          "balance",
+          "bucket",
+          "days"
+        ]
+      },
+      "AgingDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "receivable",
+              "payable"
+            ]
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "buckets": {
+            "description": "Bucket keys in display order",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totals": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "total": {
+            "type": "string"
+          },
+          "parties": {
+            "description": "Largest balance first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgingPartyDto"
+            }
+          },
+          "documents": {
+            "description": "Open documents, oldest first (up to 500)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgingDocumentDto"
+            }
+          },
+          "ledgerBalance": {
+            "type": "string",
+            "nullable": true,
+            "description": "Control account balance at the cut-off"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "description": "Open documents equal the control account balance"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "kind",
+          "asOfDate",
+          "currency",
+          "buckets",
+          "totals",
+          "total",
+          "parties",
+          "documents",
+          "reconciled",
+          "asOf"
         ]
       },
       "FinancialTotalsDto": {

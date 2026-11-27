@@ -166,7 +166,7 @@ async function main() {
   const page = await context.newPage();
   currentPage = page;
   const pageErrors = [];
-  page.on('pageerror', (e) => pageErrors.push(e.message));
+  page.on('pageerror', (e) => pageErrors.push(`${page.url()} → ${e.message}`));
   const shot = async (name) => shots && page.screenshot({ path: join(shots, `${name}.png`), fullPage: true });
   let companyId = '';
   let journalId = '';
@@ -1183,6 +1183,8 @@ async function main() {
           'supplier-bills',
           'special-orders',
           'transfers',
+          'reports',
+          'reports/balance-sheet',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1277,7 +1279,7 @@ async function main() {
       viewport: { width: 1280, height: 900 },
     });
     const staffPage = await staffContext.newPage();
-    staffPage.on('pageerror', (e) => pageErrors.push(e.message));
+    staffPage.on('pageerror', (e) => pageErrors.push(`${staffPage.url()} → ${e.message}`));
     await check('The new staff member signs in and sees only what the role allows', async () => {
       await staffPage.goto(`${base()}/journals`);
       ({ newPassword: staffPassword } = await keycloakLogin(staffPage, {
@@ -1769,6 +1771,29 @@ async function main() {
       },
     );
 
+    await check(
+      'Reports: catalog by area; profit and loss with comparison; balance sheet balances; receivables and payables match the ledger',
+      async () => {
+        await page.goto(`${base()}/reports`);
+        for (const key of ['pl', 'bs', 'tb', 'ar', 'ap', 'stock', 'supplierBills'])
+          await page.locator(`a[data-report="${key}"]`).waitFor();
+        await Promise.all([
+          page.waitForURL(/\/reports\/profit-and-loss/),
+          page.locator('a[data-report="pl"]').click(),
+        ]);
+        await page.getByRole('heading', { name: 'Profit and loss', exact: true }).waitFor();
+        await page.locator('[data-result="Net profit"]').waitFor();
+        await page.getByRole('columnheader', { name: 'Previous period' }).waitFor();
+        await shot('report-pl-en');
+        await page.goto(`${base()}/reports/balance-sheet`);
+        await page.locator('[data-balanced=true]').waitFor();
+        await page.goto(`${base()}/reports/receivables`);
+        await page.locator('[data-reconciled=true]').waitFor();
+        await page.goto(`${base()}/reports/payables`);
+        await page.locator('[data-reconciled=true]').waitFor();
+      },
+    );
+
     await check('Quick jump: Ctrl+K, type, Enter opens the page', async () => {
       await page.goto(`${base()}/jobs`);
       // The shortcut listener is attached once the page has hydrated.
@@ -1797,6 +1822,9 @@ async function main() {
           'trial-balance',
           'accounts',
           'users',
+          'reports',
+          'reports/profit-and-loss',
+          'reports/receivables',
         ]) {
           for (const lang of ['en', 'ar']) {
             await page.goto(`${WEB}/${lang}/c/${companyId}/${path}`);

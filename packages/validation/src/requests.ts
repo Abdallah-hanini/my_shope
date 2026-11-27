@@ -199,6 +199,17 @@ export const trialBalanceQuerySchema = ledgerRange
   .refine(...rangeBounded);
 export type TrialBalanceQuery = z.infer<typeof trialBalanceQuerySchema>;
 
+/** Profit and loss for a date range, optionally against the period of equal length just before it. */
+export const profitAndLossQuerySchema = ledgerRange
+  .extend({ compare: z.enum(['none', 'previous']).default('previous') })
+  .refine(...rangeOrdered)
+  .refine(...rangeBounded);
+export type ProfitAndLossQuery = z.infer<typeof profitAndLossQuerySchema>;
+
+/** Balance sheet and aging reports: everything posted up to and including `asOf`. */
+export const asOfQuerySchema = z.object({ asOf: isoDate, branchId: uuid.optional() });
+export type AsOfQuery = z.infer<typeof asOfQuerySchema>;
+
 /** WEB-100. One posting account; keyset pagination by `cursor` (opaque). */
 export const generalLedgerQuerySchema = ledgerRange
   .extend({

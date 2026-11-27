@@ -377,6 +377,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/reports/profit-and-loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profit and loss by account, with the previous period */
+        get: operations["getProfitAndLoss"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assets, liabilities and equity at a date */
+        get: operations["getBalanceSheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/receivables-aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open customer invoices by age, reconciled */
+        get: operations["getReceivablesAging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/payables-aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open supplier bills by days past due, reconciled */
+        get: operations["getPayablesAging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/reports/financial-summary": {
         parameters: {
             query?: never;
@@ -2425,6 +2493,121 @@ export interface components {
         AuditEventPageDto: {
             items: components["schemas"]["AuditEventDto"][];
             nextCursor?: string | null;
+        };
+        StatementLineDto: {
+            accountId: string;
+            code: string;
+            name: string;
+            nameAr?: string | null;
+            /** @example 1500.00 */
+            amount: string;
+            /** @description Comparison period */
+            previous?: string | null;
+            /** @description Null when the base is zero */
+            changePct?: string | null;
+        };
+        StatementSectionDto: {
+            key: string;
+            lines: components["schemas"]["StatementLineDto"][];
+            total: string;
+            /** @description Comparison period total */
+            previousTotal?: string | null;
+        };
+        FigureDto: {
+            amount: string;
+            previous?: string | null;
+            changePct?: string | null;
+        };
+        ProfitAndLossDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: date */
+            previousFrom?: string | null;
+            /** Format: date */
+            previousTo?: string | null;
+            branchId?: string | null;
+            currency: string;
+            revenue: components["schemas"]["StatementSectionDto"];
+            /** @description Expense accounts classed as COGS */
+            costOfSales: components["schemas"]["StatementSectionDto"];
+            operatingExpenses: components["schemas"]["StatementSectionDto"];
+            grossProfit: components["schemas"]["FigureDto"];
+            netProfit: components["schemas"]["FigureDto"];
+            grossMarginPct?: string | null;
+            previousGrossMarginPct?: string | null;
+            /**
+             * Format: date-time
+             * @description When the figures were read
+             */
+            asOf: string;
+        };
+        BalanceSheetDto: {
+            /** Format: date */
+            asOfDate: string;
+            branchId?: string | null;
+            currency: string;
+            assets: components["schemas"]["StatementSectionDto"];
+            liabilities: components["schemas"]["StatementSectionDto"];
+            equity: components["schemas"]["StatementSectionDto"];
+            /** @description Income less expenses not yet closed to equity (no year-end close yet) */
+            unclosedResult: string;
+            totalEquity: string;
+            totalLiabilitiesAndEquity: string;
+            /** @description Assets = liabilities + equity */
+            balanced: boolean;
+            difference: string;
+            /** Format: date-time */
+            asOf: string;
+        };
+        AgingPartyDto: {
+            id: string;
+            name: string;
+            documents: number;
+            buckets: {
+                [key: string]: string;
+            };
+            total: string;
+        };
+        AgingDocumentDto: {
+            id: string;
+            number: string;
+            partyId: string;
+            partyName: string;
+            /** Format: date */
+            date: string;
+            /** Format: date */
+            dueDate?: string | null;
+            total: string;
+            balance: string;
+            bucket: string;
+            /** @description Receivables: days since the invoice; payables: days past due */
+            days: number;
+        };
+        AgingDto: {
+            /** @enum {string} */
+            kind: "receivable" | "payable";
+            /** Format: date */
+            asOfDate: string;
+            branchId?: string | null;
+            currency: string;
+            /** @description Bucket keys in display order */
+            buckets: string[];
+            totals: {
+                [key: string]: string;
+            };
+            total: string;
+            /** @description Largest balance first */
+            parties: components["schemas"]["AgingPartyDto"][];
+            /** @description Open documents, oldest first (up to 500) */
+            documents: components["schemas"]["AgingDocumentDto"][];
+            /** @description Control account balance at the cut-off */
+            ledgerBalance?: string | null;
+            /** @description Open documents equal the control account balance */
+            reconciled: boolean;
+            /** Format: date-time */
+            asOf: string;
         };
         FinancialTotalsDto: {
             /**
@@ -5044,6 +5227,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEventPageDto"];
+                };
+            };
+        };
+    };
+    getProfitAndLoss: {
+        parameters: {
+            query: {
+                compare?: "none" | "previous";
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfitAndLossDto"];
+                };
+            };
+        };
+    };
+    getBalanceSheet: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                asOf: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceSheetDto"];
+                };
+            };
+        };
+    };
+    getReceivablesAging: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                asOf: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingDto"];
+                };
+            };
+        };
+    };
+    getPayablesAging: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                asOf: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingDto"];
                 };
             };
         };

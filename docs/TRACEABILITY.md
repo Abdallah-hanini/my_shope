@@ -29,7 +29,7 @@ Phases follow docs/ROADMAP.md: 0 foundation · 1 identity/org/accounting · 2 ca
 | ARCH-13 | Transactional outbox (write side and dispatcher) | ARCHITECTURE | 1 | Done for in-process consumers (notifications): delivery in the consumer's transaction, retry with backoff, dead-letter after 10 attempts, health report, 30-day retention. External publishing not needed yet (T-47) | `platform.outbox_event`, `enqueueOutbox` (records the actor), `platform/outbox-dispatcher.ts`; `test/notifications.int.test.ts` |
 | UX-01 | WCAG contrast and 44pt touch targets in shared tokens | CLAUDE, MOBILE | 0 | Done (verified) | `packages/design-tokens` contrast tests |
 | UX-02 | Responsive web (no horizontal scroll at phone width) | CLAUDE | 0 | Done for shell | smoke: 390px viewport en/ar |
-| RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Partial: reporting view, KPI dictionary, dashboard, trial balance, general ledger, export centre (CSV/Excel, background jobs, download recheck, audit, export = screen tests) | `apps/api/src/reporting`, `apps/api/src/exports`; reporting.int, exports.int, e2e |
+| RPT-* | Reporting schema, KPI dictionary, exports | REPORTING | 5 | Partial: reporting view, KPI dictionary, dashboard, trial balance, general ledger, export centre (CSV/Excel, background jobs, download recheck, audit, export = screen tests); R1: profit and loss with comparison, balance sheet, receivables and payables aging reconciled to the ledger, reports catalog (docs/REPORTING_PLAN.md) | `apps/api/src/reporting`, `apps/api/src/exports`; reporting.int, statements.int, exports.int, e2e |
 | MOB-C | Customer app workflows (booking, approvals, ecommerce, payment) | MOBILE | 4 | Not started | — |
 | MOB-M | Manager app workflows (dashboards, approvals) | MOBILE | 5 | Not started | — |
 
@@ -103,7 +103,7 @@ Each ID still needs user stories, API contracts and positive/negative acceptance
 | POS-012 | Commissions | 3 | Not started | — |
 | ACC-001 | Chart of accounts | 1 | Done (API + web, verified) | Hierarchy, header vs posting, type consistency; no template (D-04); `accounting.account`; integration; web screens + `scripts/e2e-web.mjs`; general ledger WEB-100 |
 | ACC-002 | Journals and GL | 1 | Done (API + web, verified) | Balanced, immutable, idempotent, gapless-numbered journals and reversal; DB-enforced; journal.service.ts + migration triggers; integration incl. concurrency; web screens + `scripts/e2e-web.mjs` |
-| ACC-003 | AR/AP | 1–3 | Partly done: customer invoices and payments (T-72); supplier bills, payments, due dates and overdue, reconciled to payables (T-76). Statements and ageing report not yet | billing.int; purchasing.int; e2e |
+| ACC-003 | AR/AP | 1–3 | Partly done: customer invoices and payments (T-72); supplier bills, payments, due dates and overdue, reconciled to payables (T-76); receivables and payables aging reconciled to the control accounts (RPT R1). Customer statements not yet | billing.int; purchasing.int; statements.int; e2e |
 | ACC-004 | Cash and bank | 1–3 | Not started | — |
 | ACC-005 | Reconciliation | 3 | Not started | — |
 | ACC-006 | Expenses/petty cash | 3 | Not started | — |

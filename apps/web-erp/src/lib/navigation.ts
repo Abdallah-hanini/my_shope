@@ -17,6 +17,9 @@ export function companyNavigation(
           label: can('reports.financial.read') ? t('nav.dashboard') : t('nav.overview'),
           icon: 'LayoutDashboard',
         },
+        ...(['reports.financial.read', 'inventory.read', 'purchasing.read', 'workshop.job.read'].some(can)
+          ? [{ href: `${base}/reports`, label: t('nav.reports'), icon: 'BarChart3' as const }]
+          : []),
       ],
     },
     {

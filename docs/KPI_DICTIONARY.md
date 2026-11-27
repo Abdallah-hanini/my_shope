@@ -152,3 +152,21 @@ Available to reserve = on hand − Σ reserved quantities at the branch.
 | Cancelled (sending branch) | Inventory | Stock in transit | Exactly the value sent |
 
 Free to send = on hand − Σ reserved at the sending branch. Stock in transit (company) = Σ value of transfers in transit.
+
+## Financial statements and aging (RPT R1)
+
+Owner of every definition below: the accountant (changes go through docs/DECISIONS.md). Source: posted journals (`reporting.ledger_line`) and posted documents filtered by their journals' posting dates. Time zone: the company's. Each report is read in one repeatable-read snapshot and shows when it was read.
+
+| Figure | Definition |
+|---|---|
+| P&L line | Revenue account: Σ(credit − debit); expense account: Σ(debit − credit), posted lines from `from` to `to` |
+| Comparison period | The period of equal length ending the day before `from` (e.g. 1–31 Oct → 31 Aug–30 Sep) |
+| Change % | (now − then) ÷ \|then\| × 100, 1 decimal half up; **null when then = 0** (shown "—", never 0 %) |
+| Balance sheet line | Asset: Σ(debit − credit); liability and equity: Σ(credit − debit); all posted lines up to and including the cut-off |
+| Profit to date (not closed) | Σ(credit − debit) of all revenue and expense lines up to the cut-off. No year-end close exists yet, so it is shown as its own equity line |
+| Balanced | Assets = liabilities + equity + profit to date. A single branch may not balance on its own (entries between branches, company-level entries) |
+| Receivable (per invoice) | Invoice total − payments whose journal is posted by the cut-off; an invoice whose credit note is posted by then is excluded |
+| Receivable age | Days from the invoice date to the cut-off (customer invoices carry no due date); buckets 0–30, 31–60, 61–90, over 90 |
+| Payable (per bill) | Bill total − supplier payments posted by the cut-off; a bill whose cancellation is posted by then is excluded |
+| Payable age | Days from the due date to the cut-off; ≤ 0 is "not yet due"; buckets 1–30, 31–60, 61–90, over 90 days late |
+| Aging reconciliation | Σ open documents = balance of the control account (receivable: debit balance; payables: credit balance) at the cut-off in the same branch scope. A manual journal on a control account shows as a difference |

@@ -16,6 +16,7 @@ import {
   Truck,
   PackageSearch,
   ArrowLeftRight,
+  BarChart3,
   ReceiptText,
   CalendarRange,
   Car,
@@ -76,6 +77,7 @@ const icons = {
   Truck,
   PackageSearch,
   ArrowLeftRight,
+  BarChart3,
   ReceiptText,
 } as const;
 

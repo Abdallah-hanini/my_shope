@@ -1,6 +1,10 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
+  asOfQuerySchema,
+  profitAndLossQuerySchema,
+  type AsOfQuery,
+  type ProfitAndLossQuery,
   financialSummaryQuerySchema,
   generalLedgerQuerySchema,
   trialBalanceQuerySchema,
@@ -15,6 +19,8 @@ import { GeneralLedgerDto, TrialBalanceDto } from './ledger.dto';
 import { LedgerService } from './ledger.service';
 import { FinancialSummaryDto } from './reporting.dto';
 import { ReportingService } from './reporting.service';
+import { AgingDto, BalanceSheetDto, ProfitAndLossDto } from './statements.dto';
+import { StatementsService } from './statements.service';
 
 @ApiTags('reporting')
 @ApiBearerAuth()
@@ -24,7 +30,59 @@ export class ReportingController {
   constructor(
     private readonly reporting: ReportingService,
     private readonly ledger: LedgerService,
+    private readonly statements: StatementsService,
   ) {}
+
+  @Get('profit-and-loss')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getProfitAndLoss',
+    summary: 'Profit and loss by account, with the previous period',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiQuery({ name: 'compare', required: false, enum: ['none', 'previous'] })
+  @ApiOkResponse({ type: ProfitAndLossDto })
+  profitAndLoss(
+    @CurrentScope() s: CompanyScope,
+    @Query(new ZodPipe(profitAndLossQuerySchema)) q: ProfitAndLossQuery,
+  ) {
+    return this.statements.profitAndLoss(s, q);
+  }
+
+  @Get('balance-sheet')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({ operationId: 'getBalanceSheet', summary: 'Assets, liabilities and equity at a date' })
+  @ApiQuery({ name: 'asOf', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: BalanceSheetDto })
+  balanceSheet(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(asOfQuerySchema)) q: AsOfQuery) {
+    return this.statements.balanceSheet(s, q);
+  }
+
+  @Get('receivables-aging')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({ operationId: 'getReceivablesAging', summary: 'Open customer invoices by age, reconciled' })
+  @ApiQuery({ name: 'asOf', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: AgingDto })
+  receivables(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(asOfQuerySchema)) q: AsOfQuery) {
+    return this.statements.receivablesAging(s, q);
+  }
+
+  @Get('payables-aging')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getPayablesAging',
+    summary: 'Open supplier bills by days past due, reconciled',
+  })
+  @ApiQuery({ name: 'asOf', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: AgingDto })
+  payables(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(asOfQuerySchema)) q: AsOfQuery) {
+    return this.statements.payablesAging(s, q);
+  }
 
   @Get('financial-summary')
   @RequirePermission('reports.financial.read')

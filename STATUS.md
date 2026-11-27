@@ -12,6 +12,33 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: Reporting and dashboards R1: statements, aging, reports catalog
+
+### Changes
+
+- **Plan:** docs/REPORTING_PLAN.md: architecture, a coverage matrix from the data the system actually records, the report catalog and a tracker. HR, satisfaction, budgets, targets and reorder levels are marked "not applicable yet": not recorded, so not invented.
+- **Profit and loss** (`/reports/profit-and-loss`): revenue, cost of sales and operating expenses by account, gross and net profit, gross margin. Compared with the previous period of equal length (or none). Branch filter; each account drills into the general ledger; print/PDF.
+- **Balance sheet** (`/reports/balance-sheet`): assets, liabilities and equity at any date. With no year-end close yet, the profit to date is shown as its own line. A balance check (assets = liabilities + equity) is shown.
+- **Receivables aging** (`/reports/receivables`): open customer invoices at a cut-off, net of payments and credit notes posted by then. Aged 0–30 / 31–60 / 61–90 / over 90 days from the invoice date, by customer and by document, and reconciled to the receivable account.
+- **Payables aging** (`/reports/payables`): open supplier bills at a cut-off, by days past due. Reconciled to supplier payables.
+- **Reports catalog** (`/reports`, new menu item): every existing report grouped by Finance, Inventory, Purchasing and Workshop, with a one-line explanation. Only reports the person may open are listed.
+- **API:** `GET /reports/profit-and-loss|balance-sheet|receivables-aging|payables-aging`. Each requires `reports.financial.read`, applies branch scope on the server (another branch → 403) and reads one repeatable-read snapshot.
+- **Formulas:** comparison period, change % (null on a zero base), aging buckets and reconciliation rules in docs/KPI_DICTIONARY.md. Pure functions in `reporting/aging.ts`.
+- **Browser test:** page errors now record the page they happened on.
+- **Accountant note:** cost of sales appears as its own section only for expense accounts classed "COGS" in the chart of accounts (for example "Cost of parts sold"). Otherwise the cost is counted under operating expenses.
+
+### Evidence (2026-12-01, Linux Docker)
+
+- Unit (aging, 5): day counts across months and years, bucket boundaries, previous period, change % sign and zero base.
+- Integration (statements.int, 5), against figures worked out by hand:
+  - October P&L 340 / 120 / 80 → gross 220, net 140, margin 64.7 %; previous period 200 / 50; changes 70.0 %, 10.0 %, −6.7 %;
+  - a DOH-only reader sees 300 / net 100; another branch → 403; no permission → 403; reversed dates → 400;
+  - balance sheet 31 Oct: assets 1 290 = equity 1 000 + profit 290, balanced; 30 Sep: 1 150 / 150;
+  - receivables: invoice 300 − 100 paid = 200 in 0–30, equal to the receivable account; the day before, nothing posted;
+  - payables: bill dated 40 days ago, 250 − 70 = 180 in 31–60, equal to payables.
+- Full gate 48/48 (uncached). Integration 253/253 on a fresh database. Browser end-to-end 52/52 twice, including the new reports check, the Arabic phone pages and the accessibility scan of the new pages.
+- An intermittent React hydration warning appeared once in one run and did not recur in the next two. The test now records the page, so it can be traced if it returns.
+
 ## 2026-12-01: UI/UX transformation, slice 3a: quick jump, accessibility scan, form feedback
 
 - **Quick jump (Ctrl/⌘ + K, or the header button):** filter the pages a person may open, in English or Arabic, then open one with Enter. A combobox and listbox for screen readers.

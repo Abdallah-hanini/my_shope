@@ -50,3 +50,16 @@ export function query(params: Record<string, string | undefined | false>): strin
   const s = q.toString();
   return s ? `?${s}` : '';
 }
+
+/** Cut-off dates for "as of" reports (balance sheet, aging), in the company's time zone. */
+export function asOfPresets(timeZone: string) {
+  const today = todayIn(timeZone);
+  const [y, m] = today.split('-').map(Number) as [number, number];
+  const prev = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 };
+  return { today, endOfLastMonth: lastDay(prev.y, prev.m), endOfLastYear: `${y - 1}-12-31` };
+}
+
+/** Cut-off from the URL; anything that is not a date falls back to today. The API validates again. */
+export function asOfDate(timeZone: string, sp: { asOf?: string }) {
+  return sp.asOf && DATE.test(sp.asOf) ? sp.asOf : todayIn(timeZone);
+}
