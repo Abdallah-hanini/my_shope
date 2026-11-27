@@ -1,6 +1,7 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import { accountReportingClasses, accountTypes } from '@erp/validation';
+import { ListTree } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -90,7 +91,7 @@ export default async function AccountsPage({
         {!accounts.ok ? (
           <ProblemNotice result={accounts} locale={locale} />
         ) : accounts.data.length === 0 ? (
-          <EmptyState>{t('account.empty')}</EmptyState>
+          <EmptyState icon={<ListTree aria-hidden size={18} />}>{t('account.empty')}</EmptyState>
         ) : (
           <Table caption={t('nav.accounts')}>
             <thead>

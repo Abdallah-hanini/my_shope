@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, groupDigits, isLocale } from '@erp/localization';
+import { BookText } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -56,7 +57,7 @@ export default async function JournalsPage({
         {!page.ok ? (
           <ProblemNotice result={page} locale={locale} />
         ) : page.data.items.length === 0 ? (
-          <EmptyState>{t('journal.empty')}</EmptyState>
+          <EmptyState icon={<BookText aria-hidden size={18} />}>{t('journal.empty')}</EmptyState>
         ) : (
           <Table caption={t('nav.journals')}>
             <thead>

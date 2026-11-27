@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
+import { Boxes } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -51,7 +52,7 @@ export default async function StockPage({
         )}
       </div>
       {v.rows.length === 0 ? (
-        <EmptyState>{t('inv.noStock')}</EmptyState>
+        <EmptyState icon={<Boxes aria-hidden size={18} />}>{t('inv.noStock')}</EmptyState>
       ) : (
         <Card title={t('inv.stockValue')} flush>
           <Table caption={t('inv.stockValue')}>

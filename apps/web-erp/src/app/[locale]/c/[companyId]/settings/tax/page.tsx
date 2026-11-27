@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { Percent } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import {
@@ -110,7 +111,9 @@ export default async function TaxPage({
         ) : null}
       </Card>
 
-      {x.codes.length === 0 ? <EmptyState>{t('settings.noTaxCodes')}</EmptyState> : null}
+      {x.codes.length === 0 ? (
+        <EmptyState icon={<Percent aria-hidden size={18} />}>{t('settings.noTaxCodes')}</EmptyState>
+      ) : null}
       {x.codes.map((c) => (
         <Card key={c.id} title={`${c.code} — ${c.name}`} id={`tax-${c.code}`}>
           <div className="mb-3 flex flex-wrap items-center gap-2 text-sm" data-tax-code={c.code}>

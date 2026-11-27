@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
+import { Contact } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -69,7 +70,7 @@ export default async function CustomersPage({
             <ProblemNotice result={list} locale={locale} />
           </div>
         ) : list.data.length === 0 ? (
-          <EmptyState>{t('cust.empty')}</EmptyState>
+          <EmptyState icon={<Contact aria-hidden size={18} />}>{t('cust.empty')}</EmptyState>
         ) : (
           <Table caption={t('cust.title')}>
             <thead>

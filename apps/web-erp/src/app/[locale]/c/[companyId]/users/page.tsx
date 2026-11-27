@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { Users } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { StaffForm } from '@/components/access/StaffForm';
@@ -63,7 +64,7 @@ export default async function UsersPage({
             <ProblemNotice result={users} locale={locale} />
           </div>
         ) : users.data.length === 0 ? (
-          <EmptyState>{t('users.empty')}</EmptyState>
+          <EmptyState icon={<Users aria-hidden size={18} />}>{t('users.empty')}</EmptyState>
         ) : (
           <Table caption={t('users.title')}>
             <thead>

@@ -1,6 +1,7 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
 import { randomUUID } from 'node:crypto';
+import { ArrowLeftRight } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -154,7 +155,7 @@ export default async function TransfersPage({
         ]}
       />
       {d.transfers.length === 0 ? (
-        <EmptyState>{t('tr.none')}</EmptyState>
+        <EmptyState icon={<ArrowLeftRight aria-hidden size={18} />}>{t('tr.none')}</EmptyState>
       ) : (
         <Card title={t('tr.title')} flush>
           <Table caption={t('tr.title')}>

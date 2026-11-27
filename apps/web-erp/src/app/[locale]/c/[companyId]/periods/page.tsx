@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
+import { CalendarRange } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
@@ -48,7 +49,7 @@ export default async function PeriodsPage({
         <ProblemNotice result={periods} locale={locale} />
       ) : periods.data.length === 0 ? (
         <Card>
-          <EmptyState>{t('period.empty')}</EmptyState>
+          <EmptyState icon={<CalendarRange aria-hidden size={18} />}>{t('period.empty')}</EmptyState>
         </Card>
       ) : (
         <ul className="flex flex-col gap-3">

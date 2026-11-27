@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
+import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -169,7 +170,7 @@ export default async function GeneralLedgerPage({
           </dl>
           <Card flush>
             {g!.lines.length === 0 ? (
-              <EmptyState>{t('ledger.noLines')}</EmptyState>
+              <EmptyState icon={<BookOpen aria-hidden size={18} />}>{t('ledger.noLines')}</EmptyState>
             ) : (
               <Table caption={`${title} ${from} – ${to}`}>
                 <thead>

@@ -1,6 +1,7 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import { PART_UNITS } from '@erp/validation';
+import { Package } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -17,6 +18,7 @@ import {
   th,
   thNum,
   fieldLabel,
+  buttonSecondary,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -61,7 +63,18 @@ export default async function PartsPage({
         </form>
       </Card>
       {res.data.parts.length === 0 ? (
-        <EmptyState>{t('inv.noParts')}</EmptyState>
+        <EmptyState
+          icon={<Package aria-hidden size={18} />}
+          action={
+            res.data.canCreate ? (
+              <a href="#add-part" className={buttonSecondary}>
+                {t('inv.addPart')}
+              </a>
+            ) : undefined
+          }
+        >
+          {t('inv.noParts')}
+        </EmptyState>
       ) : (
         <Card title={t('inv.parts')} flush>
           <Table caption={t('inv.parts')}>

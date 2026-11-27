@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
+import { History } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -76,7 +77,7 @@ export default async function VehiclePage({
               <ProblemNotice result={history} locale={locale} />
             </div>
           ) : history.data.length === 0 ? (
-            <EmptyState>{t('veh.noHistory')}</EmptyState>
+            <EmptyState icon={<History aria-hidden size={18} />}>{t('veh.noHistory')}</EmptyState>
           ) : (
             <Table caption={t('veh.history')}>
               <thead>

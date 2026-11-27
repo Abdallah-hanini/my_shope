@@ -1137,4 +1137,5 @@ export const en = {
   'tr.cancelHelp': 'Only while in transit. The stock goes back to the sending branch at the same value.',
   'tr.cancelledBy': 'Cancelled by',
   'common.onThisPage': 'On this page',
+  'job.emptyStatuses': 'Statuses with no jobs',
 } as const;

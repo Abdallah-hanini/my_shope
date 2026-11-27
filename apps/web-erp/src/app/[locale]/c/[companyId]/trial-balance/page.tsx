@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, groupDigits, isLocale } from '@erp/localization';
+import { Scale } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -131,7 +132,7 @@ export default async function TrialBalancePage({
           )}
           <Card flush>
             {tb.data.rows.length === 0 ? (
-              <EmptyState>{t('ledger.empty')}</EmptyState>
+              <EmptyState icon={<Scale aria-hidden size={18} />}>{t('ledger.empty')}</EmptyState>
             ) : (
               <Table caption={`${t('nav.trialBalance')} ${from} – ${to}`}>
                 <thead>

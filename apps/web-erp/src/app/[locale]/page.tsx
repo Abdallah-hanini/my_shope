@@ -1,6 +1,7 @@
 import { createApiClient, type HealthReport } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
 import { StatusBadge } from '@erp/web-ui';
+import { Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
@@ -96,7 +97,7 @@ export default async function HomePage({
         ) : (
           <Card title={t('home.chooseCompany')} id="companies">
             {user.data.me.companies.length === 0 ? (
-              <EmptyState>{t('home.noCompanies')}</EmptyState>
+              <EmptyState icon={<Building2 aria-hidden size={18} />}>{t('home.noCompanies')}</EmptyState>
             ) : (
               <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {user.data.me.companies.map((c) => (

@@ -1,9 +1,22 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { Truck } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, tdNum, th, thNum } from '@/components/ui';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Ltr,
+  PageHeader,
+  Table,
+  td,
+  tdNum,
+  th,
+  thNum,
+  buttonSecondary,
+} from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -31,7 +44,18 @@ export default async function SuppliersPage({
     <>
       <PageHeader title={t('pur.suppliers')}>{t('pur.suppliersHelp')}</PageHeader>
       {res.data.suppliers.length === 0 ? (
-        <EmptyState>{t('pur.noSuppliers')}</EmptyState>
+        <EmptyState
+          icon={<Truck aria-hidden size={18} />}
+          action={
+            res.data.canManage ? (
+              <a href="#add-supplier" className={buttonSecondary}>
+                {t('pur.addSupplier')}
+              </a>
+            ) : undefined
+          }
+        >
+          {t('pur.noSuppliers')}
+        </EmptyState>
       ) : (
         <Card title={t('pur.suppliers')} flush>
           <Table caption={t('pur.suppliers')}>

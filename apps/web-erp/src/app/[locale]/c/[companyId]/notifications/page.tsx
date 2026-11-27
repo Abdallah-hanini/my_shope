@@ -87,7 +87,9 @@ export default async function NotificationsPage({
           <UnreadSync count={page.data.unreadCount} />
           <Card flush>
             {page.data.items.length === 0 ? (
-              <EmptyState>{unreadOnly ? t('notify.emptyUnread') : t('notify.empty')}</EmptyState>
+              <EmptyState icon={<Bell aria-hidden size={18} />}>
+                {unreadOnly ? t('notify.emptyUnread') : t('notify.empty')}
+              </EmptyState>
             ) : (
               <ul className="divide-y divide-[var(--color-border)]" aria-label={t('notify.title')}>
                 {page.data.items.map((n: Notification) => {

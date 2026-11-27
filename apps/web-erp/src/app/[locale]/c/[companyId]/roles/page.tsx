@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { RoleForm } from '@/components/access/RoleForm';
@@ -34,7 +35,7 @@ export default async function RolesPage({
             <ProblemNotice result={roles} locale={locale} />
           </div>
         ) : roles.data.length === 0 ? (
-          <EmptyState>{t('roles.empty')}</EmptyState>
+          <EmptyState icon={<KeyRound aria-hidden size={18} />}>{t('roles.empty')}</EmptyState>
         ) : (
           <Table caption={t('roles.title')}>
             <thead>

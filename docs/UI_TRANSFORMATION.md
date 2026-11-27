@@ -59,7 +59,7 @@ Status: ✅ done in this slice · ◐ restyled through shared components (layout
 | Home | Sign-in / company list | `/` | ◐ |
 | Home | New company | `/companies/new` | ◐ |
 | Dashboard | Executive overview | `/c/[id]` | ◐ |
-| Workshop | Job board / list | `/jobs` | ✅ board columns, status cue, tabs |
+| Workshop | Job board / list | `/jobs` | ✅ only statuses with jobs get a column; empty statuses fold into a chip row; status cue; tabs; empty state with "New job card" |
 | Workshop | New job (check-in) | `/jobs/new` | ◐ |
 | Workshop | Job card | `/jobs/[id]` | ✅ section bar, sticky actions column (A9 partly) |
 | Workshop | Printouts (job, quote, invoice) | `…/print` | unchanged by design (paper) |
@@ -87,7 +87,13 @@ Status: ✅ done in this slice · ◐ restyled through shared components (layout
 | Administration | Audit trail | `/audit` | ◐ |
 | Header | Search, notifications | `/search`, `/notifications` | ✅ tabs (notifications) |
 
-## 5. Next slices
+## 5. Slice 2a (done)
+
+- Empty states on 27 screens carry an icon; parts and suppliers offer a jump to their add form, and the job list offers "New job card".
+- Page headers: the title keeps at least 18rem (or the full width), so on phones the actions wrap below it instead of squeezing the title (seen on the Arabic trial balance).
+- Job board: statuses without jobs collapse into one chip row, so every job is in view without sideways scrolling.
+
+## 6. Next slices
 
 - **Slice 2:**
   - record-page layout with a side column (job card first, then part, supplier, bill, customer, vehicle);

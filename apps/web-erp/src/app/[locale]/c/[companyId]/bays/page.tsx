@@ -1,5 +1,6 @@
 import { unwrap, type BayBoard } from '@erp/api-client';
 import { createTranslator, isLocale, type Locale } from '@erp/localization';
+import { LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -105,7 +106,9 @@ function BoardBody({
   return (
     <>
       {active.length === 0 ? (
-        <EmptyState>{b.canManage ? t('bay.noneManager') : t('bay.none')}</EmptyState>
+        <EmptyState icon={<LayoutGrid aria-hidden size={18} />}>
+          {b.canManage ? t('bay.noneManager') : t('bay.none')}
+        </EmptyState>
       ) : (
         <ul className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('bay.title')}>
           {active.map((bay) => (

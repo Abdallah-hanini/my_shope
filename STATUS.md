@@ -12,6 +12,13 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: UI/UX transformation, slice 2a: empty states, phone headers, job board
+
+- Empty states with icons on 27 screens. Jumps to the add form on parts and suppliers, and "New job card" on the empty job list.
+- Page titles no longer squeeze beside their actions on phones.
+- The job board gives columns only to statuses with jobs; the others are a chip row.
+- Evidence: typecheck and lint clean; browser end-to-end 49/49; screenshots reviewed (job board at 1280 px, Arabic trial balance at 390 px).
+
 ## 2026-12-01: UI/UX transformation, slice 1: identity, components, shell
 
 ### Changes

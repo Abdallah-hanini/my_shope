@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale } from '@erp/localization';
+import { ReceiptText } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -84,7 +85,7 @@ export default async function SupplierBillsPage({
         ]}
       />
       {bills.length === 0 ? (
-        <EmptyState>{t('pur.noBills')}</EmptyState>
+        <EmptyState icon={<ReceiptText aria-hidden size={18} />}>{t('pur.noBills')}</EmptyState>
       ) : (
         <Card title={t('pur.bills')} flush>
           <Table caption={t('pur.bills')}>

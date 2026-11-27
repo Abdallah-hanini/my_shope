@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { Car } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -48,7 +49,7 @@ export default async function CustomerPage({
       </PageHeader>
       <Card title={t('cust.vehicles')} id="vehicles" flush>
         {d.vehicles.length === 0 ? (
-          <EmptyState>{t('veh.empty')}</EmptyState>
+          <EmptyState icon={<Car aria-hidden size={18} />}>{t('veh.empty')}</EmptyState>
         ) : (
           <Table caption={t('cust.vehicles')}>
             <thead>

@@ -1,5 +1,6 @@
 import { unwrap, type LabourReport } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type Locale } from '@erp/localization';
+import { Timer } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -135,7 +136,7 @@ function ReportBody({
         {t('labour.reportHelp')} {t('labour.efficiencyHelp')}
       </p>
       {r.rows.length === 0 ? (
-        <EmptyState>{t('labour.nobody')}</EmptyState>
+        <EmptyState icon={<Timer aria-hidden size={18} />}>{t('labour.nobody')}</EmptyState>
       ) : (
         <Card title={t('labour.report')} flush>
           <Table caption={t('labour.report')}>

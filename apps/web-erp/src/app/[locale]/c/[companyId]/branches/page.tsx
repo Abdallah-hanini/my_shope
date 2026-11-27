@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
+import { Building2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
@@ -45,7 +46,7 @@ export default async function BranchesPage({
         {!branches.ok ? (
           <ProblemNotice result={branches} locale={locale} />
         ) : branches.data.length === 0 ? (
-          <EmptyState>{t('branch.empty')}</EmptyState>
+          <EmptyState icon={<Building2 aria-hidden size={18} />}>{t('branch.empty')}</EmptyState>
         ) : (
           <Table caption={t('nav.branches')}>
             <thead>

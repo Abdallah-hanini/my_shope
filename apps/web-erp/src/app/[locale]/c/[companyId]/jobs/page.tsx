@@ -1,6 +1,7 @@
 import { unwrap, type JobListItem } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type Locale } from '@erp/localization';
 import { OPEN_JOB_STATUSES } from '@erp/validation';
+import { Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -87,48 +88,76 @@ export default async function JobsPage({
       ) : list ? (
         <JobTable jobs={jobs.data} locale={locale} base={base} timeZone={company.timezone} />
       ) : jobs.data.length === 0 ? (
-        <EmptyState>{t('job.empty')}</EmptyState>
+        <EmptyState
+          icon={<Wrench aria-hidden size={18} />}
+          action={
+            can('workshop.job.manage') ? (
+              <Link className={buttonPrimary} href={`${base}/new`}>
+                {t('job.new')}
+              </Link>
+            ) : undefined
+          }
+        >
+          {t('job.empty')}
+        </EmptyState>
       ) : (
-        <div className="scroll-quiet relative -mx-4 snap-x overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0">
-          <div className="flex items-start gap-3" role="list" aria-label={t('job.board')}>
-            {OPEN_JOB_STATUSES.map((s) => {
-              const col = jobs.data.filter((j) => j.status === s);
-              return (
-                <section
-                  key={s}
-                  role="listitem"
-                  aria-labelledby={`col-${s}`}
-                  className={`flex min-h-32 shrink-0 snap-start flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]/60 p-2 ${col.length ? 'w-[17rem]' : 'w-40'}`}
+        <>
+          {/* Statuses without jobs collapse into one row, so every job is in view. */}
+          {OPEN_JOB_STATUSES.some((st) => !jobs.data.some((j) => j.status === st)) ? (
+            <ul className="mb-3 flex flex-wrap gap-2" aria-label={t('job.emptyStatuses')}>
+              {OPEN_JOB_STATUSES.filter((st) => !jobs.data.some((j) => j.status === st)).map((st) => (
+                <li
+                  key={st}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]"
                 >
-                  <h2
-                    id={`col-${s}`}
-                    className="flex items-center justify-between gap-2 px-1.5 pt-0.5 text-[13px] font-semibold"
+                  <span aria-hidden className={`size-1.5 rounded-full ${STATUS_DOT[st] ?? ''}`} />
+                  {t(`job.status.${st}` as 'job.status.draft')}
+                  <span className="tabular">0</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="scroll-quiet relative -mx-4 snap-x overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0">
+            <div className="flex items-start gap-3" role="list" aria-label={t('job.board')}>
+              {OPEN_JOB_STATUSES.filter((st) => jobs.data.some((j) => j.status === st)).map((st) => {
+                const col = jobs.data.filter((j) => j.status === st);
+                return (
+                  <section
+                    key={st}
+                    role="listitem"
+                    aria-labelledby={`col-${st}`}
+                    className="flex w-[17rem] shrink-0 snap-start flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]/60 p-2"
                   >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        aria-hidden
-                        className={`size-2 shrink-0 rounded-full ${STATUS_DOT[s] ?? 'bg-[var(--color-text-muted)]'}`}
+                    <h2
+                      id={`col-${st}`}
+                      className="flex items-center justify-between gap-2 px-1.5 pt-0.5 text-[13px] font-semibold"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          aria-hidden
+                          className={`size-2 shrink-0 rounded-full ${STATUS_DOT[st] ?? ''}`}
+                        />
+                        <span className="truncate">{t(`job.status.${st}` as 'job.status.draft')}</span>
+                      </span>
+                      <span className="rounded-full bg-[var(--color-surface)] px-1.5 text-xs tabular text-[var(--color-text-muted)] ring-1 ring-[var(--color-border)]">
+                        {col.length}
+                      </span>
+                    </h2>
+                    {col.map((j) => (
+                      <JobCardTile
+                        key={j.id}
+                        job={j}
+                        locale={locale}
+                        href={`${base}/${j.id}`}
+                        timeZone={company.timezone}
                       />
-                      <span className="truncate">{t(`job.status.${s}` as 'job.status.draft')}</span>
-                    </span>
-                    <span className="rounded-full bg-[var(--color-surface)] px-1.5 text-xs tabular text-[var(--color-text-muted)] ring-1 ring-[var(--color-border)]">
-                      {col.length}
-                    </span>
-                  </h2>
-                  {col.map((j) => (
-                    <JobCardTile
-                      key={j.id}
-                      job={j}
-                      locale={locale}
-                      href={`${base}/${j.id}`}
-                      timeZone={company.timezone}
-                    />
-                  ))}
-                </section>
-              );
-            })}
+                    ))}
+                  </section>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
@@ -187,7 +216,7 @@ function JobTable({
   timeZone: string;
 }) {
   const t = createTranslator(locale);
-  if (!jobs.length) return <EmptyState>{t('job.empty')}</EmptyState>;
+  if (!jobs.length) return <EmptyState icon={<Wrench aria-hidden size={18} />}>{t('job.empty')}</EmptyState>;
   return (
     <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]">
       <Table caption={t('job.title')}>

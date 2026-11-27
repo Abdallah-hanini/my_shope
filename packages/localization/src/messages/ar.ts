@@ -1118,4 +1118,5 @@ export const ar: Record<MessageKey, string> = {
   'tr.cancelHelp': 'فقط أثناء وجوده في الطريق. يعود المخزون إلى الفرع المرسل بنفس القيمة.',
   'tr.cancelledBy': 'ألغاه',
   'common.onThisPage': 'في هذه الصفحة',
+  'job.emptyStatuses': 'حالات بلا أوامر عمل',
 };

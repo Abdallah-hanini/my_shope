@@ -28,7 +28,8 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-      <div className="min-w-0 flex-1">
+      {/* At least 18rem (or the full width): on phones the actions wrap below the title. */}
+      <div className="min-w-[min(100%,18rem)] flex-1">
         {back ? (
           <Link
             href={back.href}

@@ -1,5 +1,6 @@
 import { unwrap } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
+import { PackageSearch } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
@@ -42,7 +43,7 @@ export default async function SpecialOrdersPage({
         ]}
       />
       {res.data.orders.length === 0 ? (
-        <EmptyState>{t('so.none')}</EmptyState>
+        <EmptyState icon={<PackageSearch aria-hidden size={18} />}>{t('so.none')}</EmptyState>
       ) : (
         <Card title={t('so.title')} flush>
           <Table caption={t('so.title')}>

@@ -1,6 +1,6 @@
 import { unwrap, type ExportJob } from '@erp/api-client';
 import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@erp/localization';
-import { Download } from 'lucide-react';
+import { Download, FileDown } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { AutoRefresh } from '@/components/reports/AutoRefresh';
@@ -127,7 +127,7 @@ export default async function ExportCentrePage({
             <ProblemNotice result={jobs} locale={locale} />
           </div>
         ) : jobs.data.length === 0 ? (
-          <EmptyState>{t('export.empty')}</EmptyState>
+          <EmptyState icon={<FileDown aria-hidden size={18} />}>{t('export.empty')}</EmptyState>
         ) : (
           <Table caption={t('export.mine')}>
             <thead>
