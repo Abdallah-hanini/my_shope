@@ -1138,4 +1138,5 @@ export const en = {
   'tr.cancelledBy': 'Cancelled by',
   'common.onThisPage': 'On this page',
   'job.emptyStatuses': 'Statuses with no jobs',
+  'common.details': 'Details',
 } as const;

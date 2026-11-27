@@ -16,6 +16,7 @@ import {
   th,
   thNum,
   buttonSecondary,
+  JumpAction,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -42,7 +43,12 @@ export default async function SuppliersPage({
   const base = `/${locale}/c/${companyId}`;
   return (
     <>
-      <PageHeader title={t('pur.suppliers')}>{t('pur.suppliersHelp')}</PageHeader>
+      <PageHeader
+        title={t('pur.suppliers')}
+        actions={res.data.canManage ? <JumpAction href="#add-supplier" label={t('pur.addSupplier')} /> : null}
+      >
+        {t('pur.suppliersHelp')}
+      </PageHeader>
       {res.data.suppliers.length === 0 ? (
         <EmptyState
           icon={<Truck aria-hidden size={18} />}

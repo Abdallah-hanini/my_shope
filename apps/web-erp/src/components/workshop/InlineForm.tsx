@@ -11,7 +11,7 @@ export function InlineForm({
   locale,
   submitLabel,
   submitClassName,
-  className = 'flex flex-wrap items-end gap-2',
+  className = 'flex flex-wrap items-end gap-x-3 gap-y-3',
   ariaLabel,
   children,
 }: {

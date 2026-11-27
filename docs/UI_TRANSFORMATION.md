@@ -66,24 +66,24 @@ Status: ✅ done in this slice · ◐ restyled through shared components (layout
 | Workshop | Appointments (day, new, detail, settings) | `/appointments…` | ◐ |
 | Workshop | Bays | `/bays` | ◐ |
 | Workshop | Labour time | `/labour-time` | ◐ |
-| CRM | Customers, customer | `/customers…` | ◐ |
-| CRM | Vehicles, vehicle | `/vehicles…` | ◐ |
-| Inventory | Parts, part | `/parts…` | ◐ |
+| CRM | Customers, customer | `/customers…` | ✅ header "New customer"; record page with vehicles in the main column, details and edit in a side column |
+| CRM | Vehicles, vehicle | `/vehicles…` | ✅ record page: service history main, owner/details and edit side |
+| Inventory | Parts, part | `/parts…` | ✅ header "Add part"; part page: stock per branch and movements main, price and edit side |
 | Inventory | Stock value | `/stock` | ◐ |
 | Inventory | Special orders | `/special-orders` | ✅ tabs |
-| Inventory | Transfers, transfer | `/transfers…` | ✅ tabs |
-| Purchasing | Suppliers, supplier | `/suppliers…` | ◐ |
-| Purchasing | Supplier bills, bill | `/supplier-bills…` | ✅ tabs |
+| Inventory | Transfers, transfer | `/transfers…` | ✅ tabs; transfer page: parts main, confirm/cancel side |
+| Purchasing | Suppliers, supplier | `/suppliers…` | ✅ header "Add supplier"; supplier page: bill entry and bills main, details and edit side |
+| Purchasing | Supplier bills, bill | `/supplier-bills…` | ✅ tabs; bill page: deliveries, payments and cancel main, totals side |
 | Finance | Journals, journal, new journal | `/journals…` | ◐ |
-| Finance | Chart of accounts | `/accounts` | ◐ |
+| Finance | Chart of accounts | `/accounts` | ✅ list first, "Add account" in the header |
 | Finance | General ledger | `/ledger` | ◐ |
 | Finance | Trial balance | `/trial-balance` | ◐ |
 | Finance | Export centre | `/exports` | ◐ |
-| Finance | Fiscal periods | `/periods` | ◐ |
-| Organization | Branches | `/branches` | ◐ |
+| Finance | Fiscal periods | `/periods` | ✅ list first, "Add period" in the header |
+| Organization | Branches | `/branches` | ✅ list first, "Add branch" in the header |
 | Organization | Company profile, tax, posting, pricing | `/settings/…` | ◐ |
-| Administration | Users, user | `/users…` | ◐ |
-| Administration | Roles, role, permission matrix | `/roles…`, `/permissions` | ◐ |
+| Administration | Users, user | `/users…` | ✅ list first, "Add staff member" in the header |
+| Administration | Roles, role, permission matrix | `/roles…`, `/permissions` | ✅ "New role" in the header (matrix ◐) |
 | Administration | Audit trail | `/audit` | ◐ |
 | Header | Search, notifications | `/search`, `/notifications` | ✅ tabs (notifications) |
 
@@ -93,7 +93,13 @@ Status: ✅ done in this slice · ◐ restyled through shared components (layout
 - Page headers: the title keeps at least 18rem (or the full width), so on phones the actions wrap below it instead of squeezing the title (seen on the Arabic trial balance).
 - Job board: statuses without jobs collapse into one chip row, so every job is in view without sideways scrolling.
 
-## 6. Next slices
+## 6. Slice 2b (done)
+
+- **One rule for lists:** the list comes first; the create form follows; a primary "Add …" button in the page header jumps to it (`JumpAction`). Applied to customers, parts, suppliers, roles, chart of accounts, branches, users and fiscal periods.
+- **One rule for record pages:** the work (vehicles, service history, stock, bills, deliveries, payments, transfer lines) in the main column; the record's facts (`DescriptionList`) and its edit form in a 340 px side column from 1280 px (stacked below). Applied to customer, vehicle, part, supplier, supplier bill and transfer pages.
+- Inline forms use 12 px spacing between fields and rows.
+
+## 7. Next slices
 
 - **Slice 2:**
   - record-page layout with a side column (job card first, then part, supplier, bill, customer, vehicle);

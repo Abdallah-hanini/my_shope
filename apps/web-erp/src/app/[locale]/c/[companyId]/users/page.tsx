@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { StaffForm } from '@/components/access/StaffForm';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, Card, EmptyState, PageHeader, Table, td, th } from '@/components/ui';
+import { Badge, Card, EmptyState, PageHeader, Table, td, th, JumpAction } from '@/components/ui';
 import { branchLabel, roleLabel } from '@/lib/access';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -42,22 +42,12 @@ export default async function UsersPage({
 
   return (
     <>
-      <PageHeader title={t('users.title')} />
-      {can('iam.user.manage') && roles.ok ? (
-        <Card title={t('users.add')} id="add-staff">
-          <StaffForm
-            locale={locale}
-            action={createStaffAction.bind(null, locale, companyId)}
-            roles={roles.data.map((r) => ({ id: r.id, label: roleLabel(r, locale) }))}
-            branches={scopeBranches.map((b) => ({
-              id: b.id,
-              label: branchLabel(branchList, b.id, locale, ''),
-            }))}
-            allowCompanyWide={companyWide}
-            usersHref={base}
-          />
-        </Card>
-      ) : null}
+      <PageHeader
+        title={t('users.title')}
+        actions={
+          can('iam.user.manage') && roles.ok ? <JumpAction href="#add-staff" label={t('users.add')} /> : null
+        }
+      />
       <Card flush>
         {!users.ok ? (
           <div className="p-5">
@@ -123,6 +113,21 @@ export default async function UsersPage({
           </Table>
         )}
       </Card>
+      {can('iam.user.manage') && roles.ok ? (
+        <Card title={t('users.add')} id="add-staff">
+          <StaffForm
+            locale={locale}
+            action={createStaffAction.bind(null, locale, companyId)}
+            roles={roles.data.map((r) => ({ id: r.id, label: roleLabel(r, locale) }))}
+            branches={scopeBranches.map((b) => ({
+              id: b.id,
+              label: branchLabel(branchList, b.id, locale, ''),
+            }))}
+            allowCompanyWide={companyWide}
+            usersHref={base}
+          />
+        </Card>
+      ) : null}
     </>
   );
 }

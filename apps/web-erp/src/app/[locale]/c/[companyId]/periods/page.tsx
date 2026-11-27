@@ -4,7 +4,7 @@ import { CalendarRange } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
-import { Card, EmptyState, Ltr, PageHeader } from '@/components/ui';
+import { Card, EmptyState, Ltr, PageHeader, JumpAction } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { closePeriodAction, createPeriodAction } from '../actions';
@@ -28,23 +28,10 @@ export default async function PeriodsPage({
   const manage = can('accounting.period.manage');
   return (
     <>
-      <PageHeader title={t('nav.periods')} />
-      {manage ? (
-        <Card title={t('period.new')} id="new-period">
-          <SimpleForm
-            locale={locale}
-            idPrefix="period"
-            action={createPeriodAction.bind(null, locale, companyId)}
-            submitLabel={t('common.create')}
-            columns={3}
-            fields={[
-              { name: 'name', label: t('common.name'), required: true, maxLength: 64, dir: 'ltr' },
-              { name: 'startDate', label: t('period.start'), type: 'date', required: true },
-              { name: 'endDate', label: t('period.end'), type: 'date', required: true },
-            ]}
-          />
-        </Card>
-      ) : null}
+      <PageHeader
+        title={t('nav.periods')}
+        actions={manage ? <JumpAction href="#new-period" label={t('period.new')} /> : null}
+      />
       {!periods.ok ? (
         <ProblemNotice result={periods} locale={locale} />
       ) : periods.data.length === 0 ? (
@@ -91,6 +78,22 @@ export default async function PeriodsPage({
           ))}
         </ul>
       )}
+      {manage ? (
+        <Card title={t('period.new')} id="new-period">
+          <SimpleForm
+            locale={locale}
+            idPrefix="period"
+            action={createPeriodAction.bind(null, locale, companyId)}
+            submitLabel={t('common.create')}
+            columns={3}
+            fields={[
+              { name: 'name', label: t('common.name'), required: true, maxLength: 64, dir: 'ltr' },
+              { name: 'startDate', label: t('period.start'), type: 'date', required: true },
+              { name: 'endDate', label: t('period.end'), type: 'date', required: true },
+            ]}
+          />
+        </Card>
+      ) : null}
     </>
   );
 }

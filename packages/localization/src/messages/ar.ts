@@ -1119,4 +1119,5 @@ export const ar: Record<MessageKey, string> = {
   'tr.cancelledBy': 'ألغاه',
   'common.onThisPage': 'في هذه الصفحة',
   'job.emptyStatuses': 'حالات بلا أوامر عمل',
+  'common.details': 'التفاصيل',
 };

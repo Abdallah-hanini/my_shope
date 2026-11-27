@@ -19,6 +19,7 @@ import {
   thNum,
   fieldLabel,
   buttonSecondary,
+  JumpAction,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -50,7 +51,12 @@ export default async function PartsPage({
   const base = `/${locale}/c/${companyId}`;
   return (
     <>
-      <PageHeader title={t('inv.parts')}>{t('inv.partsHelp')}</PageHeader>
+      <PageHeader
+        title={t('inv.parts')}
+        actions={res.data.canCreate ? <JumpAction href="#add-part" label={t('inv.addPart')} /> : null}
+      >
+        {t('inv.partsHelp')}
+      </PageHeader>
       <Card className="mb-6">
         <form method="get" className="flex flex-wrap items-end gap-3" aria-label={t('inv.search')}>
           <label className={fieldLabel}>

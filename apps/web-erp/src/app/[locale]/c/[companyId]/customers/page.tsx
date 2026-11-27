@@ -17,6 +17,7 @@ import {
   tdNum,
   th,
   thNum,
+  JumpAction,
 } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
@@ -47,7 +48,12 @@ export default async function CustomersPage({
   const base = `/${locale}/c/${companyId}/customers`;
   return (
     <>
-      <PageHeader title={t('cust.title')} />
+      <PageHeader
+        title={t('cust.title')}
+        actions={
+          can('crm.customer.manage') ? <JumpAction href="#new-customer" label={t('cust.new')} /> : null
+        }
+      />
       <form role="search" method="get" className="mb-4 flex gap-2">
         <label htmlFor="cust-q" className="sr-only">
           {t('cust.search')}

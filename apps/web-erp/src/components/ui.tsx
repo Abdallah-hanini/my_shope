@@ -367,6 +367,18 @@ export function Badge({
   );
 }
 
+/** A page-header action that jumps to a form further down the same page (e.g. "Add part"). */
+export function JumpAction({ href, label }: { href: `#${string}`; label: string }) {
+  return (
+    <a href={href} className={buttonPrimary}>
+      <span aria-hidden className="text-base leading-none">
+        +
+      </span>
+      {label}
+    </a>
+  );
+}
+
 export function TextLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link href={href} className="font-medium text-[var(--color-primary)] hover:underline">

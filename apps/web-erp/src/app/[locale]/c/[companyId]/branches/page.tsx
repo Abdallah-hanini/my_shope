@@ -4,7 +4,7 @@ import { Building2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { SimpleForm } from '@/components/SimpleForm';
-import { Card, EmptyState, Ltr, PageHeader, Table, td, th } from '@/components/ui';
+import { Card, EmptyState, Ltr, PageHeader, Table, td, th, JumpAction } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
 import { createBranchAction } from '../actions';
@@ -25,23 +25,10 @@ export default async function BranchesPage({
   );
   return (
     <>
-      <PageHeader title={t('nav.branches')} />
-      {can('org.branch.manage') ? (
-        <Card title={t('branch.new')} id="new-branch">
-          <SimpleForm
-            locale={locale}
-            idPrefix="branch"
-            action={createBranchAction.bind(null, locale, companyId)}
-            submitLabel={t('common.create')}
-            columns={3}
-            fields={[
-              { name: 'code', label: t('common.code'), required: true, maxLength: 32, dir: 'ltr' },
-              { name: 'name', label: t('common.name'), required: true, maxLength: 200 },
-              { name: 'nameAr', label: t('common.nameAr'), maxLength: 200, dir: 'rtl' },
-            ]}
-          />
-        </Card>
-      ) : null}
+      <PageHeader
+        title={t('nav.branches')}
+        actions={can('org.branch.manage') ? <JumpAction href="#new-branch" label={t('branch.new')} /> : null}
+      />
       <Card>
         {!branches.ok ? (
           <ProblemNotice result={branches} locale={locale} />
@@ -76,6 +63,22 @@ export default async function BranchesPage({
           </Table>
         )}
       </Card>
+      {can('org.branch.manage') ? (
+        <Card title={t('branch.new')} id="new-branch">
+          <SimpleForm
+            locale={locale}
+            idPrefix="branch"
+            action={createBranchAction.bind(null, locale, companyId)}
+            submitLabel={t('common.create')}
+            columns={3}
+            fields={[
+              { name: 'code', label: t('common.code'), required: true, maxLength: 32, dir: 'ltr' },
+              { name: 'name', label: t('common.name'), required: true, maxLength: 200 },
+              { name: 'nameAr', label: t('common.nameAr'), maxLength: 200, dir: 'rtl' },
+            ]}
+          />
+        </Card>
+      ) : null}
     </>
   );
 }

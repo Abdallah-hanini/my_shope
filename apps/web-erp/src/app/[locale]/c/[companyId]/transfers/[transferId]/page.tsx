@@ -15,6 +15,7 @@ import {
   th,
   thNum,
   fieldLabel,
+  SplitLayout,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -62,78 +63,88 @@ export default async function TransferPage({
           </span>
         </span>
       </PageHeader>
-      {x.note ? <p className="mb-4 text-sm">{x.note}</p> : null}
-      {x.cancelReason ? (
-        <p className="mb-4 text-sm">
-          {t('tr.cancelledBy')} {x.cancelledByName}: {x.cancelReason}
-        </p>
-      ) : null}
-      <Card title={t('tr.lines')} id="lines" flush>
-        <Table caption={t('tr.lines')}>
-          <thead>
-            <tr>
-              <th scope="col" className={th}>
-                {t('inv.sku')}
-              </th>
-              <th scope="col" className={thNum}>
-                {t('inv.quantity')}
-              </th>
-              <th scope="col" className={thNum}>
-                {t('inv.value')}
-              </th>
-              <th scope="col" className={th}>
-                {t('inv.movements')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {x.lines.map((l) => (
-              <tr key={l.lineNo} data-transfer-line={l.sku}>
-                <td className={td}>
-                  <Ltr>{l.sku}</Ltr> {l.partName}
-                </td>
-                <td className={tdNum}>
-                  <Ltr>{`${l.quantity} ${t(`inv.unit.${l.unit}` as MessageKey)}`}</Ltr>
-                </td>
-                <td className={tdNum}>
-                  <Ltr>{l.value}</Ltr>
-                </td>
-                <td className={td}>
-                  <Ltr>{[l.outNumber, l.inNumber, l.backNumber].filter(Boolean).join(' · ')}</Ltr>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card>
-      {x.actions.includes('receive') ? (
-        <Card title={t('tr.receive')} id="receive">
-          <p className="mb-3 text-sm text-[var(--color-text-muted)]">{t('tr.receiveHelp')}</p>
-          <InlineForm
-            action={transferAction.bind(null, locale, companyId, x.id, 'receive')}
-            locale={locale}
-            submitLabel={t('tr.receive')}
-            ariaLabel={t('tr.receive')}
-          />
-        </Card>
-      ) : null}
-      {x.actions.includes('cancel') ? (
-        <Card title={t('tr.cancel')} id="cancel">
-          <p className="mb-3 text-sm text-[var(--color-text-muted)]">{t('tr.cancelHelp')}</p>
-          <InlineForm
-            action={transferAction.bind(null, locale, companyId, x.id, 'cancel')}
-            locale={locale}
-            submitLabel={t('tr.cancel')}
-            submitClassName={buttonSecondary}
-            ariaLabel={t('tr.cancel')}
-          >
-            <label className={fieldLabel}>
-              {t('inv.reason')}
-              <input name="reason" maxLength={300} className={`${inputClass} w-72`} />
-            </label>
-          </InlineForm>
-        </Card>
-      ) : null}
+      <SplitLayout
+        main={
+          <>
+            {x.note ? <p className="mb-4 text-sm">{x.note}</p> : null}
+            {x.cancelReason ? (
+              <p className="mb-4 text-sm">
+                {t('tr.cancelledBy')} {x.cancelledByName}: {x.cancelReason}
+              </p>
+            ) : null}
+            <Card title={t('tr.lines')} id="lines" flush>
+              <Table caption={t('tr.lines')}>
+                <thead>
+                  <tr>
+                    <th scope="col" className={th}>
+                      {t('inv.sku')}
+                    </th>
+                    <th scope="col" className={thNum}>
+                      {t('inv.quantity')}
+                    </th>
+                    <th scope="col" className={thNum}>
+                      {t('inv.value')}
+                    </th>
+                    <th scope="col" className={th}>
+                      {t('inv.movements')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {x.lines.map((l) => (
+                    <tr key={l.lineNo} data-transfer-line={l.sku}>
+                      <td className={td}>
+                        <Ltr>{l.sku}</Ltr> {l.partName}
+                      </td>
+                      <td className={tdNum}>
+                        <Ltr>{`${l.quantity} ${t(`inv.unit.${l.unit}` as MessageKey)}`}</Ltr>
+                      </td>
+                      <td className={tdNum}>
+                        <Ltr>{l.value}</Ltr>
+                      </td>
+                      <td className={td}>
+                        <Ltr>{[l.outNumber, l.inNumber, l.backNumber].filter(Boolean).join(' · ')}</Ltr>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card>
+          </>
+        }
+        side={
+          <>
+            {x.actions.includes('receive') ? (
+              <Card title={t('tr.receive')} id="receive">
+                <p className="mb-3 text-sm text-[var(--color-text-muted)]">{t('tr.receiveHelp')}</p>
+                <InlineForm
+                  action={transferAction.bind(null, locale, companyId, x.id, 'receive')}
+                  locale={locale}
+                  submitLabel={t('tr.receive')}
+                  ariaLabel={t('tr.receive')}
+                />
+              </Card>
+            ) : null}
+            {x.actions.includes('cancel') ? (
+              <Card title={t('tr.cancel')} id="cancel">
+                <p className="mb-3 text-sm text-[var(--color-text-muted)]">{t('tr.cancelHelp')}</p>
+                <InlineForm
+                  action={transferAction.bind(null, locale, companyId, x.id, 'cancel')}
+                  locale={locale}
+                  submitLabel={t('tr.cancel')}
+                  submitClassName={buttonSecondary}
+                  ariaLabel={t('tr.cancel')}
+                >
+                  <label className={fieldLabel}>
+                    {t('inv.reason')}
+                    <input name="reason" maxLength={300} className={`${inputClass} w-72`} />
+                  </label>
+                </InlineForm>
+              </Card>
+            ) : null}
+          </>
+        }
+      />
     </>
   );
 }

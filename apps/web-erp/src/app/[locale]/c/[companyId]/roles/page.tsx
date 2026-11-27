@@ -5,7 +5,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { RoleForm } from '@/components/access/RoleForm';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, tdNum, th, thNum } from '@/components/ui';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Ltr,
+  PageHeader,
+  Table,
+  td,
+  tdNum,
+  th,
+  thNum,
+  JumpAction,
+} from '@/components/ui';
 import { roleLabel } from '@/lib/access';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -28,7 +40,10 @@ export default async function RolesPage({
   const base = `/${locale}/c/${companyId}/roles`;
   return (
     <>
-      <PageHeader title={t('roles.title')} />
+      <PageHeader
+        title={t('roles.title')}
+        actions={can('iam.role.manage') ? <JumpAction href="#new-role" label={t('roles.new')} /> : null}
+      />
       <Card flush>
         {!roles.ok ? (
           <div className="p-5">

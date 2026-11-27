@@ -12,6 +12,14 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: UI/UX transformation, slice 2b: list and record-page rules across modules
+
+- **Lists** (customers, parts, suppliers, roles, chart of accounts, branches, users, fiscal periods): the list first, the create form after it, and a primary "Add …" button in the header that jumps to the form.
+- **Record pages** (customer, vehicle, part, supplier, supplier bill, transfer): the work in the main column; the record's details and its edit form in a side column from 1280 px (stacked below).
+- Inline forms are spaced 12 px; document numbers no longer break at their hyphen on the bill page.
+- No API, permission or business-rule change.
+- Evidence: full gate 48/48 (uncached); browser end-to-end 49/49; supplier bill layout reviewed at 1280 px.
+
 ## 2026-12-01: UI/UX transformation, slice 2a: empty states, phone headers, job board
 
 - Empty states with icons on 27 screens. Jumps to the add form on parts and suppliers, and "New job card" on the empty job list.
