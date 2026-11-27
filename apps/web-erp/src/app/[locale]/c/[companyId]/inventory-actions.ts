@@ -13,6 +13,7 @@ import {
   orderJobPartSchema,
   partPriceSchema,
   receiveStockSchema,
+  reorderLevelSchema,
   updatePartSchema,
 } from '@erp/validation';
 import { redirect } from 'next/navigation';
@@ -54,7 +55,8 @@ export type PartOp =
   | { kind: 'update' }
   | { kind: 'price' }
   | { kind: 'receive'; branchId: string }
-  | { kind: 'adjust'; branchId: string };
+  | { kind: 'adjust'; branchId: string }
+  | { kind: 'reorder' | 'reorderRemove'; branchId: string };
 
 export async function partAction(
   localeRaw: string,
@@ -90,6 +92,32 @@ export async function partAction(
       return mutate(locale, values, async (api) => {
         unwrap(
           await api.PUT('/api/v1/companies/{companyId}/parts/{partId}/price', { ...path, body: v.data }),
+        );
+      });
+    }
+    if (op.kind === 'reorder' || op.kind === 'reorderRemove') {
+      const levelPath = { params: { path: { companyId, partId, branchId: op.branchId } } };
+      if (op.kind === 'reorderRemove')
+        return mutate(locale, values, async (api) => {
+          unwrap(
+            await api.DELETE(
+              '/api/v1/companies/{companyId}/parts/{partId}/reorder-levels/{branchId}',
+              levelPath,
+            ),
+          );
+        });
+      const v = validate(reorderLevelSchema, {
+        minQuantity: values.minQuantity ?? '',
+        reorderQuantity: values.reorderQuantity ?? '',
+        version: values.version ? Number(values.version) : undefined,
+      });
+      if (!v.ok) return { fieldErrors: v.fieldErrors, values };
+      return mutate(locale, values, async (api) => {
+        unwrap(
+          await api.PUT('/api/v1/companies/{companyId}/parts/{partId}/reorder-levels/{branchId}', {
+            ...levelPath,
+            body: v.data,
+          }),
         );
       });
     }

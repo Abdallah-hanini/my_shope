@@ -41,11 +41,11 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Finance | Budget vs actual | — | no budgets are recorded |
 | Sales | Revenue by labour vs parts, by branch and month, average invoice, discounts, credit notes, reconciled to ledger revenue | ✅ R2a | invoices, their journals |
 | Sales | Best-selling parts and services | ✅ R2a | invoice lines |
-| Sales | Sales targets | — | no targets are recorded (R3: owner-set targets) |
+| Sales | Monthly sales targets (company or branch) against actual, achievement, this month's pace | ✅ R3a | sales targets, invoices |
 | Inventory | Stock value by part and branch, reconciled | ✅ | stock, ledger |
 | Inventory | Movements, special orders, transfers | ✅ | movements |
 | Inventory | Stock flow per part, fast / slow / dead stock, turnover, reconciled to the inventory account | ✅ R2a | movements |
-| Inventory | Low stock / reorder recommendations | — | no reorder levels yet (R3 adds them) |
+| Inventory | Low and out of stock against per-branch reorder points, suggested order and its value | ✅ R3a | reorder points, stock, reservations |
 | Purchasing | Supplier bills, payables reconciliation | ✅ | bills |
 | Purchasing | Supplier performance (price variance, special-order lead time) | ☐ R3 | bills, job parts |
 | CRM | Customers: total, new, active, returning, top customers (balances: receivables aging) | ✅ R2a | customers, invoices |
@@ -53,7 +53,8 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Operations | Jobs opened / delivered, time to deliver, first-time right, open and overdue now, by branch | ✅ R2a | job cards |
 | Operations | Technician hours and efficiency | ✅ | labour time |
 | HR | Headcount, attendance, payroll, leave | — | HR and payroll are not built (needs the owner's payroll-law decisions) |
-| Alerts | Overdue payables/receivables, low margin, reconciliation breaks | ☐ R3 | reports above + notifications |
+| Alerts | Out/low stock, receivables over 60 days, overdue payables, AR/AP reconciliation breaks, negative gross margin this month, sales behind target pace (live, per permission, on the dashboard) | ✅ R3a | reports above |
+| Alerts | Alert history, thresholds per company, notification delivery | ☐ R3b | notifications |
 | Personalisation | Saved filters, favourite reports, personal dashboards, scheduled e-mail | ☐ R3 | needs a configured mail server for e-mail delivery |
 
 ## 3. Report catalog (as shown at /reports)
@@ -74,7 +75,8 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Workshop | Labour time, appointments | `/labour-time`, `/appointments` | workshop.job.manage / read |
 | Workshop | Workshop operations | `/reports/operations` | workshop.job.read |
 | Sales | Sales, customers | `/reports/sales`, `/reports/customers` | reports.financial.read |
-| Inventory | Stock movement | `/reports/stock-movement` | inventory.read |
+| Inventory | Stock movement, low stock | `/reports/stock-movement`, `/reports/low-stock` | inventory.read |
+| Sales | Sales targets | `/reports/targets` | reports.financial.read (setting: reports.targets.manage) |
 
 ## 4. Tracker
 
@@ -84,4 +86,5 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | R2a | Sales, operations, customers and stock-movement reports (API, pages, catalog, tests) | ✅ |
 | R2b1 | Cash flow and tax summary (API, pages, tests) | ✅ |
 | R2b2 | Excel/CSV downloads for the new reports, from each report's header (PDF: print on every report) | ✅ |
-| R3 | Owner-set targets and reorder levels; alerts; saved filters and favourites; personal dashboards; scheduled reports (needs mail settings) | ☐ |
+| R3a | Reorder points and low-stock list; monthly sales targets with pace; live alerts on the dashboard | ✅ |
+| R3b | Alert history and notification delivery; saved filters and favourites; personal dashboards; scheduled reports (needs mail settings) | ☐ |

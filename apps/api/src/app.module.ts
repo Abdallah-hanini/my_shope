@@ -24,6 +24,7 @@ import { SearchModule } from './search/search.module';
 import { SettingsModule } from './settings/settings.module';
 import { QuoteModule } from './quotes/quote.module';
 import { BillingModule } from './billing/billing.module';
+import { PlanningModule } from './planning/planning.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { PurchasingModule } from './purchasing/purchasing.module';
 
@@ -73,6 +74,7 @@ export class AppModule {
         QuoteModule,
         BillingModule,
         InventoryModule,
+        PlanningModule,
         PurchasingModule,
       ],
       providers: [

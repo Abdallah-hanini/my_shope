@@ -56,6 +56,7 @@ model Company {
   pricingSettings PricingSettings?
   labourRates     LabourRate[]
   suppliers       Supplier[]
+  salesTargets    SalesTarget[]
 
   @@map("company")
   @@schema("org")
@@ -86,6 +87,8 @@ model Branch {
   supplierBills    SupplierBill[]
   transfersOut     StockTransfer[]   @relation("transferFrom")
   transfersIn      StockTransfer[]   @relation("transferTo")
+  reorderLevels    ReorderLevel[]
+  salesTargets     SalesTarget[]
 
   @@unique([companyId, code])
   @@unique([companyId, id])
@@ -1089,6 +1092,7 @@ model Part {
   movements     StockMovement[]
   jobParts      JobPart[]
   transferLines StockTransferLine[]
+  reorderLevels ReorderLevel[]
 
   @@unique([companyId, sku])
   @@unique([companyId, id])
@@ -1111,6 +1115,27 @@ model Stock {
   @@id([branchId, partId])
   @@index([companyId, partId])
   @@map("stock")
+  @@schema("inventory")
+}
+
+/// Reorder point of a part at a branch (R3a). Low when available (on hand − reserved for jobs)
+/// is at or below minQuantity; the suggested order is max(reorderQuantity, minQuantity − available).
+model ReorderLevel {
+  companyId       String   @map("company_id") @db.Uuid
+  branchId        String   @map("branch_id") @db.Uuid
+  partId          String   @map("part_id") @db.Uuid
+  minQuantity     Decimal  @map("min_quantity") @db.Decimal(14, 3)
+  reorderQuantity Decimal  @map("reorder_quantity") @db.Decimal(14, 3)
+  version         Int      @default(1)
+  updatedBy       String   @map("updated_by") @db.Uuid
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  part   Part   @relation(fields: [companyId, partId], references: [companyId, id], onDelete: Restrict)
+  branch Branch @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  @@id([branchId, partId])
+  @@index([companyId, partId])
+  @@map("reorder_level")
   @@schema("inventory")
 }
 
@@ -1358,4 +1383,28 @@ model StockTransferLine {
   @@id([transferId, lineNo])
   @@map("stock_transfer_line")
   @@schema("inventory")
+}
+
+/// Monthly sales target set by the owner (R3a): sales excluding tax as in the sales report, for one
+/// branch or (branch empty) the whole company. One per company, branch and month.
+model SalesTarget {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  branchId  String?  @map("branch_id") @db.Uuid
+  /// First day of the month.
+  month     DateTime @db.Date
+  amount    Decimal  @db.Decimal(16, 2)
+  version   Int      @default(1)
+  updatedBy String   @map("updated_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  branch  Branch? @relation(fields: [companyId, branchId], references: [companyId, id], onDelete: Restrict)
+
+  /// NULLS NOT DISTINCT in SQL: one company-wide target (empty branch) per month too.
+  @@unique([companyId, branchId, month], map: "sales_target_unique")
+  @@index([companyId, month])
+  @@map("sales_target")
+  @@schema("reporting")
 }

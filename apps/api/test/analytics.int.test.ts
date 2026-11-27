@@ -306,3 +306,208 @@ describe('stock movement', () => {
     await a('qc').get(`${base()}/reports/stock-movement?${range()}`).expect(403);
   });
 });
+
+// ── R3a planning: reorder points, low stock, targets, alerts ─────────────────
+
+describe('reorder points and low stock', () => {
+  beforeAll(async () => {
+    ids.WAK = (await a('admin').post(`${base()}/branches`, { code: 'WAK', name: 'WAK' }).expect(201)).body.id;
+    await person('stockDoh', ['inventory.read', 'inventory.manage']); // DOH only
+    // Job 3 in progress reserves 2 × PAD (on hand 2): PAD available 0.
+    let j = (
+      await a('admin')
+        .post(`${base()}/jobs`, {
+          branchId: ids.DOH,
+          vehicleId: ids.vehicle,
+          complaint: 'Brakes',
+          odometerIn: 30,
+          fuelLevel: 'half',
+          tasks: [{ description: 'Brakes', estimatedHours: '1' }],
+        })
+        .expect(201)
+    ).body;
+    const step = async (t: string, path: string, body: object = {}) =>
+      (j = (
+        await a(t)
+          .post(`${base()}/jobs/${j.id}/${path}`, { version: j.version, ...body })
+          .expect(200)
+      ).body);
+    await step('admin', 'inspection', { items: INSPECTION_ITEMS.map((i) => ({ key: i.key, status: 'ok' })) });
+    await step('admin', 'authorize', { authorizedByName: 'Noor', authorizedVia: 'in_person' });
+    await step('admin', `tasks/${j.tasks[0].id}/assign`, { technicianId: ids.tech });
+    await step('tech', 'start');
+    await a('admin').post(`${base()}/jobs/${j.id}/parts`, { partId: ids.pad, quantity: '2' }).expect(201);
+  });
+
+  it('lists parts at or below their point with available = on hand − reserved and a suggested order', async () => {
+    const empty = (await a('admin').get(`${base()}/reports/low-stock`).expect(200)).body;
+    expect(empty).toMatchObject({ levelsSet: 0, outCount: 0, lowCount: 0, lines: [] });
+    // OIL: on hand 20 − 3 issued = 17, point 17 → low; suggested max(24, 17 − 17) = 24 × 4.00 = 96.00.
+    const oil = await a('stockDoh')
+      .put(`${base()}/parts/${ids.oil}/reorder-levels/${ids.DOH}`, {
+        minQuantity: '17',
+        reorderQuantity: '24',
+      })
+      .expect(200);
+    expect(oil.body).toMatchObject({ minQuantity: '17.000', reorderQuantity: '24.000', version: 1 });
+    // PAD: on hand 2, reserved 2 → available 0 → out; suggested max(4, 1 − 0) = 4 × 50.00 = 200.00.
+    await a('admin')
+      .put(`${base()}/parts/${ids.pad}/reorder-levels/${ids.DOH}`, { minQuantity: '1', reorderQuantity: '4' })
+      .expect(200);
+    const r = (await a('admin').get(`${base()}/reports/low-stock`).expect(200)).body;
+    expect(r).toMatchObject({ levelsSet: 2, outCount: 1, lowCount: 1, suggestedValue: '296.00' });
+    expect(r.lines.map((l: { sku: string; status: string }) => [l.sku, l.status])).toEqual([
+      ['PAD', 'out'],
+      ['OIL', 'low'],
+    ]);
+    expect(r.lines[0]).toMatchObject({
+      onHand: '2.000',
+      reserved: '2.000',
+      available: '0.000',
+      suggested: '4.000',
+      suggestedValue: '200.00',
+    });
+    expect(r.lines[1]).toMatchObject({ available: '17.000', suggested: '24.000', suggestedValue: '96.00' });
+    // The part page shows the point per branch.
+    const part = (await a('admin').get(`${base()}/parts/${ids.oil}`).expect(200)).body;
+    expect(part.branches.find((b: { branchCode: string }) => b.branchCode === 'DOH')).toMatchObject({
+      minQuantity: '17.000',
+      reorderVersion: 1,
+      canSetReorder: true,
+    });
+  });
+
+  it('changes need the current version; branch scope and permissions are enforced', async () => {
+    const url = `${base()}/parts/${ids.oil}/reorder-levels`;
+    await a('admin').put(`${url}/${ids.DOH}`, { minQuantity: '5', reorderQuantity: '24' }).expect(409);
+    await a('admin')
+      .put(`${url}/${ids.DOH}`, { minQuantity: '5', reorderQuantity: '24', version: 9 })
+      .expect(409);
+    await a('admin')
+      .put(`${url}/${ids.DOH}`, { minQuantity: '16', reorderQuantity: '24', version: 1 })
+      .expect(200);
+    await a('stockDoh').put(`${url}/${ids.WAK}`, { minQuantity: '1', reorderQuantity: '1' }).expect(403);
+    await a('tech').put(`${url}/${ids.DOH}`, { minQuantity: '1', reorderQuantity: '1' }).expect(403);
+    await a('tech').get(`${base()}/reports/low-stock`).expect(403);
+    await a('admin')
+      .put(`${url}/${ids.DOH}`, { minQuantity: '-1', reorderQuantity: '1', version: 2 })
+      .expect(400);
+    await a('admin')
+      .put(`${url}/${ids.DOH}`, { minQuantity: '1', reorderQuantity: '0', version: 2 })
+      .expect(400);
+    // 16 < 17 available: OIL is no longer low.
+    const r = (await a('stockDoh').get(`${base()}/reports/low-stock?branchId=${ids.DOH}`).expect(200)).body;
+    expect(r.lines.map((l: { sku: string }) => l.sku)).toEqual(['PAD']);
+    await a('stockDoh').get(`${base()}/reports/low-stock?branchId=${ids.WAK}`).expect(403);
+    const audit = await prisma.auditEvent.count({
+      where: { companyId, action: 'inventory.reorder_level.set' },
+    });
+    expect(audit).toBe(3);
+  });
+
+  it('removing a point takes the part off the list', async () => {
+    await a('admin').delete(`${base()}/parts/${ids.oil}/reorder-levels/${ids.DOH}`).expect(204);
+    await a('admin').delete(`${base()}/parts/${ids.oil}/reorder-levels/${ids.DOH}`).expect(404);
+    const r = (await a('admin').get(`${base()}/reports/low-stock`).expect(200)).body;
+    expect(r.levelsSet).toBe(1);
+  });
+});
+
+describe('sales targets', () => {
+  const month = () => today.slice(0, 7);
+  beforeAll(async () => {
+    await person('targetsDoh', ['reports.financial.read', 'reports.targets.manage']); // DOH only
+  });
+
+  it('company target: actual is the sales report figure, achievement and pace for this month', async () => {
+    const t = (await a('admin').put(`${base()}/sales-targets`, { month: month(), amount: '360' }).expect(200))
+      .body;
+    expect(t).toMatchObject({ month: month(), branchId: null, amount: '360.00', version: 1 });
+    const r = (
+      await a('admin')
+        .get(`${base()}/reports/targets?year=${today.slice(0, 4)}`)
+        .expect(200)
+    ).body;
+    const m = r.months.find((x: { month: string }) => x.month === month());
+    expect(m).toEqual({ month: month(), target: '360.00', actual: '180.00', achievementPct: '50.0' });
+    expect(r.months).toHaveLength(12);
+    expect(r).toMatchObject({ targetTotal: '360.00', actualOfTargeted: '180.00', canManage: true });
+    const [y, mo, day] = today.split('-').map(Number) as [number, number, number];
+    const days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    const expected = (Math.round((360 * day * 100) / days) / 100).toFixed(2);
+    expect(r.pace).toEqual({
+      month: month(),
+      day,
+      days,
+      target: '360.00',
+      expected,
+      actual: '180.00',
+      behind: 180 < Number(expected),
+    });
+  });
+
+  it('one target per month and branch; versioned changes; branch scope; validation', async () => {
+    await a('admin').put(`${base()}/sales-targets`, { month: month(), amount: '400' }).expect(409);
+    await a('admin')
+      .put(`${base()}/sales-targets`, { month: month(), amount: '1000000', version: 1 })
+      .expect(200);
+    await a('admin').put(`${base()}/sales-targets`, { month: '2026-13', amount: '1' }).expect(400);
+    await a('admin')
+      .put(`${base()}/sales-targets`, { month: month(), amount: '0', branchId: ids.DOH })
+      .expect(400);
+    // Branch-limited: own branch yes, company target no, reading needs a branch.
+    const dohT = await a('targetsDoh')
+      .put(`${base()}/sales-targets`, { month: month(), amount: '200', branchId: ids.DOH })
+      .expect(200);
+    await a('targetsDoh').put(`${base()}/sales-targets`, { month: month(), amount: '200' }).expect(403);
+    await a('targetsDoh')
+      .put(`${base()}/sales-targets`, { month: month(), amount: '200', branchId: ids.WAK })
+      .expect(403);
+    await a('targetsDoh')
+      .get(`${base()}/reports/targets?year=${today.slice(0, 4)}`)
+      .expect(422);
+    const r = (
+      await a('targetsDoh')
+        .get(`${base()}/reports/targets?year=${today.slice(0, 4)}&branchId=${ids.DOH}`)
+        .expect(200)
+    ).body;
+    expect(r.months.find((x: { month: string }) => x.month === month())).toMatchObject({
+      target: '200.00',
+      actual: '180.00',
+      achievementPct: '90.0',
+    });
+    expect(r.targets.map((x: { branchCode: string | null }) => x.branchCode)).toEqual(['DOH']);
+    await a('tech').put(`${base()}/sales-targets`, { month: month(), amount: '1' }).expect(403);
+    await a('tech').get(`${base()}/reports/targets?year=2026`).expect(403);
+    // Remove: the company target is not visible to a branch-limited manager.
+    const company = (
+      await a('admin')
+        .get(`${base()}/reports/targets?year=${today.slice(0, 4)}`)
+        .expect(200)
+    ).body.targets.find((x: { branchId: string | null }) => x.branchId === null);
+    await a('targetsDoh').delete(`${base()}/sales-targets/${company.id}`).expect(404);
+    await a('targetsDoh').delete(`${base()}/sales-targets/${dohT.body.id}`).expect(204);
+  });
+});
+
+describe('alerts', () => {
+  it('each person sees only the alerts their permissions explain', async () => {
+    const admin = (await a('admin').get(`${base()}/alerts`).expect(200)).body;
+    const keys = admin.alerts.map((x: { key: string }) => x.key);
+    // PAD out of stock (danger first); the company target of 1 000 000 is far ahead of 180.00.
+    expect(keys[0]).toBe('stock_out');
+    expect(keys).toContain('sales_behind_target');
+    expect(keys).not.toContain('stock_low');
+    expect(keys).not.toContain('receivables_overdue'); // the only invoice is paid
+    expect(keys).not.toContain('receivables_unreconciled');
+    const behind = admin.alerts.find((x: { key: string }) => x.key === 'sales_behind_target');
+    expect(behind).toMatchObject({ amount: '180.00', href: 'reports/targets' });
+    const stockOnly = (await a('stockDoh').get(`${base()}/alerts`).expect(200)).body;
+    expect(stockOnly.alerts.map((x: { key: string }) => x.key)).toEqual(['stock_out']);
+    expect((await a('tech').get(`${base()}/alerts`).expect(200)).body.alerts).toEqual([]);
+    const outsider = await createUser(prisma);
+    await api(app, await auth.sign(outsider.sub))
+      .get(`${base()}/alerts`)
+      .expect(404);
+  });
+});

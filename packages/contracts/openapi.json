@@ -7634,6 +7634,327 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/parts/{partId}/reorder-levels/{branchId}": {
+      "put": {
+        "operationId": "setReorderLevel",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderLevelBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderLevelDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the reorder point of a part at a branch",
+        "tags": [
+          "planning"
+        ]
+      },
+      "delete": {
+        "operationId": "removeReorderLevel",
+        "parameters": [
+          {
+            "name": "partId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove the reorder point of a part at a branch",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/low-stock": {
+      "get": {
+        "operationId": "getLowStock",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LowStockDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Parts at or below their reorder point, with a suggested order",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/targets": {
+      "get": {
+        "operationId": "getSalesTargets",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Empty: the company target",
+            "schema": {}
+          },
+          {
+            "name": "year",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetsReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Monthly sales targets against actual sales",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/sales-targets": {
+      "put": {
+        "operationId": "setSalesTarget",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalesTargetBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesTargetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a monthly sales target",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/sales-targets/{targetId}": {
+      "delete": {
+        "operationId": "removeSalesTarget",
+        "parameters": [
+          {
+            "name": "targetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a monthly sales target",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/alerts": {
+      "get": {
+        "operationId": "getAlerts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Low stock, overdue balances, reconciliation breaks, negative margin, target pace",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/suppliers": {
       "get": {
         "operationId": "listSuppliers",
@@ -15347,6 +15668,24 @@
           "canAdjust": {
             "type": "boolean",
             "description": "The caller may adjust stock here"
+          },
+          "minQuantity": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reorder point (R3a)"
+          },
+          "reorderQuantity": {
+            "type": "string",
+            "nullable": true
+          },
+          "reorderVersion": {
+            "type": "number",
+            "nullable": true,
+            "description": "Version of the reorder point"
+          },
+          "canSetReorder": {
+            "type": "boolean",
+            "description": "The caller may set the reorder point here (inventory.manage)"
           }
         },
         "required": [
@@ -15356,7 +15695,8 @@
           "reserved",
           "value",
           "canReceive",
-          "canAdjust"
+          "canAdjust",
+          "canSetReorder"
         ]
       },
       "StockMovementDto": {
@@ -16030,6 +16370,445 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "ReorderLevelBodyDto": {
+        "type": "object",
+        "properties": {
+          "minQuantity": {
+            "type": "string",
+            "example": "4",
+            "description": "Reorder point: low at or below this available quantity"
+          },
+          "reorderQuantity": {
+            "type": "string",
+            "example": "12",
+            "description": "Usual quantity to order"
+          },
+          "version": {
+            "type": "number",
+            "description": "Required to change an existing level"
+          }
+        },
+        "required": [
+          "minQuantity",
+          "reorderQuantity"
+        ]
+      },
+      "ReorderLevelDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "minQuantity": {
+            "type": "string"
+          },
+          "reorderQuantity": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "partId",
+          "branchId",
+          "minQuantity",
+          "reorderQuantity",
+          "version"
+        ]
+      },
+      "LowStockLineDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string"
+          },
+          "branchCode": {
+            "type": "string"
+          },
+          "onHand": {
+            "type": "string"
+          },
+          "reserved": {
+            "type": "string",
+            "description": "Reserved for jobs"
+          },
+          "available": {
+            "type": "string",
+            "description": "On hand − reserved"
+          },
+          "minQuantity": {
+            "type": "string"
+          },
+          "reorderQuantity": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "out",
+              "low"
+            ]
+          },
+          "suggested": {
+            "type": "string",
+            "description": "max(reorder quantity, minimum − available)"
+          },
+          "averageCost": {
+            "type": "string",
+            "nullable": true,
+            "description": "Branch weighted average"
+          },
+          "suggestedValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "Suggested × average cost (null without a cost)"
+          }
+        },
+        "required": [
+          "partId",
+          "sku",
+          "name",
+          "unit",
+          "branchId",
+          "branchCode",
+          "onHand",
+          "reserved",
+          "available",
+          "minQuantity",
+          "reorderQuantity",
+          "status",
+          "suggested"
+        ]
+      },
+      "LowStockDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string"
+          },
+          "levelsSet": {
+            "type": "number",
+            "description": "Part-and-branch pairs with a reorder point in scope"
+          },
+          "outCount": {
+            "type": "number"
+          },
+          "lowCount": {
+            "type": "number"
+          },
+          "suggestedValue": {
+            "type": "string",
+            "description": "Sum of suggestedValue where known"
+          },
+          "lines": {
+            "description": "Out of stock first, then by SKU",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LowStockLineDto"
+            }
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "currency",
+          "levelsSet",
+          "outCount",
+          "lowCount",
+          "suggestedValue",
+          "lines",
+          "asOf"
+        ]
+      },
+      "TargetMonthDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "target": {
+            "type": "string",
+            "nullable": true
+          },
+          "actual": {
+            "type": "string",
+            "description": "Sales excluding tax (as the sales report)"
+          },
+          "achievementPct": {
+            "type": "string",
+            "nullable": true,
+            "description": "actual ÷ target × 100"
+          }
+        },
+        "required": [
+          "month",
+          "actual"
+        ]
+      },
+      "TargetPaceDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "day": {
+            "type": "number"
+          },
+          "days": {
+            "type": "number"
+          },
+          "target": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string",
+            "description": "target × day ÷ days"
+          },
+          "actual": {
+            "type": "string"
+          },
+          "behind": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "month",
+          "day",
+          "days",
+          "target",
+          "expected",
+          "actual",
+          "behind"
+        ]
+      },
+      "SalesTargetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "branchCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "month",
+          "amount",
+          "version"
+        ]
+      },
+      "TargetsReportDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Empty: the whole company"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetMonthDto"
+            }
+          },
+          "targetTotal": {
+            "type": "string"
+          },
+          "actualOfTargeted": {
+            "type": "string",
+            "description": "Actual sales in months that have a target"
+          },
+          "pace": {
+            "nullable": true,
+            "description": "This month, when it has a target",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TargetPaceDto"
+              }
+            ]
+          },
+          "targets": {
+            "description": "Targets of the year the caller can see",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesTargetDto"
+            }
+          },
+          "canManage": {
+            "type": "boolean",
+            "description": "The caller may set targets (for the whole company or some branch)"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "year",
+          "currency",
+          "months",
+          "targetTotal",
+          "actualOfTargeted",
+          "targets",
+          "canManage",
+          "asOf"
+        ]
+      },
+      "SalesTargetBodyDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Empty: the whole company"
+          },
+          "amount": {
+            "type": "string",
+            "example": "50000.00",
+            "description": "Sales excluding tax"
+          },
+          "version": {
+            "type": "number",
+            "description": "Required to change an existing target"
+          }
+        },
+        "required": [
+          "month",
+          "amount"
+        ]
+      },
+      "AlertDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "stock_out",
+              "stock_low",
+              "receivables_overdue",
+              "payables_overdue",
+              "receivables_unreconciled",
+              "payables_unreconciled",
+              "sales_behind_target",
+              "negative_gross_margin"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "danger",
+              "warning"
+            ]
+          },
+          "count": {
+            "type": "number",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true
+          },
+          "expected": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sales target pace: expected by now"
+          },
+          "href": {
+            "type": "string",
+            "example": "reports/low-stock",
+            "description": "Page under the company that explains it"
+          }
+        },
+        "required": [
+          "key",
+          "severity",
+          "href"
+        ]
+      },
+      "AlertsDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "alerts": {
+            "description": "Danger first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertDto"
+            }
+          },
+          "overdueDays": {
+            "type": "number",
+            "description": "Overdue receivables threshold in days"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "currency",
+          "alerts",
+          "overdueDays",
+          "asOf"
         ]
       },
       "SupplierDto": {

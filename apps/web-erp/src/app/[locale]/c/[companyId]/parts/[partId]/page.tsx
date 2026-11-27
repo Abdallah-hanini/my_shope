@@ -79,6 +79,16 @@ export default async function PartPage({
                   <Ltr>{b.averageCost ?? '—'}</Ltr> · {t('inv.value')}:{' '}
                   <Ltr>{`${b.value} ${company.baseCurrency}`}</Ltr>
                 </p>
+                <p className="mb-3 text-sm text-[var(--color-text-muted)]" data-reorder={b.branchCode}>
+                  {b.minQuantity ? (
+                    <>
+                      {t('plan.reorderPoint')}: <Ltr>{`${b.minQuantity} ${unit}`}</Ltr> ·{' '}
+                      {t('plan.reorderQty')}: <Ltr>{`${b.reorderQuantity} ${unit}`}</Ltr>
+                    </>
+                  ) : (
+                    t('plan.noReorderPoint')
+                  )}
+                </p>
                 <div className="flex flex-col gap-4">
                   {b.canReceive ? (
                     <InlineForm
@@ -122,6 +132,55 @@ export default async function PartPage({
                         <input name="reference" maxLength={80} dir="ltr" className={`${inputClass} w-44`} />
                       </label>
                     </InlineForm>
+                  ) : null}
+                  {b.canSetReorder ? (
+                    <details>
+                      <summary className="cursor-pointer text-sm font-medium">
+                        {t('plan.setReorderPoint')}
+                      </summary>
+                      <InlineForm
+                        action={act({ kind: 'reorder', branchId: b.branchId })}
+                        locale={locale}
+                        submitLabel={t('cust.save')}
+                        submitClassName={buttonSecondary}
+                        ariaLabel={`${t('plan.setReorderPoint')} ${b.branchCode}`}
+                      >
+                        {b.reorderVersion ? (
+                          <input type="hidden" name="version" value={b.reorderVersion} />
+                        ) : null}
+                        <label className={fieldLabel}>
+                          {`${t('plan.reorderPoint')} (${unit})`}
+                          <input
+                            name="minQuantity"
+                            defaultValue={b.minQuantity ?? ''}
+                            inputMode="decimal"
+                            dir="ltr"
+                            className={`${inputClass} w-28`}
+                          />
+                        </label>
+                        <label className={fieldLabel}>
+                          {`${t('plan.reorderQty')} (${unit})`}
+                          <input
+                            name="reorderQuantity"
+                            defaultValue={b.reorderQuantity ?? ''}
+                            inputMode="decimal"
+                            dir="ltr"
+                            className={`${inputClass} w-28`}
+                          />
+                        </label>
+                      </InlineForm>
+                      {b.minQuantity ? (
+                        <InlineForm
+                          action={act({ kind: 'reorderRemove', branchId: b.branchId })}
+                          locale={locale}
+                          submitLabel={t('plan.removeReorderPoint')}
+                          submitClassName={buttonSecondary}
+                          ariaLabel={`${t('plan.removeReorderPoint')} ${b.branchCode}`}
+                        >
+                          {null}
+                        </InlineForm>
+                      ) : null}
+                    </details>
                   ) : null}
                   {b.canAdjust ? (
                     <details>

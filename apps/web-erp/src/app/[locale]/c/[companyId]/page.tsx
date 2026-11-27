@@ -9,8 +9,10 @@ import {
 } from '@erp/localization';
 import { AlertTriangle, BookText, Landmark, Receipt, TrendingUp, Wallet } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { TrendChart } from '@/components/dashboard/charts';
+import { AlertsCard } from '@/components/dashboard/AlertsCard';
 import { KpiCard } from '@/components/dashboard/KpiCard';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import {
@@ -61,7 +63,15 @@ export default async function ExecutiveDashboard({
   const { api, can, company } = ctx.data;
   const base = `/${locale}/c/${companyId}`;
   if (!can('reports.financial.read'))
-    return <CompanyLinks locale={locale} base={base} can={can} title={companyName(company, locale)} />;
+    return (
+      <CompanyLinks
+        locale={locale}
+        base={base}
+        can={can}
+        title={companyName(company, locale)}
+        alerts={<AlertsCard api={api} companyId={companyId} locale={locale} base={base} />}
+      />
+    );
 
   const now = currentMonth(company.timezone);
   const to = sp.to && MONTH.test(sp.to) ? sp.to : now;
@@ -169,6 +179,8 @@ export default async function ExecutiveDashboard({
           </div>
         </form>
       </Card>
+
+      <AlertsCard api={api} companyId={companyId} locale={locale} base={base} />
 
       {!summary.ok ? (
         <ProblemNotice result={summary} locale={locale} />
@@ -436,11 +448,13 @@ function CompanyLinks({
   base,
   can,
   title,
+  alerts,
 }: {
   locale: Locale;
   base: string;
   can: (p: string) => boolean;
   title: string;
+  alerts: ReactNode;
 }) {
   const t = createTranslator(locale);
   const areas = [
@@ -453,6 +467,7 @@ function CompanyLinks({
   return (
     <>
       <PageHeader title={title}>{t('overview.intro')}</PageHeader>
+      {alerts}
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {areas.map((a) => (
           <li key={a.href}>

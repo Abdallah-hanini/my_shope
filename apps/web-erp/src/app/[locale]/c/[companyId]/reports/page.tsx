@@ -18,6 +18,8 @@ import {
   ReceiptText,
   Scale,
   Timer,
+  Target,
+  TriangleAlert,
   TrendingUp,
   Wallet,
   type LucideIcon,
@@ -53,11 +55,13 @@ const CATALOG: { group: string; entries: Entry[] }[] = [
     entries: [
       { key: 'sales', href: 'reports/sales', icon: Banknote, perm: 'reports.financial.read' },
       { key: 'customers', href: 'reports/customers', icon: Users, perm: 'reports.financial.read' },
+      { key: 'targets', href: 'reports/targets', icon: Target, perm: 'reports.financial.read' },
     ],
   },
   {
     group: 'inventory',
     entries: [
+      { key: 'lowStock', href: 'reports/low-stock', icon: TriangleAlert, perm: 'inventory.read' },
       { key: 'stockMovement', href: 'reports/stock-movement', icon: RefreshCw, perm: 'inventory.read' },
       { key: 'stock', href: 'stock', icon: Boxes, perm: 'inventory.read' },
       {

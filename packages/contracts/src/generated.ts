@@ -2117,6 +2117,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/parts/{partId}/reorder-levels/{branchId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the reorder point of a part at a branch */
+        put: operations["setReorderLevel"];
+        post?: never;
+        /** Remove the reorder point of a part at a branch */
+        delete: operations["removeReorderLevel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/low-stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Parts at or below their reorder point, with a suggested order */
+        get: operations["getLowStock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monthly sales targets against actual sales */
+        get: operations["getSalesTargets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/sales-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a monthly sales target */
+        put: operations["setSalesTarget"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/sales-targets/{targetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a monthly sales target */
+        delete: operations["removeSalesTarget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Low stock, overdue balances, reconciliation breaks, negative margin, target pace */
+        get: operations["getAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/suppliers": {
         parameters: {
             query?: never;
@@ -4375,6 +4478,13 @@ export interface components {
             canReceive: boolean;
             /** @description The caller may adjust stock here */
             canAdjust: boolean;
+            /** @description Reorder point (R3a) */
+            minQuantity?: string | null;
+            reorderQuantity?: string | null;
+            /** @description Version of the reorder point */
+            reorderVersion?: number | null;
+            /** @description The caller may set the reorder point here (inventory.manage) */
+            canSetReorder: boolean;
         };
         StockMovementDto: {
             id: string;
@@ -4567,6 +4677,149 @@ export interface components {
         };
         CancelTransferDto: {
             reason: string;
+        };
+        ReorderLevelBodyDto: {
+            /**
+             * @description Reorder point: low at or below this available quantity
+             * @example 4
+             */
+            minQuantity: string;
+            /**
+             * @description Usual quantity to order
+             * @example 12
+             */
+            reorderQuantity: string;
+            /** @description Required to change an existing level */
+            version?: number;
+        };
+        ReorderLevelDto: {
+            partId: string;
+            branchId: string;
+            minQuantity: string;
+            reorderQuantity: string;
+            version: number;
+        };
+        LowStockLineDto: {
+            partId: string;
+            sku: string;
+            name: string;
+            nameAr?: string | null;
+            unit: string;
+            branchId: string;
+            branchCode: string;
+            onHand: string;
+            /** @description Reserved for jobs */
+            reserved: string;
+            /** @description On hand − reserved */
+            available: string;
+            minQuantity: string;
+            reorderQuantity: string;
+            /** @enum {string} */
+            status: "out" | "low";
+            /** @description max(reorder quantity, minimum − available) */
+            suggested: string;
+            /** @description Branch weighted average */
+            averageCost?: string | null;
+            /** @description Suggested × average cost (null without a cost) */
+            suggestedValue?: string | null;
+        };
+        LowStockDto: {
+            branchId?: string | null;
+            currency: string;
+            /** @description Part-and-branch pairs with a reorder point in scope */
+            levelsSet: number;
+            outCount: number;
+            lowCount: number;
+            /** @description Sum of suggestedValue where known */
+            suggestedValue: string;
+            /** @description Out of stock first, then by SKU */
+            lines: components["schemas"]["LowStockLineDto"][];
+            /** Format: date-time */
+            asOf: string;
+        };
+        TargetMonthDto: {
+            /** @example 2026-11 */
+            month: string;
+            target?: string | null;
+            /** @description Sales excluding tax (as the sales report) */
+            actual: string;
+            /** @description actual ÷ target × 100 */
+            achievementPct?: string | null;
+        };
+        TargetPaceDto: {
+            /** @example 2026-11 */
+            month: string;
+            day: number;
+            days: number;
+            target: string;
+            /** @description target × day ÷ days */
+            expected: string;
+            actual: string;
+            behind: boolean;
+        };
+        SalesTargetDto: {
+            id: string;
+            /** @example 2026-11 */
+            month: string;
+            branchId?: string | null;
+            branchCode?: string | null;
+            amount: string;
+            version: number;
+        };
+        TargetsReportDto: {
+            year: number;
+            /** @description Empty: the whole company */
+            branchId?: string | null;
+            currency: string;
+            months: components["schemas"]["TargetMonthDto"][];
+            targetTotal: string;
+            /** @description Actual sales in months that have a target */
+            actualOfTargeted: string;
+            /** @description This month, when it has a target */
+            pace?: components["schemas"]["TargetPaceDto"] | null;
+            /** @description Targets of the year the caller can see */
+            targets: components["schemas"]["SalesTargetDto"][];
+            /** @description The caller may set targets (for the whole company or some branch) */
+            canManage: boolean;
+            /** Format: date-time */
+            asOf: string;
+        };
+        SalesTargetBodyDto: {
+            /** @example 2026-11 */
+            month: string;
+            /** @description Empty: the whole company */
+            branchId?: string | null;
+            /**
+             * @description Sales excluding tax
+             * @example 50000.00
+             */
+            amount: string;
+            /** @description Required to change an existing target */
+            version?: number;
+        };
+        AlertDto: {
+            /** @enum {string} */
+            key: "stock_out" | "stock_low" | "receivables_overdue" | "payables_overdue" | "receivables_unreconciled" | "payables_unreconciled" | "sales_behind_target" | "negative_gross_margin";
+            /** @enum {string} */
+            severity: "danger" | "warning";
+            count?: number | null;
+            amount?: string | null;
+            /** @description Sales target pace: expected by now */
+            expected?: string | null;
+            /**
+             * @description Page under the company that explains it
+             * @example reports/low-stock
+             */
+            href: string;
+        };
+        AlertsDto: {
+            currency: string;
+            /** @description Danger first */
+            alerts: components["schemas"]["AlertDto"][];
+            /** @description Overdue receivables threshold in days */
+            overdueDays: number;
+            /** Format: date-time */
+            asOf: string;
         };
         SupplierDto: {
             id: string;
@@ -8589,6 +8842,168 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferDto"];
+                };
+            };
+        };
+    };
+    setReorderLevel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderLevelBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReorderLevelDto"];
+                };
+            };
+        };
+    };
+    removeReorderLevel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partId: string;
+                branchId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getLowStock: {
+        parameters: {
+            query?: {
+                branchId?: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LowStockDto"];
+                };
+            };
+        };
+    };
+    getSalesTargets: {
+        parameters: {
+            query: {
+                /** @description Empty: the company target */
+                branchId?: unknown;
+                year: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetsReportDto"];
+                };
+            };
+        };
+    };
+    setSalesTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesTargetBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesTargetDto"];
+                };
+            };
+        };
+    };
+    removeSalesTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                targetId: string;
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertsDto"];
                 };
             };
         };

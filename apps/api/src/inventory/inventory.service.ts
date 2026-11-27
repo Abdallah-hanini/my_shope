@@ -140,11 +140,14 @@ export class InventoryService {
       this.scopeFor(p, scope.companyId, 'inventory.manage'),
       this.scopeFor(p, scope.companyId, 'inventory.adjust'),
     ]);
-    const reserved = await this.prisma.jobPart.groupBy({
-      by: ['branchId'],
-      where: { partId, status: 'reserved' },
-      _sum: { quantity: true },
-    });
+    const [reserved, levels] = await Promise.all([
+      this.prisma.jobPart.groupBy({
+        by: ['branchId'],
+        where: { partId, status: 'reserved' },
+        _sum: { quantity: true },
+      }),
+      this.prisma.reorderLevel.findMany({ where: { companyId: scope.companyId, partId } }),
+    ]);
     const [users, journals, suppliers] = await Promise.all([
       this.prisma.user.findMany({
         where: { id: { in: [...new Set(movements.map((m) => m.createdBy))] } },
@@ -172,6 +175,7 @@ export class InventoryService {
       : [];
     const has = (s: typeof receive, b: string) => !!s && (s.allBranches || s.branchIds.includes(b));
     const code = (b: string) => branches.find((x) => x.id === b)?.code ?? '—';
+    const lvl = (b: string) => levels.find((x) => x.branchId === b);
     return {
       ...this.item(part, stock),
       version: part.version,
@@ -190,6 +194,10 @@ export class InventoryService {
           averageCost: avg ? avg.toFixed(4) : null,
           canReceive: part.active && has(receive, b.id),
           canAdjust: has(adjust, b.id),
+          minQuantity: lvl(b.id) ? qty(lvl(b.id)!.minQuantity) : null,
+          reorderQuantity: lvl(b.id) ? qty(lvl(b.id)!.reorderQuantity) : null,
+          reorderVersion: lvl(b.id)?.version ?? null,
+          canSetReorder: has(receive, b.id),
         };
       }),
       movements: movements.map((m) => ({

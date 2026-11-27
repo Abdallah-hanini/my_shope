@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 
 export interface Series {
   name: string;
-  values: number[];
+  /** null = no value (a gap). */
+  values: (number | null)[];
   color: 'primary' | 'muted' | 'success' | 'danger';
   type: 'bar' | 'line';
 }

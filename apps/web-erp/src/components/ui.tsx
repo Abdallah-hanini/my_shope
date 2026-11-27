@@ -124,6 +124,8 @@ export function Grid({
 
 /** Record page layout: main column and a narrower side column (stacks below 1280 px). */
 export function SplitLayout({ main, side }: { main: ReactNode; side: ReactNode }) {
+  // Nothing on the side (e.g. no permission to act): the main column takes the full width.
+  if (side === null || side === undefined || side === false) return <div className="min-w-0">{main}</div>;
   return (
     <div className="grid grid-cols-1 gap-x-5 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0">{main}</div>

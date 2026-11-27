@@ -12,6 +12,34 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-02: Reporting and dashboards R3a: reorder points, low stock, sales targets, alerts
+
+- **Reorder points** (part page, per branch): a reorder point and the usual order quantity. Setting one needs `inventory.manage` at that branch. Changes are versioned and audited.
+- **Low stock** (`/reports/low-stock`): parts out of stock or at/below their point. Available = on hand − reserved for jobs. Shows the suggested order and its value at the branch's average cost.
+- **Sales targets** (`/reports/targets`): monthly targets set by the owner, for the whole company or one branch. Shows target against actual sales (the sales report's figure) by month, achievement %, and this month's pace (expected by now vs actual). New permission `reports.targets.manage`, added to the company administrator role by the migration. A company target needs whole-company access. Branch-limited people see and set their own branch's targets.
+- **Alerts** (dashboard card, `GET /alerts`): out/low stock, receivables over 60 days, overdue payables, receivables/payables not matching their control account, negative gross margin this month, sales behind target pace. Computed live from the same reports. Each person sees only alerts their permissions explain; each links to the report behind it.
+- **Migration** `20261202120000_reorder_levels_targets`: two new tables with checks:
+  - minimum ≥ 0 and order quantity > 0;
+  - target > 0 and on the 1st of the month;
+  - one target per company, branch and month.
+  It also adds the permission to the admin role. Nothing existing is changed or dropped.
+- **Assumptions (owner can change):**
+  - receivables alert after **60 days** from the invoice date (customer invoices have no due date);
+  - target pace assumes sales spread **evenly** over the month;
+  - targets are sales **excluding tax**.
+- Not yet (R3b): alert history and notifications to the bell, per-company thresholds, saved filters/favourites, personal dashboards, scheduled e-mails (needs mail settings).
+- Evidence:
+  - unit tests for stock position and pace rules;
+  - integration (analytics.int 11 tests, 6 new), against hand-worked figures:
+    - PAD out (2 on hand − 2 reserved) suggests 4 = 200.00;
+    - OIL low at 17 suggests 24 = 96.00;
+    - target 360 vs 180.00 actual = 50.0 %; branch target 200 = 90.0 %;
+    - versions, branch scope and permissions are enforced;
+    - alerts differ per person;
+  - full gate 48/48; migration diff clean; integration 270/270 on a fresh database;
+  - browser end-to-end 54/54, including reorder point → low-stock list → dashboard alert, and target → behind pace → alert;
+  - new pages pass the Arabic phone and accessibility scans.
+
 ## 2026-12-02: Reporting and dashboards R2b2: Excel and CSV for the new reports
 
 - **Export from the report itself**: P&L, balance sheet, receivables aging, payables aging, cash flow, tax summary, sales and stock movement now have Excel/CSV export next to Print/PDF in the header. The file uses exactly the filters on screen (period or as-of date, branch, comparison).

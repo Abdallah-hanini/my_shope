@@ -390,3 +390,66 @@ export function Reconciliation({
     </p>
   );
 }
+
+/** GET form with a branch and, optionally, a year (low stock, targets); values live in the URL. */
+export function BranchYearFilters({
+  locale,
+  action,
+  branch,
+  branches,
+  year,
+  allLabel,
+}: {
+  locale: Locale;
+  action: string;
+  branch?: string;
+  branches: { id: string; label: string }[];
+  year?: number;
+  /** Label of the empty branch choice; omit to require a branch. */
+  allLabel?: string;
+}) {
+  const t = createTranslator(locale);
+  if (year === undefined && branches.length <= 1) return null;
+  return (
+    <Card className="mb-6 print:hidden">
+      <form
+        method="get"
+        action={action}
+        className="flex flex-wrap items-end gap-3"
+        aria-label={t('rpt.filters')}
+      >
+        {year !== undefined ? (
+          <label className={fieldLabel}>
+            {t('plan.year')}
+            <input
+              type="number"
+              name="year"
+              min={2000}
+              max={2100}
+              defaultValue={year}
+              required
+              dir="ltr"
+              className={`${inputClass} w-28`}
+            />
+          </label>
+        ) : null}
+        {branches.length > 1 || !allLabel ? (
+          <label className={fieldLabel}>
+            {t('common.branch')}
+            <select name="branch" defaultValue={branch ?? ''} className={`${inputClass} w-56`}>
+              {allLabel ? <option value="">{allLabel}</option> : null}
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <button type="submit" className={buttonSecondary}>
+          {t('ledger.apply')}
+        </button>
+      </form>
+    </Card>
+  );
+}

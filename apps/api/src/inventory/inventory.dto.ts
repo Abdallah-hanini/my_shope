@@ -33,6 +33,13 @@ export class BranchStockDto {
   @ApiPropertyOptional({ nullable: true, type: String }) averageCost!: string | null;
   @ApiProperty({ description: 'The caller may receive stock here' }) canReceive!: boolean;
   @ApiProperty({ description: 'The caller may adjust stock here' }) canAdjust!: boolean;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Reorder point (R3a)' })
+  minQuantity!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) reorderQuantity!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: Number, description: 'Version of the reorder point' })
+  reorderVersion!: number | null;
+  @ApiProperty({ description: 'The caller may set the reorder point here (inventory.manage)' })
+  canSetReorder!: boolean;
 }
 
 export class StockMovementDto {

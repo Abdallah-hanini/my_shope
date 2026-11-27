@@ -204,3 +204,23 @@ Owner of every definition below: the accountant (changes go through docs/DECISIO
 | Input tax | Σ over supplier bills posted in the period of tax, less bills whose cancellation is posted in the period; taxable = billed amount before tax |
 | Net tax | Output − input (negative = refundable). A working summary, not a filed return |
 | Tax checks | Output = Σ(credit − debit) on the tax codes' payable accounts in the period; input = Σ(debit − credit) on the recoverable input tax account |
+
+## Reorder points, targets and alerts (RPT R3a)
+
+| KPI | Formula | Source | Filters | Owner |
+|---|---|---|---|---|
+| Available | on hand − quantity reserved for jobs (status reserved) at the branch | stock, job parts | branch | Stock manager |
+| Low / out of stock | out when available ≤ 0; low when available ≤ reorder point; active parts with a reorder point only | reorder points | branch | Stock manager |
+| Suggested order | max(usual order quantity, reorder point − available), only when low or out | reorder points | branch | Stock manager |
+| Suggested order value | suggested order × branch weighted average cost (value ÷ on hand), 2 dp half up; unknown when nothing is on hand | stock | branch | Stock manager |
+| Sales target | amount set by the owner per month, for one branch or the whole company (empty branch) | sales targets | year, branch | Owner |
+| Actual (against target) | sales excluding tax as in the sales report: invoices less credit notes by posting date | invoices | year, branch | Finance |
+| Achievement % | actual ÷ target × 100, 1 dp half up | — | — | Finance |
+| Expected by now | target × day of month (today included, company time zone) ÷ days in the month, 2 dp half up; "behind" when actual < expected | — | this month | Owner |
+| Receivables alert | open customer invoices older than 60 days (from the invoice date), count and open balance | receivables aging | caller's branches | Finance |
+| Payables alert | open supplier bills past their due date, count and open balance | payables aging | caller's branches | Finance |
+| Reconciliation alerts | open documents ≠ the control account balance (receivables / payables) | aging reports | caller's branches | Finance |
+| Negative margin alert | gross profit from the 1st of this month to today < 0 | profit and loss | caller's branches | Finance |
+
+Alerts are computed when asked (no stored copy), each only for people with the permission of the report that explains it.
+

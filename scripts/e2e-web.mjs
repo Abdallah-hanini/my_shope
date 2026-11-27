@@ -1185,6 +1185,8 @@ async function main() {
           'transfers',
           'reports',
           'reports/balance-sheet',
+          'reports/low-stock',
+          'reports/targets',
           jobUrl.slice(jobUrl.indexOf('/jobs/') + 1),
           `${jobUrl.slice(jobUrl.indexOf('/jobs/') + 1)}/print`,
         ]) {
@@ -1844,6 +1846,37 @@ async function main() {
       },
     );
 
+    await check(
+      'Planning: reorder point on a part → low-stock list → dashboard alert; monthly target with pace',
+      async () => {
+        await page.goto(`${base()}/parts?q=oil`);
+        await Promise.all([
+          page.waitForURL(/\/parts\/[0-9a-f-]{36}$/),
+          page.getByRole('link', { name: 'OIL-5W30' }).click(),
+        ]);
+        await page.getByText('Set reorder point', { exact: true }).first().click();
+        const f = page.getByRole('form', { name: 'Set reorder point DOH' });
+        await f.getByLabel(/^Reorder point/).fill('1000');
+        await f.getByLabel(/^Usual order/).fill('50');
+        await f.getByRole('button', { name: 'Save' }).click();
+        await page.locator('[data-reorder=DOH]').getByText('1000.000 litre').first().waitFor();
+        await page.goto(`${base()}/reports/low-stock`);
+        await page.locator('tr[data-low-stock="OIL-5W30"]').waitFor();
+        await shot('report-low-stock-en');
+        await page.goto(base());
+        await page.locator('a[data-alert^="stock_"]').first().waitFor();
+        await page.goto(`${base()}/reports/targets`);
+        const tf = page.getByRole('form', { name: 'Set a monthly target' });
+        await tf.getByLabel(/^Target/).fill('999999');
+        await tf.getByRole('button', { name: 'Save' }).click();
+        await page.locator('li[data-target]').first().waitFor();
+        await page.locator('[data-pace=behind]').waitFor();
+        await shot('report-targets-en');
+        await page.goto(base());
+        await page.locator('a[data-alert="sales_behind_target"]').waitFor();
+      },
+    );
+
     await check('Quick jump: Ctrl+K, type, Enter opens the page', async () => {
       await page.goto(`${base()}/jobs`);
       // The shortcut listener is attached once the page has hydrated.
@@ -1879,6 +1912,8 @@ async function main() {
           'reports/stock-movement',
           'reports/cash-flow',
           'reports/tax',
+          'reports/low-stock',
+          'reports/targets',
         ]) {
           for (const lang of ['en', 'ar']) {
             await page.goto(`${WEB}/${lang}/c/${companyId}/${path}`);
