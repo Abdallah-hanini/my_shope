@@ -103,7 +103,7 @@ export default async function HomePage({
                   <li key={c.companyId}>
                     <Link
                       href={`/${locale}/c/${c.companyId}`}
-                      className="flex min-h-16 flex-col justify-center rounded-xl border border-[var(--color-border)] px-4 py-2"
+                      className="flex min-h-16 flex-col justify-center rounded-[var(--radius-card)] border border-[var(--color-border)] px-4 py-2"
                     >
                       <span className="font-semibold">{companyName(c, locale)}</span>
                       <span dir="ltr" className="text-sm text-[var(--color-text-muted)]">
@@ -126,7 +126,7 @@ export default async function HomePage({
 
         <section
           aria-labelledby="health-title"
-          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+          className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]"
         >
           <h2
             id="health-title"

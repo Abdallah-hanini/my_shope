@@ -55,7 +55,7 @@ export default async function PeriodsPage({
           {periods.data.map((p) => (
             <li
               key={p.id}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+              className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-lg font-semibold">

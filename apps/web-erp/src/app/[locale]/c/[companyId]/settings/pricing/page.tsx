@@ -2,13 +2,11 @@ import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { buttonSecondary, Card, inputClass, Ltr, PageHeader } from '@/components/ui';
+import { buttonSecondary, Card, inputClass, Ltr, PageHeader, fieldLabel } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { pricingStepAction } from '../../settings-actions';
-
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** Labour rates per branch and the managers' discount limit (owner). */
 export default async function PricingPage({
@@ -48,7 +46,7 @@ export default async function PricingPage({
             ariaLabel={t('settings.discountLimit')}
           >
             <input type="hidden" name="version" value={x.version} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.ratePct')}
               <input
                 name="managerDiscountLimitPct"
@@ -95,11 +93,11 @@ export default async function PricingPage({
               submitClassName={buttonSecondary}
               ariaLabel={`${t('settings.addRate')} ${b.branchCode}`}
             >
-              <label className={field}>
+              <label className={fieldLabel}>
                 {`${t('settings.perHour')} (${x.currency})`}
                 <input name="rate" inputMode="decimal" dir="ltr" className={`${inputClass} w-32`} />
               </label>
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('settings.from')}
                 <input
                   name="effectiveFrom"

@@ -14,6 +14,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '../ui';
 import { InlineForm } from './InlineForm';
 
@@ -193,7 +194,6 @@ export function ManualTimeForm({
   timeZone: string;
 }) {
   const t = createTranslator(locale);
-  const field = 'flex flex-col gap-1.5 text-[13px] font-medium';
   return (
     <InlineForm
       action={manualTimeAction.bind(null, locale, companyId, job.id, timeZone)}
@@ -203,7 +203,7 @@ export function ManualTimeForm({
       className="flex flex-col gap-3"
       ariaLabel={t('labour.manual')}
     >
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('labour.task')}
         <select name="taskId" className={inputClass}>
           {job.tasks.map((x) => (
@@ -213,7 +213,7 @@ export function ManualTimeForm({
           ))}
         </select>
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('labour.technician')}
         <select name="technicianId" className={inputClass} defaultValue={job.tasks[0]?.technicianId ?? ''}>
           {technicians.map((x) => (
@@ -223,15 +223,15 @@ export function ManualTimeForm({
           ))}
         </select>
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('labour.start')}
         <input name="startedAt" type="datetime-local" dir="ltr" className={inputClass} />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('labour.end')}
         <input name="endedAt" type="datetime-local" dir="ltr" className={inputClass} />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('labour.reason')}
         <input name="reason" className={inputClass} maxLength={500} />
       </label>
@@ -262,7 +262,7 @@ export function MyClockBanner({
     <section
       role="status"
       aria-label={t('labour.working')}
-      className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-info-brand,var(--color-border))] bg-[var(--color-surface-muted)] p-4 text-sm"
+      className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-info-brand,var(--color-border))] bg-[var(--color-surface-muted)] p-4 text-sm"
     >
       <p>
         <span aria-hidden className="me-2 inline-block size-2.5 rounded-full bg-[var(--color-primary)]" />

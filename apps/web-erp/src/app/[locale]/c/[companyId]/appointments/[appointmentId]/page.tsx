@@ -3,7 +3,16 @@ import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@er
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, buttonPrimary, buttonSecondary, Card, inputClass, Ltr, PageHeader } from '@/components/ui';
+import {
+  Badge,
+  buttonPrimary,
+  buttonSecondary,
+  Card,
+  inputClass,
+  Ltr,
+  PageHeader,
+  fieldLabel,
+} from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -116,7 +125,7 @@ export default async function AppointmentPage({
         </div>
         <aside className="flex flex-col gap-4" aria-label={t('common.actions')}>
           {can('reschedule') ? (
-            <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
               <h2 className="mb-2 text-sm font-semibold">{t('appt.reschedule')}</h2>
               <InlineForm
                 action={step('reschedule')}
@@ -126,7 +135,7 @@ export default async function AppointmentPage({
                 className="flex flex-col gap-3"
               >
                 {version}
-                <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="re-start">
+                <label className={fieldLabel} htmlFor="re-start">
                   {t('appt.start')}
                   <input
                     id="re-start"
@@ -137,7 +146,7 @@ export default async function AppointmentPage({
                     className={inputClass}
                   />
                 </label>
-                <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="re-dur">
+                <label className={fieldLabel} htmlFor="re-dur">
                   {t('appt.duration')}
                   <input
                     id="re-dur"
@@ -155,7 +164,7 @@ export default async function AppointmentPage({
             </section>
           ) : null}
           {can('noShow') ? (
-            <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
               <InlineForm
                 action={step('no-show')}
                 locale={locale}
@@ -167,7 +176,7 @@ export default async function AppointmentPage({
             </section>
           ) : null}
           {can('cancel') ? (
-            <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
               <h2 className="mb-2 text-sm font-semibold">{t('appt.cancel')}</h2>
               <InlineForm
                 action={step('cancel')}
@@ -177,7 +186,7 @@ export default async function AppointmentPage({
                 className="flex flex-col gap-3"
               >
                 {version}
-                <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="cx-reason">
+                <label className={fieldLabel} htmlFor="cx-reason">
                   {t('appt.reason')}
                   <input id="cx-reason" name="reason" maxLength={500} className={inputClass} />
                 </label>

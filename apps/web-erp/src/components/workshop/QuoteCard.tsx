@@ -16,10 +16,10 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '../ui';
 import { InlineForm } from './InlineForm';
 
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 const tone = {
   draft: 'neutral',
   issued: 'warning',
@@ -217,7 +217,7 @@ function QuoteView({
           </Table>
           {edit ? (
             <div className="flex flex-wrap gap-3">
-              <label className={field}>
+              <label className={fieldLabel}>
                 {`${t('quote.discount')} (%)`}
                 <input
                   name="discountPct"
@@ -227,7 +227,7 @@ function QuoteView({
                   className={`${inputClass} w-24`}
                 />
               </label>
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('quote.discountReason')}
                 <input
                   name="discountReason"
@@ -332,7 +332,7 @@ function QuoteView({
       {q.discountNeedsApproval ? (
         <p
           role="note"
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-sm"
+          className="rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-sm"
         >
           {fill(t('quote.needsApproval'), {
             limit: String(Number(data.managerDiscountLimitPct)),
@@ -406,11 +406,11 @@ function QuoteView({
               </label>
             </fieldset>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('job.authorizedBy')}
                 <input name="authorizedByName" defaultValue={job.customer.name} className={inputClass} />
               </label>
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('job.authorizedVia')}
                 <select name="authorizedVia" defaultValue="in_person" className={inputClass}>
                   {(['in_person', 'phone', 'written'] as const).map((v) => (
@@ -421,7 +421,7 @@ function QuoteView({
                 </select>
               </label>
             </div>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('add.declineReason')}
               <input name="reason" maxLength={500} className={inputClass} />
             </label>

@@ -3,6 +3,7 @@ import { createTranslator, formatDateTime, isLocale, type Locale, type MessageKe
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { OnThisPage } from '@/components/OnThisPage';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import {
   Badge,
@@ -16,6 +17,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { AdditionsCard } from '@/components/workshop/Additions';
 import { QuoteCard } from '@/components/workshop/QuoteCard';
@@ -41,7 +43,7 @@ import {
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const buttonDanger =
-  'inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--color-danger-brand)] px-4 text-sm font-semibold text-[var(--color-danger)]';
+  'inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] border border-[var(--color-danger-brand)] px-4 text-sm font-semibold text-[var(--color-danger)]';
 
 /** WEB-020 job card details with WEB-021 assignment, WEB-028 final inspection and WEB-029 delivery. */
 export default async function JobPage({
@@ -132,7 +134,23 @@ export default async function JobPage({
         </span>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <OnThisPage
+        label={t('common.onThisPage')}
+        items={[
+          { id: 'details', label: t('job.complaint') },
+          { id: 'inspection', label: t('insp.title') },
+          { id: 'photos', label: t('photo.title') },
+          { id: 'tasks', label: t('job.tasks') },
+          { id: 'parts', label: t('jp.title') },
+          { id: 'quote', label: t('quote.title') },
+          { id: 'billing', label: t('bill.title') },
+          { id: 'additions', label: t('add.title') },
+          { id: 'labour', label: t('labour.entries') },
+          { id: 'timeline', label: t('job.timeline') },
+        ]}
+      />
+
+      <div className="grid grid-cols-1 gap-x-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card title={t('job.complaint')} id="details">
             <p className="whitespace-pre-line">{j.complaint}</p>
@@ -350,7 +368,10 @@ export default async function JobPage({
           </Card>
         </div>
 
-        <aside className="flex flex-col" aria-label={t('common.actions')}>
+        <aside
+          className="flex flex-col lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:self-start lg:overflow-y-auto scroll-quiet"
+          aria-label={t('common.actions')}
+        >
           {can('authorize') ? (
             <Panel title={t('job.authorize')} help={t('job.authorizeHelp')}>
               <InlineForm
@@ -366,7 +387,7 @@ export default async function JobPage({
                   label={t('job.authorizedBy')}
                   defaultValue={j.customer.name}
                 />
-                <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="auth-via">
+                <label className={fieldLabel} htmlFor="auth-via">
                   {t('job.authorizedVia')}
                   <select id="auth-via" name="authorizedVia" className={inputClass} defaultValue="in_person">
                     {(['in_person', 'phone', 'written'] as const).map((v) => (
@@ -418,7 +439,7 @@ export default async function JobPage({
           {j.additions.some((a) => a.status === 'proposed') ? (
             <p
               role="note"
-              className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-sm"
+              className="mb-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-sm"
             >
               {t('add.waitingNote')}
             </p>
@@ -426,7 +447,7 @@ export default async function JobPage({
           {j.status === 'qc' && !can('qc') ? (
             <p
               role="note"
-              className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-sm"
+              className="mb-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 text-sm"
             >
               {t('job.waitingQc')}
             </p>
@@ -532,7 +553,7 @@ export default async function JobPage({
                 submitClassName={buttonSecondary}
                 className="flex flex-col gap-3"
               >
-                <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="note-text">
+                <label className={fieldLabel} htmlFor="note-text">
                   {t('job.noteText')}
                   <textarea id="note-text" name="note" rows={2} maxLength={2000} className={inputClass} />
                 </label>
@@ -578,7 +599,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 function Panel({ title, help, children }: { title: string; help?: string; children: ReactNode }) {
   return (
-    <section className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
+    <section className="mb-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
       <h2 className="mb-2 text-sm font-semibold">{title}</h2>
       {help ? <p className="mb-3 text-xs text-[var(--color-text-muted)]">{help}</p> : null}
       {children}
@@ -600,7 +621,7 @@ function LabeledInput({
   defaultValue?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor={id}>
+    <label className={fieldLabel} htmlFor={id}>
       {label}
       <input
         id={id}
@@ -627,7 +648,7 @@ function EditDraft({
 }) {
   const t = createTranslator(locale);
   return (
-    <details className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <details className="mb-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <summary className="cursor-pointer text-sm font-semibold">{t('job.editDraft')}</summary>
       <div className="mt-4">
         <JobForm

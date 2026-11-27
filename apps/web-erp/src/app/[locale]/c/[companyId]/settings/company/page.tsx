@@ -2,13 +2,11 @@ import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { buttonSecondary, Card, inputClass, PageHeader } from '@/components/ui';
+import { buttonSecondary, Card, inputClass, PageHeader, fieldLabel } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { logoAction, profileAction } from '../../settings-actions';
-
-const field = 'flex flex-col gap-1.5 text-[13px] font-medium';
 
 /** Company letterhead: CR number, address, phone and logo (printed on documents). */
 export default async function CompanyProfilePage({
@@ -41,7 +39,7 @@ export default async function CompanyProfilePage({
           ariaLabel={t('settings.company')}
         >
           <input type="hidden" name="version" value={p.version} />
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('settings.crNumber')}
             <input
               name="crNumber"
@@ -52,11 +50,11 @@ export default async function CompanyProfilePage({
               className={inputClass}
             />
           </label>
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('cust.phone')}
             <input name="phone" defaultValue={p.phone ?? ''} dir="ltr" disabled={ro} className={inputClass} />
           </label>
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('settings.address')}
             <textarea
               name="address"
@@ -67,7 +65,7 @@ export default async function CompanyProfilePage({
               className={inputClass}
             />
           </label>
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('settings.addressAr')}
             <textarea
               name="addressAr"
@@ -104,7 +102,7 @@ export default async function CompanyProfilePage({
               submitClassName={buttonSecondary}
               ariaLabel={t('settings.uploadLogo')}
             >
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('settings.logoHelp')}
                 <input name="file" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm" />
               </label>

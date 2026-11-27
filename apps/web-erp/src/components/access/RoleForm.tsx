@@ -73,7 +73,10 @@ export function RoleForm({
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {PERMISSION_GROUPS.map((g) => (
-            <fieldset key={g.id} className="rounded-xl border border-[var(--color-border)] p-4">
+            <fieldset
+              key={g.id}
+              className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-4"
+            >
               <legend className="px-1 text-sm font-semibold">{t(`perm.group.${g.id}` as MessageKey)}</legend>
               <ul className="mt-1 flex flex-col gap-2">
                 {g.permissions.map((p) => (

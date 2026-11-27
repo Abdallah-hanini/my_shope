@@ -4,21 +4,22 @@ import { OPEN_JOB_STATUSES } from '@erp/validation';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import {
-  Badge,
-  buttonGhost,
-  buttonPrimary,
-  EmptyState,
-  Ltr,
-  PageHeader,
-  Table,
-  td,
-  th,
-} from '@/components/ui';
+import { Badge, buttonPrimary, EmptyState, Ltr, PageHeader, Table, Tabs, td, th } from '@/components/ui';
 import { MyClockBanner } from '@/components/workshop/Labour';
 import { JobStatus } from '@/components/workshop/JobStatus';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
+
+/** Status colour cue on the board (the status name is always shown as text too). */
+const STATUS_DOT: Record<string, string> = {
+  draft: 'bg-[var(--color-text-muted)]',
+  approved: 'bg-[var(--color-info)]',
+  assigned: 'bg-[var(--color-info)]',
+  in_progress: 'bg-[var(--color-primary)]',
+  rework: 'bg-[var(--color-danger-brand)]',
+  qc: 'bg-[var(--color-warning-brand)]',
+  ready: 'bg-[var(--color-success-brand)]',
+};
 
 /** WEB-009 repair board (open jobs by status) and WEB-019 job card list. */
 export default async function JobsPage({
@@ -52,8 +53,6 @@ export default async function JobsPage({
       )
     : null;
   const base = `/${locale}/c/${companyId}/jobs`;
-  const tab = (active: boolean) =>
-    `${buttonGhost} ${active ? 'bg-[var(--color-surface-muted)] text-[var(--color-primary)]' : ''}`;
   return (
     <>
       <PageHeader
@@ -76,14 +75,13 @@ export default async function JobsPage({
           timeZone={company.timezone}
         />
       ) : null}
-      <nav aria-label={t('job.title')} className="mb-4 flex gap-2">
-        <Link href={base} aria-current={!list ? 'page' : undefined} className={tab(!list)}>
-          {t('job.board')}
-        </Link>
-        <Link href={`${base}?view=list`} aria-current={list ? 'page' : undefined} className={tab(list)}>
-          {t('job.list')}
-        </Link>
-      </nav>
+      <Tabs
+        label={t('job.title')}
+        items={[
+          { href: base, label: t('job.board'), current: !list },
+          { href: `${base}?view=list`, label: t('job.list'), current: list },
+        ]}
+      />
       {!jobs.ok ? (
         <ProblemNotice result={jobs} locale={locale} />
       ) : list ? (
@@ -91,8 +89,8 @@ export default async function JobsPage({
       ) : jobs.data.length === 0 ? (
         <EmptyState>{t('job.empty')}</EmptyState>
       ) : (
-        <div className="relative -mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-          <div className="flex gap-3" role="list" aria-label={t('job.board')}>
+        <div className="scroll-quiet relative -mx-4 snap-x overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0">
+          <div className="flex items-start gap-3" role="list" aria-label={t('job.board')}>
             {OPEN_JOB_STATUSES.map((s) => {
               const col = jobs.data.filter((j) => j.status === s);
               return (
@@ -100,14 +98,22 @@ export default async function JobsPage({
                   key={s}
                   role="listitem"
                   aria-labelledby={`col-${s}`}
-                  className={`flex shrink-0 flex-col gap-2 rounded-xl bg-[var(--color-surface-muted)] p-2 ${col.length ? 'w-64' : 'w-28'}`}
+                  className={`flex min-h-32 shrink-0 snap-start flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-muted)]/60 p-2 ${col.length ? 'w-[17rem]' : 'w-40'}`}
                 >
                   <h2
                     id={`col-${s}`}
-                    className="flex items-center justify-between px-1 text-sm font-semibold"
+                    className="flex items-center justify-between gap-2 px-1.5 pt-0.5 text-[13px] font-semibold"
                   >
-                    {t(`job.status.${s}` as 'job.status.draft')}
-                    <span className="text-xs text-[var(--color-text-muted)]">{col.length}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        aria-hidden
+                        className={`size-2 shrink-0 rounded-full ${STATUS_DOT[s] ?? 'bg-[var(--color-text-muted)]'}`}
+                      />
+                      <span className="truncate">{t(`job.status.${s}` as 'job.status.draft')}</span>
+                    </span>
+                    <span className="rounded-full bg-[var(--color-surface)] px-1.5 text-xs tabular text-[var(--color-text-muted)] ring-1 ring-[var(--color-border)]">
+                      {col.length}
+                    </span>
                   </h2>
                   {col.map((j) => (
                     <JobCardTile
@@ -144,7 +150,7 @@ function JobCardTile({
     <Link
       href={href}
       data-job={job.number}
-      className="block rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm shadow-[var(--shadow-card)] hover:border-[var(--color-primary)]"
+      className="block rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm shadow-[var(--shadow-card)] transition-[border-color,box-shadow] hover:border-[var(--color-primary)]/60 hover:shadow-[var(--shadow-raised)]"
     >
       <div className="flex items-center justify-between gap-2">
         <Ltr className="font-semibold text-[var(--color-primary)]">{job.number}</Ltr>
@@ -183,7 +189,7 @@ function JobTable({
   const t = createTranslator(locale);
   if (!jobs.length) return <EmptyState>{t('job.empty')}</EmptyState>;
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)]">
       <Table caption={t('job.title')}>
         <thead>
           <tr>

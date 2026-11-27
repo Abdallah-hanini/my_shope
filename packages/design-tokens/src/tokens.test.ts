@@ -15,6 +15,11 @@ describe('design tokens', () => {
     expect(contrastRatio(p.sidebarMuted, p.sidebar)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(p.textMuted, p.background)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(p.primary, p.surface)).toBeGreaterThanOrEqual(4.5); // links
+    expect(contrastRatio(p.primary, p.primarySoft)).toBeGreaterThanOrEqual(4.5); // active nav, tabs
+    expect(contrastRatio(p.onPrimary, p.primaryHover)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.info, p.infoBg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(p.textMuted, p.surfaceMuted)).toBeGreaterThanOrEqual(4.5); // table headers
+    expect(contrastRatio(p.sidebarMuted, p.sidebarActive)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('light and dark palettes define the same tokens', () => {

@@ -2,7 +2,7 @@ import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Card, inputClass, PageHeader } from '@/components/ui';
+import { Card, inputClass, PageHeader, fieldLabel } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
@@ -63,7 +63,7 @@ export default async function PostingPage({
           {FIELDS.map((f) => {
             const current = x[`${f.key}Account` as 'cashAccount'];
             return (
-              <label key={f.key} className="flex flex-col gap-1 text-[13px] font-medium">
+              <label key={f.key} className={fieldLabel}>
                 {t(`posting.${f.key}` as MessageKey)}
                 <select
                   name={`${f.key}AccountId`}

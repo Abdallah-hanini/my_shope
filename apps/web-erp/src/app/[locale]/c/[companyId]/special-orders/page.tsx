@@ -3,7 +3,7 @@ import { createTranslator, formatDateTime, isLocale, type MessageKey } from '@er
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, tdNum, th, thNum } from '@/components/ui';
+import { Badge, Card, EmptyState, Ltr, PageHeader, Table, td, tdNum, th, thNum, Tabs } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 
@@ -31,22 +31,16 @@ export default async function SpecialOrdersPage({
   );
   if (!res.ok) return <ProblemNotice result={res} locale={locale} />;
   const base = `/${locale}/c/${companyId}`;
-  const tab = (s: 'open' | 'all', label: string) => (
-    <Link
-      href={`${base}/special-orders${s === 'all' ? '?status=all' : ''}`}
-      aria-current={status === s ? 'page' : undefined}
-      className={status === s ? 'font-semibold underline' : 'text-[var(--color-primary)] hover:underline'}
-    >
-      {label}
-    </Link>
-  );
   return (
     <>
       <PageHeader title={t('so.title')}>{t('so.listHelp')}</PageHeader>
-      <nav className="mb-3 flex gap-4 text-sm" aria-label={t('so.title')}>
-        {tab('open', t('so.waiting'))}
-        {tab('all', t('so.all'))}
-      </nav>
+      <Tabs
+        label={t('so.title')}
+        items={[
+          { href: `${base}/special-orders`, label: t('so.waiting'), current: status === 'open' },
+          { href: `${base}/special-orders?status=all`, label: t('so.all'), current: status === 'all' },
+        ]}
+      />
       {res.data.orders.length === 0 ? (
         <EmptyState>{t('so.none')}</EmptyState>
       ) : (

@@ -1,7 +1,5 @@
 import type { createTranslator } from '@erp/localization';
-import { inputClass } from '@/components/ui';
-
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
+import { inputClass, fieldLabel } from '@/components/ui';
 
 /** Supplier profile fields shared by the add and edit forms (T-76). */
 export function SupplierFields({
@@ -20,11 +18,11 @@ export function SupplierFields({
 }) {
   return (
     <>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('bay.name')}
         <input name="name" defaultValue={s?.name} maxLength={200} className={`${inputClass} w-56`} />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('settings.nameAr')}
         <input
           name="nameAr"
@@ -34,7 +32,7 @@ export function SupplierFields({
           className={`${inputClass} w-48`}
         />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('pur.phone')}
         <input
           name="phone"
@@ -44,7 +42,7 @@ export function SupplierFields({
           className={`${inputClass} w-40`}
         />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('pur.email')}
         <input
           name="email"
@@ -55,7 +53,7 @@ export function SupplierFields({
           className={`${inputClass} w-52`}
         />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('pur.taxNumber')}
         <input
           name="taxNumber"
@@ -65,7 +63,7 @@ export function SupplierFields({
           className={`${inputClass} w-40`}
         />
       </label>
-      <label className={field}>
+      <label className={fieldLabel}>
         {t('pur.termsField')}
         <input
           name="paymentTermsDays"

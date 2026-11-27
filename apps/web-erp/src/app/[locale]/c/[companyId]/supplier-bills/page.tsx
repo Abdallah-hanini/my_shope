@@ -4,7 +4,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { BillStatus } from '@/components/purchasing/BillStatus';
-import { Card, EmptyState, Ltr, Notice, PageHeader, Table, td, tdNum, th, thNum } from '@/components/ui';
+import {
+  Card,
+  EmptyState,
+  Ltr,
+  Notice,
+  PageHeader,
+  Table,
+  td,
+  tdNum,
+  th,
+  thNum,
+  Tabs,
+} from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 
@@ -33,15 +45,6 @@ export default async function SupplierBillsPage({
   if (!res.ok) return <ProblemNotice result={res} locale={locale} />;
   const { bills, reconciliation: r, currency } = res.data;
   const base = `/${locale}/c/${companyId}`;
-  const tab = (s: 'open' | 'all', label: string) => (
-    <Link
-      href={`${base}/supplier-bills${s === 'all' ? '?status=all' : ''}`}
-      aria-current={status === s ? 'page' : undefined}
-      className={status === s ? 'font-semibold underline' : 'text-[var(--color-primary)] hover:underline'}
-    >
-      {label}
-    </Link>
-  );
   return (
     <>
       <PageHeader title={t('pur.bills')}>{t('pur.billsHelp')}</PageHeader>
@@ -73,10 +76,13 @@ export default async function SupplierBillsPage({
           {t('pur.asOf')} {formatDateTime(locale, r.asOf, company.timezone)}
         </p>
       </Card>
-      <nav className="mb-3 flex gap-4 text-sm" aria-label={t('pur.bills')}>
-        {tab('open', t('pur.openOnly'))}
-        {tab('all', t('pur.allBills'))}
-      </nav>
+      <Tabs
+        label={t('pur.bills')}
+        items={[
+          { href: `${base}/supplier-bills`, label: t('pur.openOnly'), current: status === 'open' },
+          { href: `${base}/supplier-bills?status=all`, label: t('pur.allBills'), current: status === 'all' },
+        ]}
+      />
       {bills.length === 0 ? (
         <EmptyState>{t('pur.noBills')}</EmptyState>
       ) : (

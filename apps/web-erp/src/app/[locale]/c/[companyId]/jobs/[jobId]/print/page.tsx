@@ -84,7 +84,10 @@ export default async function JobPrintPage({
         </span>
       </div>
       {doc === 'handover' && !handoverReady ? (
-        <p role="note" className="rounded-xl border border-[var(--color-border)] p-4 text-sm">
+        <p
+          role="note"
+          className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-4 text-sm"
+        >
           {t('print.handoverNotYet')}
         </p>
       ) : (

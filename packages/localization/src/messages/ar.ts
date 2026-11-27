@@ -1117,4 +1117,5 @@ export const ar: Record<MessageKey, string> = {
   'tr.cancel': 'إلغاء التحويل',
   'tr.cancelHelp': 'فقط أثناء وجوده في الطريق. يعود المخزون إلى الفرع المرسل بنفس القيمة.',
   'tr.cancelledBy': 'ألغاه',
+  'common.onThisPage': 'في هذه الصفحة',
 };

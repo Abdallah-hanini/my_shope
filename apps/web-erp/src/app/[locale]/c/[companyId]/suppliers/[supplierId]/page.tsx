@@ -19,6 +19,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -27,7 +28,6 @@ import { isoToZonedLocal } from '@/lib/time';
 import { createSupplierBillAction, updateSupplierAction } from '../../purchasing-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** A supplier: profile, bills, and entering a bill for receipts not yet billed (T-76). */
 export default async function SupplierPage({
@@ -125,11 +125,11 @@ export default async function SupplierPage({
             >
               <input type="hidden" name="idempotencyKey" value={randomUUID()} />
               <div className="flex flex-wrap items-end gap-3">
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('pur.invoiceNo')}
                   <input name="supplierInvoiceNo" maxLength={60} dir="ltr" className={`${inputClass} w-40`} />
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('pur.invoiceDate')}
                   <input
                     name="billDate"
@@ -140,7 +140,7 @@ export default async function SupplierPage({
                     className={`${inputClass} w-40`}
                   />
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('pur.tax')}
                   <select
                     name="taxCodeId"
@@ -219,7 +219,7 @@ export default async function SupplierPage({
                   ))}
                 </tbody>
               </Table>
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('pur.varianceReason')}
                 <input name="varianceReason" maxLength={300} className={`${inputClass} w-full max-w-md`} />
               </label>
@@ -299,7 +299,7 @@ export default async function SupplierPage({
           >
             <input type="hidden" name="version" value={s.version} />
             <SupplierFields t={t} s={s} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('common.status')}
               <select name="active" defaultValue={String(s.active)} className={`${inputClass} w-36`}>
                 <option value="true">{t('bay.active')}</option>

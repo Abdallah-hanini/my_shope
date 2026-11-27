@@ -334,7 +334,7 @@ function DashboardBody({ locale, base, data }: { locale: Locale; base: string; d
                 <li key={`${e.kind}-${e.recordId ?? i}`}>
                   <Link
                     href={exceptionHref(e)}
-                    className="flex gap-3 rounded-lg border border-[var(--color-border)] p-3 text-sm hover:bg-[var(--color-surface-muted)]"
+                    className="flex gap-3 rounded-[var(--radius-control)] border border-[var(--color-border)] p-3 text-sm hover:bg-[var(--color-surface-muted)]"
                   >
                     <AlertTriangle
                       aria-hidden

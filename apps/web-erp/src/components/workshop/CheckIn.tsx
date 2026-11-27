@@ -3,7 +3,7 @@ import { createTranslator, formatDateTime, type Locale, type MessageKey } from '
 import { INSPECTION_ITEMS, INSPECTION_STATUSES, PHOTO_AREAS } from '@erp/validation';
 import type { FormState } from '@/lib/form-state';
 import { ActionButton } from '../access/ActionButton';
-import { Badge, buttonGhost, Card, inputClass } from '../ui';
+import { Badge, buttonGhost, Card, inputClass, fieldLabel } from '../ui';
 import { InlineForm } from './InlineForm';
 
 const GROUPS = [...new Set(INSPECTION_ITEMS.map((i) => i.group))];
@@ -46,7 +46,10 @@ export function InspectionCard({
         >
           <input type="hidden" name="version" value={job.version} />
           {GROUPS.map((g) => (
-            <fieldset key={g} className="rounded-lg border border-[var(--color-border)] p-3">
+            <fieldset
+              key={g}
+              className="rounded-[var(--radius-control)] border border-[var(--color-border)] p-3"
+            >
               <legend className="px-1 text-sm font-semibold">{t(`insp.group.${g}` as MessageKey)}</legend>
               <ul className="flex flex-col divide-y divide-[var(--color-border)]">
                 {INSPECTION_ITEMS.filter((i) => i.group === g).map((i) => {
@@ -140,7 +143,7 @@ export function PhotosCard({
               <li
                 key={ph.id}
                 data-photo={ph.area}
-                className="flex flex-col gap-1 rounded-lg border border-[var(--color-border)] p-2"
+                className="flex flex-col gap-1 rounded-[var(--radius-control)] border border-[var(--color-border)] p-2"
               >
                 <a
                   href={photoHref(ph.id, false)}
@@ -183,7 +186,7 @@ export function PhotosCard({
           className="flex flex-col gap-3"
           ariaLabel={t('photo.add')}
         >
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="photo-files">
+          <label className={fieldLabel} htmlFor="photo-files">
             {t('photo.files')}
             <input
               id="photo-files"
@@ -196,7 +199,7 @@ export function PhotosCard({
             />
           </label>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="photo-area">
+            <label className={fieldLabel} htmlFor="photo-area">
               {t('photo.area')}
               <select id="photo-area" name="area" defaultValue="front" className={inputClass}>
                 {PHOTO_AREAS.map((a) => (
@@ -206,7 +209,7 @@ export function PhotosCard({
                 ))}
               </select>
             </label>
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="photo-caption">
+            <label className={fieldLabel} htmlFor="photo-caption">
               {t('photo.caption')} ({t('common.optional')})
               <input id="photo-caption" name="caption" maxLength={200} className={inputClass} />
             </label>

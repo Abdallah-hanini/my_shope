@@ -1136,4 +1136,5 @@ export const en = {
   'tr.cancel': 'Cancel transfer',
   'tr.cancelHelp': 'Only while in transit. The stock goes back to the sending branch at the same value.',
   'tr.cancelledBy': 'Cancelled by',
+  'common.onThisPage': 'On this page',
 } as const;

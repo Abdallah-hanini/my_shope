@@ -12,6 +12,7 @@ import {
   inputClass,
   Ltr,
   PageHeader,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { JobStatus } from '@/components/workshop/JobStatus';
@@ -61,7 +62,7 @@ export default async function BaysPage({
       {list.length > 1 ? (
         <Card className="mb-6">
           <form method="get" className="flex flex-wrap items-end gap-3" aria-label={t('job.branch')}>
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="bay-branch">
+            <label className={fieldLabel} htmlFor="bay-branch">
               {t('job.branch')}
               <select id="bay-branch" name="branch" defaultValue={branchId} className={`${inputClass} w-52`}>
                 {list.map((b) => (
@@ -111,7 +112,7 @@ function BoardBody({
             <li
               key={bay.id}
               data-bay={bay.code}
-              className="flex min-h-36 flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]"
+              className="flex min-h-36 flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]"
             >
               <div className="flex items-center justify-between gap-2">
                 <h2 className="font-semibold">
@@ -223,7 +224,7 @@ function BoardBody({
                   <span className="min-w-16 self-center font-semibold">
                     <Ltr>{bay.code}</Ltr>
                   </span>
-                  <label className="flex flex-col gap-1 text-[13px] font-medium">
+                  <label className={fieldLabel}>
                     {t('bay.name')}
                     <input
                       name="name"
@@ -232,7 +233,7 @@ function BoardBody({
                       className={`${inputClass} w-48`}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-[13px] font-medium">
+                  <label className={fieldLabel}>
                     {t('common.status')}
                     <select name="active" defaultValue={String(bay.active)} className={`${inputClass} w-36`}>
                       <option value="true">{t('bay.active')}</option>
@@ -249,11 +250,11 @@ function BoardBody({
             submitLabel={t('bay.add')}
             ariaLabel={t('bay.add')}
           >
-            <label className="flex flex-col gap-1 text-[13px] font-medium">
+            <label className={fieldLabel}>
               {t('bay.code')}
               <input name="code" maxLength={10} dir="ltr" className={`${inputClass} w-28`} />
             </label>
-            <label className="flex flex-col gap-1 text-[13px] font-medium">
+            <label className={fieldLabel}>
               {t('bay.name')}
               <input name="name" maxLength={60} className={`${inputClass} w-48`} />
             </label>

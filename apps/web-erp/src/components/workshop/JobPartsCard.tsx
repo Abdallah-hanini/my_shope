@@ -2,7 +2,19 @@ import type { JobParts } from '@erp/api-client';
 import { createTranslator, formatDateTime, type Locale, type MessageKey } from '@erp/localization';
 import { randomUUID } from 'node:crypto';
 import { jobPartAction, type JobPartOp } from '@/app/[locale]/c/[companyId]/inventory-actions';
-import { Badge, buttonSecondary, Card, inputClass, Ltr, Table, td, tdNum, th, thNum } from '../ui';
+import {
+  Badge,
+  buttonSecondary,
+  Card,
+  inputClass,
+  Ltr,
+  Table,
+  td,
+  tdNum,
+  th,
+  thNum,
+  fieldLabel,
+} from '../ui';
 import { InlineForm } from './InlineForm';
 
 const tone = {
@@ -40,7 +52,6 @@ export function JobPartsCard({
     return: t('jp.return'),
     allocate: t('so.allocate'),
   } as const;
-  const field = 'flex flex-col gap-1 text-[13px] font-medium';
   return (
     <Card title={t('jp.title')} id="parts" flush>
       {data.parts.length ? (
@@ -129,7 +140,7 @@ export function JobPartsCard({
                           submitClassName={buttonSecondary}
                           ariaLabel={`${t('so.cancel')} ${x.sku}`}
                         >
-                          <label className={field}>
+                          <label className={fieldLabel}>
                             {t('inv.reason')}
                             <input name="reason" maxLength={300} className={`${inputClass} w-48`} />
                           </label>
@@ -152,7 +163,7 @@ export function JobPartsCard({
               submitLabel={t('jp.reserve')}
               ariaLabel={t('jp.reserve')}
             >
-              <label className="flex flex-col gap-1 text-[13px] font-medium">
+              <label className={fieldLabel}>
                 {t('jp.part')}
                 <select name="partId" className={`${inputClass} w-72`}>
                   {data.choices.map((c) => (
@@ -162,7 +173,7 @@ export function JobPartsCard({
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-[13px] font-medium">
+              <label className={fieldLabel}>
                 {t('inv.quantity')}
                 <input name="quantity" inputMode="decimal" dir="ltr" className={`${inputClass} w-24`} />
               </label>
@@ -182,7 +193,7 @@ export function JobPartsCard({
             submitClassName={buttonSecondary}
             ariaLabel={t('so.order')}
           >
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('so.part')}
               <select name="partId" className={`${inputClass} w-72`}>
                 {data.orderChoices.map((c) => (
@@ -192,11 +203,11 @@ export function JobPartsCard({
                 ))}
               </select>
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.quantity')}
               <input name="quantity" inputMode="decimal" dir="ltr" className={`${inputClass} w-24`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('pur.supplier')}
               <select name="supplierId" defaultValue="" className={`${inputClass} w-44`}>
                 <option value="">{t('so.noSupplier')}</option>
@@ -207,7 +218,7 @@ export function JobPartsCard({
                 ))}
               </select>
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('so.orderRef')}
               <input name="orderRef" maxLength={80} dir="ltr" className={`${inputClass} w-32`} />
             </label>

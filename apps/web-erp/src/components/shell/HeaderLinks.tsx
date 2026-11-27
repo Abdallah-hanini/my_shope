@@ -51,11 +51,11 @@ export function Breadcrumbs({
           <li key={`${c.href}-${i}`} className="flex min-w-0 items-center gap-1">
             {i > 0 ? <ChevronRight aria-hidden size={14} className="shrink-0 rtl:-scale-x-100" /> : null}
             {i === all.length - 1 ? (
-              <span aria-current="page" className="truncate font-medium text-[var(--color-text)]">
+              <span aria-current="page" className="shrink-0 font-medium text-[var(--color-text)]">
                 {c.label}
               </span>
             ) : (
-              <Link href={c.href} className="truncate hover:text-[var(--color-text)]">
+              <Link href={c.href} className="max-w-[14rem] truncate hover:text-[var(--color-text)]">
                 {c.label}
               </Link>
             )}
@@ -78,7 +78,7 @@ export function LanguageSwitch({ locale }: { locale: Locale }) {
       href={href}
       hrefLang={other}
       lang={other}
-      className="inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold"
+      className="inline-flex min-h-10 items-center rounded-[var(--radius-control)] border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] transition-colors px-3 text-sm font-semibold"
     >
       {t('common.switchLanguage')}
     </Link>

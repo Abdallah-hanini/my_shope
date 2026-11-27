@@ -16,6 +16,7 @@ import {
   Table,
   td,
   th,
+  fieldLabel,
 } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
@@ -92,7 +93,7 @@ export default async function AppointmentsPage({
       </PageHeader>
       <Card className="mb-6">
         <form method="get" className="flex flex-wrap items-end gap-3" aria-label={t('appt.date')}>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="appt-branch">
+          <label className={fieldLabel} htmlFor="appt-branch">
             {t('job.branch')}
             <select id="appt-branch" name="branch" defaultValue={branchId} className={`${inputClass} w-52`}>
               {list.map((b) => (
@@ -100,7 +101,7 @@ export default async function AppointmentsPage({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="appt-date">
+          <label className={fieldLabel} htmlFor="appt-date">
             {t('appt.date')}
             <input
               id="appt-date"
@@ -188,7 +189,7 @@ export default async function AppointmentsPage({
                           <Link
                             key={a.id}
                             href={`${base}/${a.id}`}
-                            className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-[var(--color-border)] px-2 py-1 text-sm hover:border-[var(--color-primary)]"
+                            className="inline-flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] border border-[var(--color-border)] px-2 py-1 text-sm hover:border-[var(--color-primary)]"
                           >
                             <Ltr className="font-semibold">{a.vehicle.plate}</Ltr>
                             <span>{a.service}</span>

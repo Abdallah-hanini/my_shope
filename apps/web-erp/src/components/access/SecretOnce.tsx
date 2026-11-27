@@ -21,7 +21,7 @@ export function SecretOnce({
   return (
     <div
       role="status"
-      className="rounded-xl border border-[var(--color-success-brand)] bg-[var(--color-success-bg)] p-4"
+      className="rounded-[var(--radius-card)] border border-[var(--color-success-brand)] bg-[var(--color-success-bg)] p-4"
     >
       <p className="flex items-center gap-2 font-semibold text-[var(--color-success)]">
         <KeyRound aria-hidden size={16} />
@@ -42,7 +42,7 @@ export function SecretOnce({
           onClick={() => {
             void navigator.clipboard?.writeText(secret).then(() => setCopied(true));
           }}
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold"
         >
           {copied ? <Check aria-hidden size={14} /> : <Copy aria-hidden size={14} />}
           {copied ? t('users.copied') : t('users.copy')}

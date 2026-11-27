@@ -17,6 +17,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -24,7 +25,6 @@ import { loadCompany } from '@/lib/context';
 import { supplierBillAction, type BillOp } from '../../purchasing-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** A supplier bill: receipts charged, totals and journal, payments, cancel (T-76). */
 export default async function SupplierBillPage({
@@ -184,14 +184,14 @@ export default async function SupplierBillPage({
         {b.actions.includes('pay') ? (
           <InlineForm action={act('pay')} locale={locale} submitLabel={t('pur.pay')} ariaLabel={t('pur.pay')}>
             <input type="hidden" name="idempotencyKey" value={randomUUID()} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bill.method')}
               <select name="method" defaultValue="bank" className={`${inputClass} w-40`}>
                 <option value="bank">{t('bill.method.bank')}</option>
                 <option value="cash">{t('bill.method.cash')}</option>
               </select>
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {`${t('quote.amount')} (${b.currency})`}
               <input
                 name="amount"
@@ -201,7 +201,7 @@ export default async function SupplierBillPage({
                 className={`${inputClass} w-32`}
               />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('pur.transferRef')}
               <input name="reference" maxLength={80} dir="ltr" className={`${inputClass} w-44`} />
             </label>
@@ -219,7 +219,7 @@ export default async function SupplierBillPage({
             submitClassName={buttonSecondary}
             ariaLabel={t('pur.cancel')}
           >
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.reason')}
               <input name="reason" maxLength={500} className={`${inputClass} w-72`} />
             </label>

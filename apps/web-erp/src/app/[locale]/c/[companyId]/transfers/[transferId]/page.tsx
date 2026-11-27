@@ -14,6 +14,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -126,7 +127,7 @@ export default async function TransferPage({
             submitClassName={buttonSecondary}
             ariaLabel={t('tr.cancel')}
           >
-            <label className="flex flex-col gap-1 text-[13px] font-medium">
+            <label className={fieldLabel}>
               {t('inv.reason')}
               <input name="reason" maxLength={300} className={`${inputClass} w-72`} />
             </label>

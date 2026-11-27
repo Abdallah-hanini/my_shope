@@ -12,7 +12,7 @@ import { DesktopSidebar, MobileNav, type SidebarGroup } from './shell/Sidebar';
 export type { Crumb };
 
 /**
- * Application shell: role-filtered sidebar (desktop) / drawer (mobile), 64 px header with
+ * Application shell: role-filtered sidebar (desktop) / drawer (mobile), 56 px header with
  * breadcrumbs, company switcher, language and profile menus, and the main landmark.
  */
 export async function AppShell({
@@ -53,7 +53,8 @@ export async function AppShell({
   const switchHref = path.replace(/^\/(en|ar)(?=\/|$|\?)/, `/${other}`);
   const [collapsed, theme] = await Promise.all([sidebarCollapsed(), themePreference()]);
   const hasNav = groups.some((g) => g.items.length);
-  const trail: Crumb[] = [{ href: `/${locale}`, label: t('common.home') }, ...crumbs];
+  // Inside a company the company is the root of the trail; elsewhere the trail starts at Home.
+  const trail: Crumb[] = sectionBase ? crumbs : [{ href: `/${locale}`, label: t('common.home') }, ...crumbs];
   return (
     <div dir={getDirection(locale)} className="flex min-h-dvh">
       <a
@@ -71,11 +72,11 @@ export async function AppShell({
         />
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 print:hidden shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]/85 px-4 backdrop-blur-md backdrop-saturate-150 sm:px-6 print:hidden">
           {hasNav ? <MobileNav locale={locale} groups={groups} companyName={currentCompany?.name} /> : null}
           {!hasNav ? (
             <Link href={`/${locale}`} className="flex items-center gap-2 font-bold" dir="ltr">
-              <span className="rounded-md bg-[var(--color-sidebar)] px-2 py-1 text-xs tracking-wide text-white">
+              <span className="rounded-md bg-[var(--color-primary)] px-2 py-1 text-xs tracking-wide text-[var(--color-on-primary)]">
                 AUTO360
               </span>
             </Link>
@@ -106,7 +107,7 @@ export async function AppShell({
                   href={switchHref}
                   hrefLang={other}
                   lang={other}
-                  className="inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold"
+                  className="inline-flex min-h-10 items-center rounded-[var(--radius-control)] border border-[var(--color-border)] px-3 text-sm font-semibold"
                 >
                   {t('common.switchLanguage')}
                 </Link>
@@ -124,7 +125,7 @@ export async function AppShell({
             {user ? <ProfileMenu locale={locale} name={user.name} email={user.email} theme={theme} /> : null}
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
+        <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-7 sm:py-7">
           {/* On paper the header is hidden, so the company is named here instead. */}
           <p className="mb-2 hidden text-sm font-semibold print:block">{title}</p>
           {children}

@@ -5,10 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { billingAction, type BillingOp } from '@/app/[locale]/c/[companyId]/billing-actions';
 import type { FormState } from '@/lib/form-state';
 import { fill } from '@/lib/notifications';
-import { Badge, buttonGhost, buttonSecondary, Card, inputClass, Ltr } from '../ui';
+import { Badge, buttonGhost, buttonSecondary, Card, inputClass, Ltr, fieldLabel } from '../ui';
 import { InlineForm } from './InlineForm';
-
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** T-72 on the job card: invoice the approved quote, take payments, credit notes, handover. */
 export function BillingCard({
@@ -82,7 +80,7 @@ export function BillingCard({
             ariaLabel={t('bill.release')}
           >
             <input type="hidden" name="version" value={job.version} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bill.releaseReason')}
               <input name="reason" maxLength={500} className={`${inputClass} w-72`} />
             </label>
@@ -112,7 +110,7 @@ function DocView({
   const credit = d.kind === 'credit_note';
   return (
     <section
-      className="mb-4 rounded-lg border border-[var(--color-border)] p-4"
+      className="mb-4 rounded-[var(--radius-control)] border border-[var(--color-border)] p-4"
       data-invoice={d.number}
       aria-label={d.number}
     >
@@ -168,7 +166,7 @@ function DocView({
           ariaLabel={`${t('bill.recordPayment')} ${d.number}`}
         >
           <input type="hidden" name="idempotencyKey" value={randomUUID()} />
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('bill.method')}
             <select name="method" defaultValue="cash" className={`${inputClass} w-36`}>
               {(['cash', 'card', 'bank'] as const).map((m) => (
@@ -178,7 +176,7 @@ function DocView({
               ))}
             </select>
           </label>
-          <label className={field}>
+          <label className={fieldLabel}>
             {`${t('quote.amount')} (${d.currency})`}
             <input
               name="amount"
@@ -188,7 +186,7 @@ function DocView({
               className={`${inputClass} w-32`}
             />
           </label>
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('bill.reference')}
             <input name="reference" maxLength={80} dir="ltr" className={`${inputClass} w-40`} />
           </label>
@@ -204,7 +202,7 @@ function DocView({
             submitClassName={buttonSecondary}
             ariaLabel={`${t('bill.issueCredit')} ${d.number}`}
           >
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bill.creditReason')}
               <input name="reason" maxLength={500} className={`${inputClass} w-72`} />
             </label>

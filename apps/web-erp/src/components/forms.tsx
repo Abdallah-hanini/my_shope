@@ -25,7 +25,10 @@ export function SubmitButton({
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-lg bg-[var(--color-danger-bg)] p-3 text-[var(--color-danger)]">
+    <p
+      role="alert"
+      className="rounded-[var(--radius-control)] bg-[var(--color-danger-bg)] p-3 text-[var(--color-danger)]"
+    >
       {message}
     </p>
   );

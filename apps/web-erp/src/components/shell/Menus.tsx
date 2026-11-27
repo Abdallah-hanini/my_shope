@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ThemeMenu } from './ThemeMenu';
 
 const panel =
-  'z-50 min-w-60 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 text-[var(--color-text)] shadow-lg';
+  'z-50 min-w-60 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-1.5 text-[var(--color-text)] shadow-[var(--shadow-raised)]';
 const item =
   'flex min-h-10 cursor-pointer items-center gap-2 rounded-md px-2 text-sm outline-none data-[highlighted]:bg-[var(--color-surface-muted)]';
 
@@ -28,7 +28,7 @@ export function CompanySwitcher({
     <Dropdown.Root dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <Dropdown.Trigger
         aria-label={t('nav.switchCompany')}
-        className="flex min-h-10 max-w-64 items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 text-sm font-medium"
+        className="flex min-h-10 max-w-64 items-center gap-2 rounded-[var(--radius-control)] border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] transition-colors px-3 text-sm font-medium"
       >
         <Building2 aria-hidden size={16} className="shrink-0 text-[var(--color-text-muted)]" />
         <span className="truncate">{current?.name ?? t('nav.companies')}</span>

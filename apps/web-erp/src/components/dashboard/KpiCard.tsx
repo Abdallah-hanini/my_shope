@@ -18,10 +18,10 @@ export function KpiCard({
   tone?: 'neutral' | 'positive' | 'negative';
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
+    <div className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[13px] font-medium text-[var(--color-text-muted)]">{label}</p>
-        <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-surface-muted)] text-[var(--color-primary)]">
+        <span className="flex size-8 items-center justify-center rounded-[var(--radius-control)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
           <Icon aria-hidden size={16} />
         </span>
       </div>

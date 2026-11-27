@@ -15,6 +15,7 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
@@ -22,7 +23,6 @@ import { loadCompany } from '@/lib/context';
 import { partAction, type PartOp } from '../../inventory-actions';
 
 const UUID = /^[0-9a-f-]{36}$/i;
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** A part: stock per branch with receipts and counted adjustments, and its movements (T-74). */
 export default async function PartPage({
@@ -80,7 +80,7 @@ export default async function PartPage({
                 ariaLabel={`${t('inv.receive')} ${b.branchCode}`}
               >
                 <input type="hidden" name="idempotencyKey" value={randomUUID()} />
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('pur.supplier')}
                   <select name="supplierId" defaultValue="" className={`${inputClass} w-48`}>
                     <option value="">{t('pur.noSupplier')}</option>
@@ -91,15 +91,15 @@ export default async function PartPage({
                     ))}
                   </select>
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {`${t('inv.quantity')} (${unit})`}
                   <input name="quantity" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {`${t('inv.unitCost')} (${company.baseCurrency})`}
                   <input name="unitCost" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('inv.reference')}
                   <input name="reference" maxLength={80} dir="ltr" className={`${inputClass} w-44`} />
                 </label>
@@ -116,22 +116,22 @@ export default async function PartPage({
                   ariaLabel={`${t('inv.adjust')} ${b.branchCode}`}
                 >
                   <input type="hidden" name="idempotencyKey" value={randomUUID()} />
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('inv.direction')}
                     <select name="direction" defaultValue="out" className={`${inputClass} w-40`}>
                       <option value="out">{t('inv.out')}</option>
                       <option value="in">{t('inv.in')}</option>
                     </select>
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {`${t('inv.quantity')} (${unit})`}
                     <input name="quantity" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('inv.foundCost')}
                     <input name="unitCost" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('inv.reason')}
                     <input name="reason" maxLength={300} className={`${inputClass} w-56`} />
                   </label>
@@ -214,7 +214,7 @@ export default async function PartPage({
             ariaLabel={t('jp.salePrice')}
           >
             <input type="hidden" name="version" value={p.version} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {`${t('jp.salePrice')} (${company.baseCurrency})`}
               <input
                 name="salePrice"
@@ -237,11 +237,11 @@ export default async function PartPage({
             ariaLabel={t('inv.editPart')}
           >
             <input type="hidden" name="version" value={p.version} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bay.name')}
               <input name="name" defaultValue={p.name} maxLength={200} className={`${inputClass} w-56`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.nameAr')}
               <input
                 name="nameAr"
@@ -251,7 +251,7 @@ export default async function PartPage({
                 className={`${inputClass} w-48`}
               />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.brand')}
               <input
                 name="brand"
@@ -260,7 +260,7 @@ export default async function PartPage({
                 className={`${inputClass} w-36`}
               />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('common.status')}
               <select name="active" defaultValue={String(p.active)} className={`${inputClass} w-36`}>
                 <option value="true">{t('bay.active')}</option>

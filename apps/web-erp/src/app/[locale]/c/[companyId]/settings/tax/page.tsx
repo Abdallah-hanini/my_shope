@@ -2,13 +2,20 @@ import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale } from '@erp/localization';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Badge, buttonSecondary, Card, EmptyState, inputClass, Ltr, PageHeader } from '@/components/ui';
+import {
+  Badge,
+  buttonSecondary,
+  Card,
+  EmptyState,
+  inputClass,
+  Ltr,
+  PageHeader,
+  fieldLabel,
+} from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { taxStepAction } from '../../settings-actions';
-
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** D-05 tax set-up by the accountant: codes, dated rates, the default and price basis. */
 export default async function TaxPage({
@@ -36,7 +43,7 @@ export default async function TaxPage({
     : [];
   const step = (op: Parameters<typeof taxStepAction>[2]) => taxStepAction.bind(null, locale, companyId, op);
   const accountSelect = (current: string | null | undefined) => (
-    <label className={field}>
+    <label className={fieldLabel}>
       {t('settings.taxAccount')}
       <select name="outputAccountId" defaultValue={current ?? ''} className={`${inputClass} w-56`}>
         <option value="">{t('settings.noAccount')}</option>
@@ -63,7 +70,7 @@ export default async function TaxPage({
             ariaLabel={t('settings.taxSettings')}
           >
             <input type="hidden" name="version" value={x.version} />
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.defaultTax')}
               <select
                 name="defaultTaxCodeId"
@@ -78,7 +85,7 @@ export default async function TaxPage({
                   ))}
               </select>
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.priceBasis')}
               <select
                 name="pricesIncludeTax"
@@ -89,7 +96,7 @@ export default async function TaxPage({
                 <option value="true">{t('settings.pricesInclude')}</option>
               </select>
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.taxNo')}
               <input
                 name="taxRegistrationNo"
@@ -147,11 +154,11 @@ export default async function TaxPage({
                 submitClassName={buttonSecondary}
                 ariaLabel={`${t('settings.addRate')} ${c.code}`}
               >
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('settings.ratePct')}
                   <input name="rate" inputMode="decimal" dir="ltr" className={`${inputClass} w-28`} />
                 </label>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('settings.from')}
                   <input
                     name="effectiveFrom"
@@ -173,7 +180,7 @@ export default async function TaxPage({
                   ariaLabel={`${t('settings.editCode')} ${c.code}`}
                 >
                   <input type="hidden" name="version" value={c.version} />
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('bay.name')}
                     <input
                       name="name"
@@ -182,7 +189,7 @@ export default async function TaxPage({
                       className={`${inputClass} w-48`}
                     />
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('settings.nameAr')}
                     <input
                       name="nameAr"
@@ -193,7 +200,7 @@ export default async function TaxPage({
                     />
                   </label>
                   {accountSelect(c.outputAccount?.id)}
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('common.status')}
                     <select name="active" defaultValue={String(c.active)} className={`${inputClass} w-36`}>
                       <option value="true">{t('bay.active')}</option>
@@ -215,15 +222,15 @@ export default async function TaxPage({
             submitLabel={t('settings.addCode')}
             ariaLabel={t('settings.addCode')}
           >
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bay.code')}
               <input name="code" maxLength={15} dir="ltr" className={`${inputClass} w-32`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bay.name')}
               <input name="name" maxLength={100} className={`${inputClass} w-48`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.nameAr')}
               <input name="nameAr" dir="rtl" maxLength={100} className={`${inputClass} w-48`} />
             </label>

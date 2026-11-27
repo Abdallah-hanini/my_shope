@@ -2,7 +2,7 @@ import { unwrap } from '@erp/api-client';
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import { notFound } from 'next/navigation';
 import { ProblemNotice } from '@/components/ProblemNotice';
-import { Card, inputClass, PageHeader } from '@/components/ui';
+import { Card, inputClass, PageHeader, fieldLabel } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany, localName } from '@/lib/context';
@@ -59,7 +59,7 @@ export default async function WorkshopHoursPage({
         >
           <input type="hidden" name="version" value={s.version} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="h-bays">
+            <label className={fieldLabel} htmlFor="h-bays">
               {t('appt.bays')}
               <input
                 id="h-bays"
@@ -73,7 +73,7 @@ export default async function WorkshopHoursPage({
                 className={inputClass}
               />
             </label>
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="h-slot">
+            <label className={fieldLabel} htmlFor="h-slot">
               {t('appt.slotLength')}
               <select
                 id="h-slot"

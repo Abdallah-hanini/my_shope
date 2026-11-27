@@ -61,7 +61,7 @@ export function HeaderSearch({ locale, action }: { locale: Locale; action: strin
           defaultValue={current}
           placeholder={t('search.placeholder')}
           aria-describedby="global-search-hint"
-          className="h-10 w-56 rounded-lg 2xl:w-72 border border-[var(--color-border)] bg-[var(--color-surface)] ps-9 pe-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+          className="h-9 w-60 rounded-[var(--radius-control)] border border-transparent bg-[var(--color-surface-muted)] ps-9 pe-9 text-sm transition-[border-color,box-shadow,background-color] outline-none placeholder:text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)] focus:shadow-[var(--shadow-focus)] 2xl:w-80"
         />
         <kbd
           aria-hidden
@@ -76,7 +76,7 @@ export function HeaderSearch({ locale, action }: { locale: Locale; action: strin
       <Link
         href={action}
         aria-label={t('search.label')}
-        className="inline-flex size-10 items-center justify-center rounded-lg border border-[var(--color-border)] lg:hidden"
+        className="inline-flex size-10 items-center justify-center rounded-[var(--radius-control)] border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] transition-colors lg:hidden"
       >
         <Search aria-hidden size={18} />
       </Link>

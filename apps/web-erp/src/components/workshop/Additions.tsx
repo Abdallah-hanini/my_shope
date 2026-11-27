@@ -6,10 +6,9 @@ import {
   withdrawAdditionAction,
 } from '@/app/[locale]/c/[companyId]/workshop-actions';
 import { fill } from '@/lib/notifications';
-import { Badge, buttonSecondary, Card, inputClass, Ltr } from '../ui';
+import { Badge, buttonSecondary, Card, inputClass, Ltr, fieldLabel } from '../ui';
 import { InlineForm } from './InlineForm';
 
-const field = 'flex flex-col gap-1.5 text-[13px] font-medium';
 const tone = { proposed: 'warning', approved: 'success', declined: 'danger', withdrawn: 'neutral' } as const;
 
 /** WEB-025 additional work on a job: the proposals with the customer's decision, and the forms. */
@@ -35,7 +34,7 @@ export function AdditionsCard({
           <article
             key={a.id}
             data-addition={a.seq}
-            className="rounded-lg border border-[var(--color-border)] p-4"
+            className="rounded-[var(--radius-control)] border border-[var(--color-border)] p-4"
             aria-labelledby={`addition-${a.seq}`}
           >
             <header className="mb-2 flex flex-wrap items-center gap-2">
@@ -86,7 +85,7 @@ export function AdditionsCard({
                     </label>
                   </fieldset>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className={field}>
+                    <label className={fieldLabel}>
                       {t('job.authorizedBy')}
                       <input
                         name="authorizedByName"
@@ -94,7 +93,7 @@ export function AdditionsCard({
                         className={inputClass}
                       />
                     </label>
-                    <label className={field}>
+                    <label className={fieldLabel}>
                       {t('job.authorizedVia')}
                       <select name="authorizedVia" className={inputClass} defaultValue="phone">
                         {(['in_person', 'phone', 'written'] as const).map((v) => (
@@ -105,7 +104,7 @@ export function AdditionsCard({
                       </select>
                     </label>
                   </div>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('add.declineReason')}
                     <input name="reason" maxLength={500} className={inputClass} />
                   </label>
@@ -123,7 +122,7 @@ export function AdditionsCard({
                   ariaLabel={`${t('add.withdraw')} ${a.seq}`}
                 >
                   {version}
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('add.withdrawReason')}
                     <input name="reason" maxLength={500} className={`${inputClass} w-64`} />
                   </label>
@@ -145,17 +144,17 @@ export function AdditionsCard({
               ariaLabel={t('add.propose')}
             >
               {version}
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('add.finding')}
                 <textarea name="finding" rows={2} maxLength={2000} className={inputClass} />
               </label>
               {[1, 2, 3].map((n) => (
                 <div key={n} className="grid grid-cols-[1fr_7rem] gap-2">
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('job.task')} {n}
                     <input name="taskDescription" maxLength={500} className={inputClass} />
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {t('job.hours')} {n}
                     <input name="taskHours" inputMode="decimal" dir="ltr" className={inputClass} />
                   </label>

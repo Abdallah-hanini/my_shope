@@ -16,13 +16,14 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
+  Tabs,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { sendTransferAction } from '../inventory-actions';
 
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 const ROWS = [0, 1, 2, 3, 4];
 
 /** Stock transfers between branches: in transit or all, and sending stock (T-78). */
@@ -62,15 +63,6 @@ export default async function TransfersPage({
     : null;
   const choices = stock?.ok ? stock.data.parts.filter((x) => Number(x.onHand) > 0) : [];
   const base = `/${locale}/c/${companyId}`;
-  const tab = (s: 'open' | 'all', label: string) => (
-    <Link
-      href={`${base}/transfers${s === 'all' ? '?status=all' : ''}`}
-      aria-current={status === s ? 'page' : undefined}
-      className={status === s ? 'font-semibold underline' : 'text-[var(--color-primary)] hover:underline'}
-    >
-      {label}
-    </Link>
-  );
   return (
     <>
       <PageHeader title={t('tr.title')}>{t('tr.help')}</PageHeader>
@@ -109,7 +101,7 @@ export default async function TransfersPage({
                 <p className="text-sm">
                   {t('tr.from')} <strong>{from.code}</strong>
                 </p>
-                <label className={field}>
+                <label className={fieldLabel}>
                   {t('tr.to')}
                   <select name="toBranchId" className={`${inputClass} w-36`}>
                     {d.toBranches
@@ -124,7 +116,7 @@ export default async function TransfersPage({
               </div>
               {ROWS.map((i) => (
                 <div key={i} className="flex flex-wrap items-end gap-3" data-transfer-row={i}>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {`${t('inv.sku')} ${i + 1}`}
                     <select name={`part${i}`} defaultValue="" className={`${inputClass} w-72`}>
                       <option value="">—</option>
@@ -135,7 +127,7 @@ export default async function TransfersPage({
                       ))}
                     </select>
                   </label>
-                  <label className={field}>
+                  <label className={fieldLabel}>
                     {`${t('inv.quantity')} ${i + 1}`}
                     <input
                       name={`quantity${i}`}
@@ -146,7 +138,7 @@ export default async function TransfersPage({
                   </label>
                 </div>
               ))}
-              <label className={field}>
+              <label className={fieldLabel}>
                 {t('tr.note')}
                 <input name="note" maxLength={300} className={`${inputClass} w-full max-w-md`} />
               </label>
@@ -154,10 +146,13 @@ export default async function TransfersPage({
           )}
         </Card>
       ) : null}
-      <nav className="mb-3 flex gap-4 text-sm" aria-label={t('tr.title')}>
-        {tab('open', t('tr.inTransit'))}
-        {tab('all', t('tr.all'))}
-      </nav>
+      <Tabs
+        label={t('tr.title')}
+        items={[
+          { href: `${base}/transfers`, label: t('tr.inTransit'), current: status === 'open' },
+          { href: `${base}/transfers?status=all`, label: t('tr.all'), current: status === 'all' },
+        ]}
+      />
       {d.transfers.length === 0 ? (
         <EmptyState>{t('tr.none')}</EmptyState>
       ) : (

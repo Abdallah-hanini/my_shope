@@ -58,13 +58,13 @@ export function NotificationBell({
       href={inboxHref}
       aria-label={label}
       data-testid="notification-bell"
-      className="relative inline-flex size-10 items-center justify-center rounded-lg border border-[var(--color-border)]"
+      className="relative inline-flex size-10 items-center justify-center rounded-[var(--radius-control)] border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] transition-colors"
     >
       <Bell aria-hidden size={18} />
       {count ? (
         <span
           aria-hidden
-          className="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--color-danger-brand)] px-1 text-[11px] leading-5 font-bold text-white"
+          className="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--color-danger-brand)] px-1 text-[11px] leading-5 font-bold text-white ring-2 ring-[var(--color-surface)]"
         >
           {count > 99 ? '99+' : count}
         </span>

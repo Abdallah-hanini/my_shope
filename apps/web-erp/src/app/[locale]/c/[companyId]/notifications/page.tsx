@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { ActionButton } from '@/components/access/ActionButton';
 import { ProblemNotice } from '@/components/ProblemNotice';
 import { UnreadSync } from '@/components/shell/NotificationBell';
-import { buttonGhost, buttonSecondary, Card, EmptyState, PageHeader } from '@/components/ui';
+import { buttonSecondary, Card, EmptyState, PageHeader, Tabs } from '@/components/ui';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { renderNotification } from '@/lib/notifications';
@@ -51,9 +51,6 @@ export default async function NotificationsPage({
     ),
   );
   const base = `/${locale}/c/${companyId}/notifications`;
-  const tab = (active: boolean) =>
-    `${buttonGhost} ${active ? 'bg-[var(--color-surface-muted)] text-[var(--color-primary)]' : ''}`;
-
   return (
     <>
       <PageHeader
@@ -71,19 +68,18 @@ export default async function NotificationsPage({
       >
         {t('notify.help')}
       </PageHeader>
-      <nav aria-label={t('notify.title')} className="mb-4 flex gap-2">
-        <Link href={base} aria-current={!unreadOnly ? 'page' : undefined} className={tab(!unreadOnly)}>
-          {t('notify.all')}
-        </Link>
-        <Link
-          href={`${base}?filter=unread`}
-          aria-current={unreadOnly ? 'page' : undefined}
-          className={tab(unreadOnly)}
-        >
-          {t('notify.unreadOnly')}
-          {page.ok && page.data.unreadCount ? ` (${page.data.unreadCount})` : ''}
-        </Link>
-      </nav>
+      <Tabs
+        label={t('notify.title')}
+        items={[
+          { href: base, label: t('notify.all'), current: !unreadOnly },
+          {
+            href: `${base}?filter=unread`,
+            label: t('notify.unreadOnly'),
+            current: unreadOnly,
+            count: page.ok && page.data.unreadCount ? page.data.unreadCount : undefined,
+          },
+        ]}
+      />
       {!page.ok ? (
         <ProblemNotice result={page} locale={locale} />
       ) : (

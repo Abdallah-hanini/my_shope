@@ -8,56 +8,75 @@
 /* Class-based dark variant so the user's theme choice (data-theme) wins over the OS setting. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* AUTO360 tokens — mirror packages/design-tokens (contrast verified there). */
+/* AUTO360 tokens — generated from packages/design-tokens (contrast verified there; a test keeps
+   this block in sync). Identity v2: graphite neutrals, one petrol accent. */
 :root {
-  --color-background: #f8fafc;
+  --color-background: #f5f6f8;
   --color-surface: #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-text: #101828;
-  --color-text-muted: #475569;
-  --color-border: #e2e8f0;
-  --color-primary: #2563eb;
+  --color-surface-muted: #f0f2f5;
+  --color-surface-raised: #ffffff;
+  --color-text: #14171f;
+  --color-text-muted: #555b69;
+  --color-border: #e3e6eb;
+  --color-border-strong: #cfd4dc;
+  --color-primary: #0b6680;
+  --color-primary-hover: #095368;
+  --color-primary-soft: #e6f2f5;
   --color-on-primary: #ffffff;
-  --color-sidebar: #101828;
-  --color-sidebar-text: #e2e8f0;
-  --color-sidebar-muted: #94a3b8;
-  --color-sidebar-active: #1e293b;
-  --color-success: #047857;
-  --color-success-bg: #ecfdf5;
-  --color-success-brand: #059669;
-  --color-danger: #b91c1c;
-  --color-danger-bg: #fef2f2;
-  --color-danger-brand: #dc2626;
-  --color-warning: #92400e;
-  --color-warning-bg: #fffbeb;
-  --color-warning-brand: #d97706;
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.04);
+  --color-sidebar: #fbfbfc;
+  --color-sidebar-text: #1f2430;
+  --color-sidebar-muted: #5d6371;
+  --color-sidebar-active: #e6f2f5;
+  --color-success: #0e6f48;
+  --color-success-bg: #e9f6ef;
+  --color-success-brand: #12a06a;
+  --color-danger: #a91f27;
+  --color-danger-bg: #fdeeee;
+  --color-danger-brand: #dc3b42;
+  --color-warning: #7f4c00;
+  --color-warning-bg: #fdf4e3;
+  --color-warning-brand: #e09b1a;
+  --color-info: #1d4f91;
+  --color-info-bg: #ecf2fb;
+  --shadow-card: 0 1px 2px rgb(20 23 31 / 0.04);
+  --shadow-raised: 0 1px 2px rgb(20 23 31 / 0.05), 0 8px 24px -8px rgb(20 23 31 / 0.12);
+  --shadow-focus: 0 0 0 3px rgb(11 102 128 / 0.22);
+  --radius-control: 8px;
+  --radius-card: 10px;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --color-background: #0b1220;
-  --color-surface: #111a2e;
-  --color-surface-muted: #162036;
-  --color-text: #e2e8f0;
-  --color-text-muted: #94a3b8;
-  --color-border: #1e293b;
-  --color-primary: #60a5fa;
-  --color-on-primary: #0b1220;
-  --color-sidebar: #070c17;
-  --color-sidebar-text: #e2e8f0;
-  --color-sidebar-muted: #94a3b8;
-  --color-sidebar-active: #16213a;
-  --color-success: #34d399;
-  --color-success-bg: #052e26;
-  --color-success-brand: #10b981;
-  --color-danger: #fca5a5;
-  --color-danger-bg: #2a0a0a;
-  --color-danger-brand: #ef4444;
-  --color-warning: #fcd34d;
-  --color-warning-bg: #2a1e05;
-  --color-warning-brand: #f59e0b;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --color-background: #0d1014;
+  --color-surface: #14181e;
+  --color-surface-muted: #1b2028;
+  --color-surface-raised: #1a1f27;
+  --color-text: #e7e9ed;
+  --color-text-muted: #9ea5b1;
+  --color-border: #262c35;
+  --color-border-strong: #353c47;
+  --color-primary: #5cc2db;
+  --color-primary-hover: #7fd0e3;
+  --color-primary-soft: #14303a;
+  --color-on-primary: #06191f;
+  --color-sidebar: #101318;
+  --color-sidebar-text: #e7e9ed;
+  --color-sidebar-muted: #949ba7;
+  --color-sidebar-active: #16313a;
+  --color-success: #4ade9b;
+  --color-success-bg: #0c2a1d;
+  --color-success-brand: #22c380;
+  --color-danger: #f7a1a4;
+  --color-danger-bg: #2e1012;
+  --color-danger-brand: #ef5359;
+  --color-warning: #f5c062;
+  --color-warning-bg: #2b2008;
+  --color-warning-brand: #e9a23b;
+  --color-info: #9cc3f5;
+  --color-info-bg: #14233a;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-raised: 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --shadow-focus: 0 0 0 3px rgb(92 194 219 / 0.3);
   color-scheme: dark;
 }
 
@@ -69,8 +88,30 @@ body {
 
 body {
   font-family: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.011em;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}
+
+/* Native date, select and checkbox controls follow the theme and the accent. */
+input,
+select,
+textarea {
+  accent-color: var(--color-primary);
 }
 
 html[dir='rtl'] body {
@@ -108,6 +149,13 @@ html[dir='rtl'] body {
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin, quiet scrollbars inside scroll areas (tables, board columns, sidebar). */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -130,7 +178,7 @@ html[dir='rtl'] body {
     --color-text: #101828;
     --color-text-muted: #475569;
     --color-border: #cbd5e1;
-    --color-primary: #1d4ed8;
+    --color-primary: #0b6680;
     --shadow-card: none;
     color-scheme: light;
   }

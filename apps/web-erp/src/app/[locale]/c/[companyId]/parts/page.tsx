@@ -16,13 +16,12 @@ import {
   tdNum,
   th,
   thNum,
+  fieldLabel,
 } from '@/components/ui';
 import { InlineForm } from '@/components/workshop/InlineForm';
 import { attempt } from '@/lib/api';
 import { loadCompany } from '@/lib/context';
 import { createPartAction } from '../inventory-actions';
-
-const field = 'flex flex-col gap-1 text-[13px] font-medium';
 
 /** Parts catalogue with stock in the caller's branches (T-74). */
 export default async function PartsPage({
@@ -52,7 +51,7 @@ export default async function PartsPage({
       <PageHeader title={t('inv.parts')}>{t('inv.partsHelp')}</PageHeader>
       <Card className="mb-6">
         <form method="get" className="flex flex-wrap items-end gap-3" aria-label={t('inv.search')}>
-          <label className={field}>
+          <label className={fieldLabel}>
             {t('inv.search')}
             <input name="q" defaultValue={q} className={`${inputClass} w-64`} />
           </label>
@@ -127,23 +126,23 @@ export default async function PartsPage({
             submitLabel={t('inv.addPart')}
             ariaLabel={t('inv.addPart')}
           >
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.sku')}
               <input name="sku" maxLength={40} dir="ltr" className={`${inputClass} w-40`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('bay.name')}
               <input name="name" maxLength={200} className={`${inputClass} w-56`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('settings.nameAr')}
               <input name="nameAr" maxLength={200} dir="rtl" className={`${inputClass} w-48`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.brand')}
               <input name="brand" maxLength={80} className={`${inputClass} w-36`} />
             </label>
-            <label className={field}>
+            <label className={fieldLabel}>
               {t('inv.unit')}
               <select name="unit" defaultValue="each" className={`${inputClass} w-32`}>
                 {PART_UNITS.map((u) => (

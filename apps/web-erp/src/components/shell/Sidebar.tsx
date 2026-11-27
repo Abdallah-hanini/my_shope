@@ -97,15 +97,17 @@ function NavList({
   const path = usePathname() ?? '';
   const first = groups[0]?.items[0]?.href;
   return (
-    <nav aria-label={label} className="flex-1 overflow-y-auto px-3 py-4">
+    <nav aria-label={label} className="scroll-quiet flex-1 overflow-y-auto px-2.5 py-3">
       {groups.map((g, gi) => (
-        <div key={gi} className="mb-5">
+        <div key={gi} className="mb-4 last:mb-0">
           {g.label && !collapsed ? (
-            <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-[var(--color-sidebar-muted)] uppercase">
+            <p className="mb-1 px-2.5 text-[11px] font-semibold tracking-wide text-[var(--color-sidebar-muted)] uppercase">
               {g.label}
             </p>
+          ) : collapsed && gi > 0 ? (
+            <hr className="mx-3 mb-3 border-[var(--color-border)]" />
           ) : null}
-          <ul className="flex flex-col gap-0.5">
+          <ul className="flex flex-col gap-px">
             {g.items.map((i) => {
               const Icon = icons[i.icon];
               const active = isActive(path, i.href, i.href === first);
@@ -118,13 +120,23 @@ function NavList({
                     aria-label={collapsed ? i.label : undefined}
                     title={collapsed ? i.label : undefined}
                     className={cn(
-                      'flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-active)]',
+                      'group flex min-h-9 items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 text-[13.5px] text-[var(--color-sidebar-text)] transition-colors hover:bg-[var(--color-surface-muted)]',
                       active &&
-                        'bg-[var(--color-sidebar-active)] font-semibold shadow-[inset_3px_0_0_var(--color-primary)] rtl:shadow-[inset_-3px_0_0_var(--color-primary)]',
+                        'bg-[var(--color-sidebar-active)] font-semibold text-[var(--color-primary)] hover:bg-[var(--color-sidebar-active)]',
                       collapsed && 'justify-center px-0',
                     )}
                   >
-                    <Icon aria-hidden size={18} className="shrink-0" />
+                    <Icon
+                      aria-hidden
+                      size={17}
+                      strokeWidth={active ? 2.2 : 1.8}
+                      className={cn(
+                        'shrink-0',
+                        active
+                          ? 'text-[var(--color-primary)]'
+                          : 'text-[var(--color-sidebar-muted)] group-hover:text-[var(--color-sidebar-text)]',
+                      )}
+                    />
                     {collapsed ? null : <span className="truncate">{i.label}</span>}
                   </Link>
                 </li>
@@ -139,18 +151,16 @@ function NavList({
 
 function Brand({ collapsed, companyName }: { collapsed: boolean; companyName?: string }) {
   return (
-    <div
-      className={cn(
-        'flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5',
-        collapsed && 'justify-center px-0',
-      )}
-    >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] text-[var(--color-on-primary)]">
-        <CarFront aria-hidden size={18} />
+    <div className={cn('flex h-14 shrink-0 items-center gap-2.5 px-4', collapsed && 'justify-center px-0')}>
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-[inset_0_-1px_0_rgb(0_0_0/0.15)]">
+        <CarFront aria-hidden size={17} strokeWidth={2.2} />
       </span>
       {collapsed ? null : (
         <span className="min-w-0">
-          <span className="block text-sm font-bold tracking-wide text-white" dir="ltr">
+          <span
+            className="block text-[14px] leading-5 font-semibold tracking-tight text-[var(--color-sidebar-text)]"
+            dir="ltr"
+          >
             AUTO360
           </span>
           {companyName ? (
@@ -162,7 +172,7 @@ function Brand({ collapsed, companyName }: { collapsed: boolean; companyName?: s
   );
 }
 
-/** Desktop sidebar: 248 px expanded, 72 px collapsed (preference kept in a cookie). */
+/** Desktop sidebar: 244 px expanded, 68 px collapsed (preference kept in a cookie). */
 export function DesktopSidebar({
   locale,
   groups,
@@ -185,8 +195,8 @@ export function DesktopSidebar({
   return (
     <aside
       className={cn(
-        'sticky top-0 hidden h-dvh shrink-0 flex-col bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)] lg:flex print:hidden',
-        collapsed ? 'w-[72px]' : 'w-[248px]',
+        'sticky top-0 hidden h-dvh shrink-0 flex-col border-e border-[var(--color-border)] bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)] lg:flex print:hidden',
+        collapsed ? 'w-[68px]' : 'w-[244px]',
       )}
     >
       <Brand collapsed={collapsed} companyName={companyName} />
@@ -196,7 +206,7 @@ export function DesktopSidebar({
         onClick={toggle}
         aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
         aria-expanded={!collapsed}
-        className="m-3 flex min-h-10 items-center justify-center gap-2 rounded-lg text-sm text-[var(--color-sidebar-muted)] hover:bg-[var(--color-sidebar-active)]"
+        className="mx-2.5 mb-3 flex min-h-9 items-center justify-center gap-2 rounded-[var(--radius-control)] border-t border-transparent text-[13px] text-[var(--color-sidebar-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-sidebar-text)]"
       >
         <ToggleIcon aria-hidden size={18} className="rtl:-scale-x-100" />
         {collapsed ? null : t('nav.collapse')}
@@ -221,15 +231,15 @@ export function MobileNav({
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         aria-label={t('nav.openMenu')}
-        className="flex size-10 items-center justify-center rounded-lg border border-[var(--color-border)] lg:hidden"
+        className="flex size-10 items-center justify-center rounded-[var(--radius-control)] border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] lg:hidden"
       >
         <Menu aria-hidden size={18} />
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]" />
         <Dialog.Content
           dir={locale === 'ar' ? 'rtl' : 'ltr'}
-          className="fixed inset-y-0 start-0 z-50 flex w-[280px] max-w-[85vw] flex-col bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)]"
+          className="fixed inset-y-0 start-0 z-50 flex w-[280px] max-w-[85vw] flex-col border-e border-[var(--color-border)] bg-[var(--color-sidebar)] text-[var(--color-sidebar-text)] shadow-[var(--shadow-raised)]"
         >
           <Dialog.Title className="sr-only">{t('nav.mainLabel')}</Dialog.Title>
           <Dialog.Description className="sr-only">{companyName ?? ''}</Dialog.Description>
@@ -237,7 +247,7 @@ export function MobileNav({
             <Brand collapsed={false} companyName={companyName} />
             <Dialog.Close
               aria-label={t('nav.closeMenu')}
-              className="me-3 flex size-10 items-center justify-center rounded-lg"
+              className="me-3 flex size-10 items-center justify-center rounded-[var(--radius-control)] hover:bg-[var(--color-surface-muted)]"
             >
               <X aria-hidden size={18} />
             </Dialog.Close>

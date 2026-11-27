@@ -160,7 +160,7 @@ export default async function GeneralLedgerPage({
             ].map(([label, value], i) => (
               <div
                 key={i}
-                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+                className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
               >
                 <dt className="text-xs text-[var(--color-text-muted)]">{label}</dt>
                 <dd className="mt-1 text-lg font-semibold">{value}</dd>

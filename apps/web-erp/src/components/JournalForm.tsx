@@ -129,7 +129,7 @@ export function JournalForm({
         ) : null}
       </div>
 
-      <fieldset className="rounded-xl border border-[var(--color-border)] p-3">
+      <fieldset className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-3">
         <legend className="px-1 font-semibold">{t('journal.lines')}</legend>
         <ol className="flex flex-col gap-3">
           {lines.map((l, i) => {

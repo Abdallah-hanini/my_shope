@@ -12,6 +12,35 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: UI/UX transformation, slice 1: identity, components, shell
+
+### Changes
+
+- **Audit and plan:** docs/UI_TRANSFORMATION.md (12 findings, identity decisions, per-screen tracker, next slices).
+- **Identity v2:**
+  - graphite neutrals with one petrol accent (`#0B6680`, dark `#5CC2DB`), plus an info tone, primary hover and soft tints, strong borders and raised surfaces;
+  - every text/background pair ≥ 4.5:1 (token tests extended); a web test keeps `globals.css` identical to the token package.
+- **Type and shape:** page titles 24 px, body 14 px, sentence-case table headers, Inter stylistic sets; controls 8 px and cards 10 px; hairline borders.
+- **Components (`ui.tsx`):**
+  - existing APIs kept, so every screen picks up the new design;
+  - new pieces: `Tabs`, `DescriptionList`, `Grid`, `SplitLayout`, `Skeleton`, `buttonDanger`, `buttonSm`, `fieldLabel`; Notice `info`; EmptyState title, icon and action; PageHeader eyebrow and back link; Card description and anchors.
+- **Shell:**
+  - light sidebar with compact items and an accent active state; a 56 px translucent header; one style for the search, company, language, bell and profile controls;
+  - the breadcrumb starts at the company and never truncates the current page;
+  - a centred error card with retry.
+- **Screens:**
+  - 22 screens moved from local label styles to the shared `fieldLabel`, and all radii use the two tokens;
+  - the job board has wider columns, a status colour cue and counts;
+  - view switchers on jobs, notifications, supplier bills, special orders and transfers use the shared tabs;
+  - the job card has an "On this page" section bar and an actions column that stays in view.
+- **Not adopted:** a route-level loading skeleton. A form's redirect back to the same page stayed on "Saving…"; the browser test caught it and the skeleton was removed.
+- **No behaviour change:** API contracts, permissions, business rules and calculations are untouched.
+
+### Evidence (2026-12-01, Linux Docker)
+
+- Token contrast tests (12 pairs per theme); token-mirror test (2).
+- Full gate: format clean; build, typecheck, lint and unit tests 48/48; browser end-to-end 49/49 on the new design.
+
 ## 2026-12-01: Stock transfers between branches (T-78)
 
 ### Changes
