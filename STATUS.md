@@ -12,6 +12,23 @@
 | 2 Catalog/inventory/procurement | **In progress:** parts catalogue, stock at weighted average, receipts and counted adjustments; suppliers, supplier bills matched to deliveries, supplier payments; special orders; transfers between branches. Not yet: purchase orders, returns to suppliers. |
 | 4–7 | Not started. |
 
+## 2026-12-01: Reporting and dashboards R2a: sales, operations, customers, stock movement
+
+- **Sales** (`/reports/sales`, `reports.financial.read`):
+  - invoices less credit notes, excluding tax, by posting date;
+  - labour and parts revenue taken from those documents' own postings;
+  - parts share, average invoice, discounts, tax;
+  - by branch and by month (chart), best-selling parts and top services;
+  - "other revenue" shows anything in the revenue accounts that is not from invoices (0 = matches the ledger).
+- **Workshop operations** (`/reports/operations`, `workshop.job.read`): jobs opened, cancelled and delivered; average and median hours to deliver; first-time right (no rework); open and overdue jobs now by status; by branch.
+- **Customers** (`/reports/customers`, `reports.financial.read`): total, new, active (invoiced in the period) and returning customers; top customers by sales with last invoice date.
+- **Stock movement** (`/reports/stock-movement`, `inventory.read`): per part, opening, received, issued and closing quantities and values; turnover; fast / slow / dead class. The closing value is reconciled to the inventory account.
+- All four reports are in the catalog (new group "Sales and customers"), with KPI cards, tables, print and definitions under each. Formulas are in docs/KPI_DICTIONARY.md; the coverage matrix and tracker are updated.
+- Evidence:
+  - unit (analytics, 2): percentages and the fast/slow/dead rule;
+  - integration (analytics.int, 5), against hand-worked figures: a job with 1.5 h labour and 3 parts (180.00, parts at cost 12.00); a second job invoiced and cancelled by credit note (sales stay 180.00); a part in stock never used (dead); turnover 0.14 and 0.35; permissions;
+  - full gate 48/48 (uncached); integration 258/258 on a fresh database; browser end-to-end 52/52, including the four pages and the accessibility scan of sales and stock movement.
+
 ## 2026-12-01: Reporting and dashboards R1: statements, aging, reports catalog
 
 ### Changes

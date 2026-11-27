@@ -1321,6 +1321,222 @@
         ]
       }
     },
+    "/api/v1/companies/{companyId}/reports/sales": {
+      "get": {
+        "operationId": "getSalesReport",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sales: labour and parts revenue, branches, months, top items",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/customers": {
+      "get": {
+        "operationId": "getCustomersReport",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomersReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Customers: new, active, returning, top by sales",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/operations": {
+      "get": {
+        "operationId": "getOperationsReport",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Workshop: jobs opened and delivered, time to deliver, first-time right, open now",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/companies/{companyId}/reports/stock-movement": {
+      "get": {
+        "operationId": "getStockMovementReport",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockMovementReportDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stock flow per part: issued, received, turnover, fast/slow/dead",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
     "/api/v1/companies/{companyId}/reports/profit-and-loss": {
       "get": {
         "operationId": "getProfitAndLoss",
@@ -9006,6 +9222,536 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "SalesBranchDto": {
+        "type": "object",
+        "properties": {
+          "branchCode": {
+            "type": "string"
+          },
+          "invoices": {
+            "type": "number"
+          },
+          "sales": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchCode",
+          "invoices",
+          "sales"
+        ]
+      },
+      "SalesMonthDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-11"
+          },
+          "sales": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "sales"
+        ]
+      },
+      "SalesItemDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "string",
+            "description": "Parts: units; services: hours"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Line amounts before the invoice discount"
+          }
+        },
+        "required": [
+          "description",
+          "quantity",
+          "amount"
+        ]
+      },
+      "SalesReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were read"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "invoices": {
+            "type": "number"
+          },
+          "creditNotes": {
+            "type": "number"
+          },
+          "sales": {
+            "type": "string",
+            "description": "Invoices less credit notes, excluding tax (= revenue posted by them)"
+          },
+          "labourRevenue": {
+            "type": "string"
+          },
+          "partsRevenue": {
+            "type": "string"
+          },
+          "partsSharePct": {
+            "type": "string",
+            "nullable": true
+          },
+          "discounts": {
+            "type": "string"
+          },
+          "tax": {
+            "type": "string"
+          },
+          "averageInvoice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sales ÷ invoices not cancelled"
+          },
+          "ledgerRevenue": {
+            "type": "string",
+            "description": "All revenue accounts in the ledger for the period"
+          },
+          "otherRevenue": {
+            "type": "string",
+            "description": "Ledger revenue not from invoices (e.g. manual journals)"
+          },
+          "byBranch": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesBranchDto"
+            }
+          },
+          "byMonth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesMonthDto"
+            }
+          },
+          "topParts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesItemDto"
+            }
+          },
+          "topServices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesItemDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "asOf",
+          "currency",
+          "invoices",
+          "creditNotes",
+          "sales",
+          "labourRevenue",
+          "partsRevenue",
+          "discounts",
+          "tax",
+          "ledgerRevenue",
+          "otherRevenue",
+          "byBranch",
+          "byMonth",
+          "topParts",
+          "topServices"
+        ]
+      },
+      "TopCustomerDto": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "invoices": {
+            "type": "number"
+          },
+          "sales": {
+            "type": "string"
+          },
+          "lastInvoiceDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "returning": {
+            "type": "boolean",
+            "description": "Also invoiced before the period"
+          }
+        },
+        "required": [
+          "customerId",
+          "name",
+          "invoices",
+          "sales",
+          "returning"
+        ]
+      },
+      "CustomersReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were read"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalCustomers": {
+            "type": "number"
+          },
+          "newCustomers": {
+            "type": "number",
+            "description": "Customer records created in the period"
+          },
+          "activeCustomers": {
+            "type": "number",
+            "description": "Customers invoiced in the period"
+          },
+          "returningCustomers": {
+            "type": "number",
+            "description": "Active customers also invoiced before the period"
+          },
+          "returningPct": {
+            "type": "string",
+            "nullable": true
+          },
+          "topCustomers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopCustomerDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "asOf",
+          "currency",
+          "totalCustomers",
+          "newCustomers",
+          "activeCustomers",
+          "returningCustomers",
+          "topCustomers"
+        ]
+      },
+      "OpenStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "overdue": {
+            "type": "number",
+            "description": "Past their promised time"
+          }
+        },
+        "required": [
+          "status",
+          "count",
+          "overdue"
+        ]
+      },
+      "OperationsBranchDto": {
+        "type": "object",
+        "properties": {
+          "branchCode": {
+            "type": "string"
+          },
+          "opened": {
+            "type": "number"
+          },
+          "delivered": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "branchCode",
+          "opened",
+          "delivered"
+        ]
+      },
+      "OperationsReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were read"
+          },
+          "opened": {
+            "type": "number",
+            "description": "Job cards opened in the period"
+          },
+          "cancelled": {
+            "type": "number",
+            "description": "Of those, cancelled"
+          },
+          "delivered": {
+            "type": "number",
+            "description": "Delivered in the period"
+          },
+          "firstTimeRightPct": {
+            "type": "string",
+            "nullable": true,
+            "description": "Delivered without rework"
+          },
+          "averageHoursToDeliver": {
+            "type": "string",
+            "nullable": true
+          },
+          "medianHoursToDeliver": {
+            "type": "string",
+            "nullable": true
+          },
+          "openNow": {
+            "type": "number",
+            "description": "Open now (not delivered or cancelled)"
+          },
+          "overdueNow": {
+            "type": "number"
+          },
+          "openByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpenStatusDto"
+            }
+          },
+          "byBranch": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationsBranchDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "asOf",
+          "opened",
+          "cancelled",
+          "delivered",
+          "openNow",
+          "overdueNow",
+          "openByStatus",
+          "byBranch"
+        ]
+      },
+      "StockCountsDto": {
+        "type": "object",
+        "properties": {
+          "fast": {
+            "type": "number"
+          },
+          "slow": {
+            "type": "number"
+          },
+          "dead": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fast",
+          "slow",
+          "dead"
+        ]
+      },
+      "StockPartDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "openingQty": {
+            "type": "string"
+          },
+          "receivedQty": {
+            "type": "string"
+          },
+          "issuedQty": {
+            "type": "string",
+            "description": "Issued to jobs less returns"
+          },
+          "closingQty": {
+            "type": "string"
+          },
+          "issuedValue": {
+            "type": "string",
+            "description": "Cost of parts issued less returned"
+          },
+          "closingValue": {
+            "type": "string"
+          },
+          "turnover": {
+            "type": "string",
+            "nullable": true,
+            "description": "Issued value ÷ average stock value"
+          },
+          "lastIssueDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "class": {
+            "type": "string",
+            "enum": [
+              "fast",
+              "slow",
+              "dead",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "partId",
+          "sku",
+          "name",
+          "unit",
+          "openingQty",
+          "receivedQty",
+          "issuedQty",
+          "closingQty",
+          "issuedValue",
+          "closingValue",
+          "class"
+        ]
+      },
+      "StockMovementReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the figures were read"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "openingValue": {
+            "type": "string"
+          },
+          "closingValue": {
+            "type": "string"
+          },
+          "issuedValue": {
+            "type": "string"
+          },
+          "turnover": {
+            "type": "string",
+            "nullable": true
+          },
+          "ledgerInventory": {
+            "type": "string",
+            "nullable": true,
+            "description": "Inventory account at the end date"
+          },
+          "reconciled": {
+            "type": "boolean"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/StockCountsDto"
+          },
+          "parts": {
+            "description": "Largest issued value first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockPartDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "asOf",
+          "currency",
+          "openingValue",
+          "closingValue",
+          "issuedValue",
+          "reconciled",
+          "counts",
+          "parts"
         ]
       },
       "StatementLineDto": {

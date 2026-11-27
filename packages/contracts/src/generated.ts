@@ -377,6 +377,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{companyId}/reports/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales: labour and parts revenue, branches, months, top items */
+        get: operations["getSalesReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers: new, active, returning, top by sales */
+        get: operations["getCustomersReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workshop: jobs opened and delivered, time to deliver, first-time right, open now */
+        get: operations["getOperationsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{companyId}/reports/stock-movement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock flow per part: issued, received, turnover, fast/slow/dead */
+        get: operations["getStockMovementReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{companyId}/reports/profit-and-loss": {
         parameters: {
             query?: never;
@@ -2493,6 +2561,173 @@ export interface components {
         AuditEventPageDto: {
             items: components["schemas"]["AuditEventDto"][];
             nextCursor?: string | null;
+        };
+        SalesBranchDto: {
+            branchCode: string;
+            invoices: number;
+            sales: string;
+        };
+        SalesMonthDto: {
+            /** @example 2026-11 */
+            month: string;
+            sales: string;
+        };
+        SalesItemDto: {
+            description: string;
+            /** @description Parts: units; services: hours */
+            quantity: string;
+            /** @description Line amounts before the invoice discount */
+            amount: string;
+        };
+        SalesReportDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description When the figures were read
+             */
+            asOf: string;
+            currency: string;
+            invoices: number;
+            creditNotes: number;
+            /** @description Invoices less credit notes, excluding tax (= revenue posted by them) */
+            sales: string;
+            labourRevenue: string;
+            partsRevenue: string;
+            partsSharePct?: string | null;
+            discounts: string;
+            tax: string;
+            /** @description Sales ÷ invoices not cancelled */
+            averageInvoice?: string | null;
+            /** @description All revenue accounts in the ledger for the period */
+            ledgerRevenue: string;
+            /** @description Ledger revenue not from invoices (e.g. manual journals) */
+            otherRevenue: string;
+            byBranch: components["schemas"]["SalesBranchDto"][];
+            byMonth: components["schemas"]["SalesMonthDto"][];
+            topParts: components["schemas"]["SalesItemDto"][];
+            topServices: components["schemas"]["SalesItemDto"][];
+        };
+        TopCustomerDto: {
+            customerId: string;
+            name: string;
+            invoices: number;
+            sales: string;
+            /** Format: date */
+            lastInvoiceDate?: string | null;
+            /** @description Also invoiced before the period */
+            returning: boolean;
+        };
+        CustomersReportDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description When the figures were read
+             */
+            asOf: string;
+            currency: string;
+            totalCustomers: number;
+            /** @description Customer records created in the period */
+            newCustomers: number;
+            /** @description Customers invoiced in the period */
+            activeCustomers: number;
+            /** @description Active customers also invoiced before the period */
+            returningCustomers: number;
+            returningPct?: string | null;
+            topCustomers: components["schemas"]["TopCustomerDto"][];
+        };
+        OpenStatusDto: {
+            status: string;
+            count: number;
+            /** @description Past their promised time */
+            overdue: number;
+        };
+        OperationsBranchDto: {
+            branchCode: string;
+            opened: number;
+            delivered: number;
+        };
+        OperationsReportDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description When the figures were read
+             */
+            asOf: string;
+            /** @description Job cards opened in the period */
+            opened: number;
+            /** @description Of those, cancelled */
+            cancelled: number;
+            /** @description Delivered in the period */
+            delivered: number;
+            /** @description Delivered without rework */
+            firstTimeRightPct?: string | null;
+            averageHoursToDeliver?: string | null;
+            medianHoursToDeliver?: string | null;
+            /** @description Open now (not delivered or cancelled) */
+            openNow: number;
+            overdueNow: number;
+            openByStatus: components["schemas"]["OpenStatusDto"][];
+            byBranch: components["schemas"]["OperationsBranchDto"][];
+        };
+        StockCountsDto: {
+            fast: number;
+            slow: number;
+            dead: number;
+        };
+        StockPartDto: {
+            partId: string;
+            sku: string;
+            name: string;
+            unit: string;
+            openingQty: string;
+            receivedQty: string;
+            /** @description Issued to jobs less returns */
+            issuedQty: string;
+            closingQty: string;
+            /** @description Cost of parts issued less returned */
+            issuedValue: string;
+            closingValue: string;
+            /** @description Issued value ÷ average stock value */
+            turnover?: string | null;
+            /** Format: date */
+            lastIssueDate?: string | null;
+            /** @enum {string} */
+            class: "fast" | "slow" | "dead" | "none";
+        };
+        StockMovementReportDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description When the figures were read
+             */
+            asOf: string;
+            currency: string;
+            openingValue: string;
+            closingValue: string;
+            issuedValue: string;
+            turnover?: string | null;
+            /** @description Inventory account at the end date */
+            ledgerInventory?: string | null;
+            reconciled: boolean;
+            counts: components["schemas"]["StockCountsDto"];
+            /** @description Largest issued value first */
+            parts: components["schemas"]["StockPartDto"][];
         };
         StatementLineDto: {
             accountId: string;
@@ -5227,6 +5462,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEventPageDto"];
+                };
+            };
+        };
+    };
+    getSalesReport: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReportDto"];
+                };
+            };
+        };
+    };
+    getCustomersReport: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomersReportDto"];
+                };
+            };
+        };
+    };
+    getOperationsReport: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationsReportDto"];
+                };
+            };
+        };
+    };
+    getStockMovementReport: {
+        parameters: {
+            query: {
+                branchId?: unknown;
+                to: unknown;
+                from: unknown;
+            };
+            header?: never;
+            path: {
+                companyId: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockMovementReportDto"];
                 };
             };
         };

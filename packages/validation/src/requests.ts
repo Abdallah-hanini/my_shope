@@ -206,6 +206,10 @@ export const profitAndLossQuerySchema = ledgerRange
   .refine(...rangeBounded);
 export type ProfitAndLossQuery = z.infer<typeof profitAndLossQuerySchema>;
 
+/** Analytics reports over a date range (sales, operations, customers, stock movement). */
+export const rangeQuerySchema = ledgerRange.refine(...rangeOrdered).refine(...rangeBounded);
+export type RangeQuery = z.infer<typeof rangeQuerySchema>;
+
 /** Balance sheet and aging reports: everything posted up to and including `asOf`. */
 export const asOfQuerySchema = z.object({ asOf: isoDate, branchId: uuid.optional() });
 export type AsOfQuery = z.infer<typeof asOfQuerySchema>;

@@ -2,6 +2,8 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   asOfQuerySchema,
+  rangeQuerySchema,
+  type RangeQuery,
   profitAndLossQuerySchema,
   type AsOfQuery,
   type ProfitAndLossQuery,
@@ -19,6 +21,13 @@ import { GeneralLedgerDto, TrialBalanceDto } from './ledger.dto';
 import { LedgerService } from './ledger.service';
 import { FinancialSummaryDto } from './reporting.dto';
 import { ReportingService } from './reporting.service';
+import { AnalyticsService } from './analytics.service';
+import {
+  CustomersReportDto,
+  OperationsReportDto,
+  SalesReportDto,
+  StockMovementReportDto,
+} from './analytics.dto';
 import { AgingDto, BalanceSheetDto, ProfitAndLossDto } from './statements.dto';
 import { StatementsService } from './statements.service';
 
@@ -31,7 +40,64 @@ export class ReportingController {
     private readonly reporting: ReportingService,
     private readonly ledger: LedgerService,
     private readonly statements: StatementsService,
+    private readonly analytics: AnalyticsService,
   ) {}
+
+  @Get('sales')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getSalesReport',
+    summary: 'Sales: labour and parts revenue, branches, months, top items',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: SalesReportDto })
+  sales(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.analytics.sales(s, q);
+  }
+
+  @Get('customers')
+  @RequirePermission('reports.financial.read')
+  @ApiOperation({
+    operationId: 'getCustomersReport',
+    summary: 'Customers: new, active, returning, top by sales',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: CustomersReportDto })
+  customers(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.analytics.customers(s, q);
+  }
+
+  @Get('operations')
+  @RequirePermission('workshop.job.read')
+  @ApiOperation({
+    operationId: 'getOperationsReport',
+    summary: 'Workshop: jobs opened and delivered, time to deliver, first-time right, open now',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: OperationsReportDto })
+  operations(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.analytics.operations(s, q);
+  }
+
+  @Get('stock-movement')
+  @RequirePermission('inventory.read')
+  @ApiOperation({
+    operationId: 'getStockMovementReport',
+    summary: 'Stock flow per part: issued, received, turnover, fast/slow/dead',
+  })
+  @ApiQuery({ name: 'from', required: true })
+  @ApiQuery({ name: 'to', required: true })
+  @ApiQuery({ name: 'branchId', required: false })
+  @ApiOkResponse({ type: StockMovementReportDto })
+  stockMovement(@CurrentScope() s: CompanyScope, @Query(new ZodPipe(rangeQuerySchema)) q: RangeQuery) {
+    return this.analytics.stockMovement(s, q);
+  }
 
   @Get('profit-and-loss')
   @RequirePermission('reports.financial.read')

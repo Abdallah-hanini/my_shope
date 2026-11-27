@@ -170,3 +170,23 @@ Owner of every definition below: the accountant (changes go through docs/DECISIO
 | Payable (per bill) | Bill total − supplier payments posted by the cut-off; a bill whose cancellation is posted by then is excluded |
 | Payable age | Days from the due date to the cut-off; ≤ 0 is "not yet due"; buckets 1–30, 31–60, 61–90, over 90 days late |
 | Aging reconciliation | Σ open documents = balance of the control account (receivable: debit balance; payables: credit balance) at the cut-off in the same branch scope. A manual journal on a control account shows as a difference |
+
+## Sales, operations, customers, stock movement (RPT R2a)
+
+| Figure | Definition |
+|---|---|
+| Sales (excl. tax) | Σ over invoices and credit notes whose journal is posted in the period of sign × (total − tax); credit notes count negative. Equals the revenue those documents posted |
+| Labour / parts revenue | Σ(credit − debit) on the labour and parts revenue accounts of those documents' own journals |
+| Other revenue | All revenue accounts in the ledger for the period − sales (e.g. manual journals). 0 means sales equal ledger revenue |
+| Average invoice | Sales ÷ (invoices − credit notes), 2 decimals half up; null when no invoice stands |
+| Best sellers | Invoice lines grouped by description and kind, sign-adjusted, amounts before the invoice discount; top 10 |
+| Jobs opened / delivered | Job cards with `created_at` / `delivered_at` in the period (company time zone, whole days); cancelled = opened in the period and now cancelled |
+| Time to deliver | Hours from opening the card to delivery for jobs delivered in the period: mean and median, 1 decimal |
+| First-time right % | Delivered in the period with no rework (QC never failed) ÷ delivered |
+| Open now / overdue now | Jobs not delivered or cancelled today; overdue = promised time passed |
+| Customers / new | All customer records / records created in the period |
+| Active / returning | Customers with an invoice posted in the period / of those, also invoiced before it |
+| Stock flow per part | Opening and closing = the last movement's quantity and value before the start / up to the end, per branch, summed; issued = issues − returns; received = receipts |
+| Turnover | Issued cost ÷ ((opening value + closing value) ÷ 2), 2 decimals; null when the average is 0. Depends on the period length |
+| Fast / slow / dead | Fast = parts issued in the period whose cumulative share of issued cost (largest first) starts below 80 %; slow = other parts issued; dead = closing stock > 0 and nothing issued in the period |
+| Stock reconciliation | Closing value = inventory account balance at the end date (same branch scope) |

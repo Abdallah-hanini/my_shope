@@ -1,6 +1,10 @@
 import { createTranslator, isLocale, type MessageKey } from '@erp/localization';
 import {
   ArrowLeftRight,
+  Banknote,
+  Gauge,
+  RefreshCw,
+  Users,
   BookOpen,
   Boxes,
   CalendarClock,
@@ -41,8 +45,16 @@ const CATALOG: { group: string; entries: Entry[] }[] = [
     ],
   },
   {
+    group: 'sales',
+    entries: [
+      { key: 'sales', href: 'reports/sales', icon: Banknote, perm: 'reports.financial.read' },
+      { key: 'customers', href: 'reports/customers', icon: Users, perm: 'reports.financial.read' },
+    ],
+  },
+  {
     group: 'inventory',
     entries: [
+      { key: 'stockMovement', href: 'reports/stock-movement', icon: RefreshCw, perm: 'inventory.read' },
       { key: 'stock', href: 'stock', icon: Boxes, perm: 'inventory.read' },
       {
         key: 'specialOrders',
@@ -62,6 +74,7 @@ const CATALOG: { group: string; entries: Entry[] }[] = [
   {
     group: 'workshop',
     entries: [
+      { key: 'operations', href: 'reports/operations', icon: Gauge, perm: 'workshop.job.read' },
       { key: 'labour', href: 'labour-time', icon: Timer, perm: 'workshop.job.manage' },
       { key: 'appointments', href: 'appointments', icon: CalendarClock, perm: 'workshop.job.read' },
     ],

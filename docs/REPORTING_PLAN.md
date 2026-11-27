@@ -39,18 +39,18 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Finance | Cash flow statement (direct, from cash/bank lines by source) | ☐ R2 | ledger + journal source |
 | Finance | Tax summary (output tax on invoices, input tax on bills, by code) | ☐ R2 | invoices, supplier bills |
 | Finance | Budget vs actual | — | no budgets are recorded |
-| Sales | Revenue by labour vs parts, by branch, average invoice value, discounts, credit notes | ☐ R2 | invoices, invoice lines |
-| Sales | Best-selling parts and services | ☐ R2 | invoice lines, job parts |
+| Sales | Revenue by labour vs parts, by branch and month, average invoice, discounts, credit notes, reconciled to ledger revenue | ✅ R2a | invoices, their journals |
+| Sales | Best-selling parts and services | ✅ R2a | invoice lines |
 | Sales | Sales targets | — | no targets are recorded (R3: owner-set targets) |
 | Inventory | Stock value by part and branch, reconciled | ✅ | stock, ledger |
 | Inventory | Movements, special orders, transfers | ✅ | movements |
-| Inventory | Fast / slow / dead stock, turnover (COGS ÷ average stock) | ☐ R2 | issue movements, stock |
+| Inventory | Stock flow per part, fast / slow / dead stock, turnover, reconciled to the inventory account | ✅ R2a | movements |
 | Inventory | Low stock / reorder recommendations | — | no reorder levels yet (R3 adds them) |
 | Purchasing | Supplier bills, payables reconciliation | ✅ | bills |
 | Purchasing | Supplier performance (price variance, special-order lead time) | ☐ R3 | bills, job parts |
-| CRM | Customers: new, returning, outstanding balance, history | ☐ R2 | customers, jobs, invoices |
+| CRM | Customers: total, new, active, returning, top customers (balances: receivables aging) | ✅ R2a | customers, invoices |
 | CRM | Satisfaction, segmentation | — | not recorded |
-| Operations | Job workload by status, cycle time, overdue promises, rework rate, bay use | ☐ R2 | job cards, events, bays |
+| Operations | Jobs opened / delivered, time to deliver, first-time right, open and overdue now, by branch | ✅ R2a | job cards |
 | Operations | Technician hours and efficiency | ✅ | labour time |
 | HR | Headcount, attendance, payroll, leave | — | HR and payroll are not built (needs the owner's payroll-law decisions) |
 | Alerts | Overdue payables/receivables, low margin, reconciliation breaks | ☐ R3 | reports above + notifications |
@@ -71,11 +71,15 @@ Status: ✅ built and tested · ◐ partly · ☐ planned (data exists) · — n
 | Inventory | Stock value, special orders, transfers | `/stock`, `/special-orders`, `/transfers` | inventory.read |
 | Purchasing | Supplier bills | `/supplier-bills` | purchasing.read |
 | Workshop | Labour time, appointments | `/labour-time`, `/appointments` | workshop.job.manage / read |
+| Workshop | Workshop operations | `/reports/operations` | workshop.job.read |
+| Sales | Sales, customers | `/reports/sales`, `/reports/customers` | reports.financial.read |
+| Inventory | Stock movement | `/reports/stock-movement` | inventory.read |
 
 ## 4. Tracker
 
 | Part | Scope | Status |
 |---|---|---|
 | R1 | Audit, architecture, coverage matrix, catalog page; P&L, balance sheet, receivables and payables aging (API, pages, print, drill-down, reconciliation); tests | ✅ |
-| R2 | Sales, operations, CRM and inventory-movement dashboards; cash flow and tax summary; Excel/CSV/PDF for the new reports | ☐ |
+| R2a | Sales, operations, customers and stock-movement reports (API, pages, catalog, tests) | ✅ |
+| R2b | Cash flow and tax summary; Excel/CSV/PDF downloads for the new reports | ☐ |
 | R3 | Owner-set targets and reorder levels; alerts; saved filters and favourites; personal dashboards; scheduled reports (needs mail settings) | ☐ |

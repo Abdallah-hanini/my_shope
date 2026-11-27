@@ -1791,6 +1791,18 @@ async function main() {
         await page.locator('[data-reconciled=true]').waitFor();
         await page.goto(`${base()}/reports/payables`);
         await page.locator('[data-reconciled=true]').waitFor();
+        // R2a analytics.
+        await page.goto(`${base()}/reports/sales`);
+        await page.getByRole('heading', { name: 'Sales', exact: true }).waitFor();
+        await page.locator('[data-other-revenue]').waitFor();
+        await shot('report-sales-en');
+        await page.goto(`${base()}/reports/operations`);
+        await page.getByRole('heading', { name: 'Workshop operations', exact: true }).waitFor();
+        await page.goto(`${base()}/reports/customers`);
+        await page.getByRole('heading', { name: 'Customers', exact: true }).waitFor();
+        await page.goto(`${base()}/reports/stock-movement`);
+        await page.locator('tr[data-stock-part="OIL-5W30"]').waitFor();
+        await page.locator('[data-reconciled=true]').waitFor();
       },
     );
 
@@ -1825,6 +1837,8 @@ async function main() {
           'reports',
           'reports/profit-and-loss',
           'reports/receivables',
+          'reports/sales',
+          'reports/stock-movement',
         ]) {
           for (const lang of ['en', 'ar']) {
             await page.goto(`${WEB}/${lang}/c/${companyId}/${path}`);
